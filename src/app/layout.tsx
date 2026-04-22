@@ -1,5 +1,8 @@
 import './globals.css'
 import type { Metadata } from 'next'
+import { NextSSRPlugin } from '@uploadthing/react/next-ssr-plugin'
+import { extractRouterConfig } from 'uploadthing/server'
+import { ourFileRouter } from '@/app/api/uploadthing/core'
 
 export const metadata: Metadata = {
   title: 'Topin Store | Toon & Low Poly',
@@ -13,8 +16,15 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
-      {/* antialiased ayuda a que las fuentes se vean mejor con bordes gruesos */}
-      <body className="antialiased selection:bg-toon-yellow">{children}</body>
+      <body>
+        <NextSSRPlugin
+          /**
+           * El routerConfig ayuda a hidratar el estado de UploadThing en el cliente
+           */
+          routerConfig={extractRouterConfig(ourFileRouter)}
+        />
+        {children}
+      </body>
     </html>
   )
 }

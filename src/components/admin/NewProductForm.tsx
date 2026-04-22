@@ -90,15 +90,22 @@ export default function NewProductForm({
 
         <UploadDropzone
           endpoint="productImage"
+          onUploadBegin={(name) => {
+            console.log('🚀 Iniciando subida de:', name)
+          }}
           onClientUploadComplete={(res) => {
-            if (res) {
+            console.log('✅ UploadThing respondió:', res) // AQUÍ VEREMOS LA URL
+            if (res && res.length > 0) {
               const urls = res.map((f) => f.url)
               setImageUrls(urls)
-              console.log('Fotos subidas:', urls)
+              console.log('🔗 URLs guardadas en el estado:', urls)
             }
           }}
           onUploadError={(error: Error) => {
-            alert(`Error: ${error.message}`)
+            // ESTO ES LO QUE BUSCAMOS
+            console.error('❌ ERROR DETECTADO EN UPLOADTHING:', error.message)
+            console.error('Detalles del error:', error)
+            alert(`Error de subida: ${error.message}`)
           }}
           className="border-4 border-dashed border-toon-border bg-slate-50 
                      ut-button:bg-toon-pink 
