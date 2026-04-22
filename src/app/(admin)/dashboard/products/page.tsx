@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { Plus, Search, Filter, Layers, Edit3, ExternalLink } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import ProductDrawer from '@/components/admin/ProductDrawer'
+import { Suspense } from 'react'
 
 export default async function InventoryPage() {
   const products = await getProducts()
@@ -44,7 +45,6 @@ export default async function InventoryPage() {
           </Link>
         </div>
       </div>
-
       {/* TABLA DE PRODUCTOS */}
       <div className="bg-white border-4 border-toon-border rounded-3xl shadow-toon overflow-hidden">
         <div className="overflow-x-auto">
@@ -150,7 +150,6 @@ export default async function InventoryPage() {
           </table>
         </div>
       </div>
-
       {/* FOOTER DE LA TABLA */}
       <div className="flex justify-between items-center px-4">
         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
@@ -168,7 +167,9 @@ export default async function InventoryPage() {
           </button>
         </div>
       </div>
-      <ProductDrawer products={products} categories={categories} />
+      <Suspense fallback={<div className="hidden">Cargando gaveta...</div>}>
+        <ProductDrawer products={products} categories={categories} />
+      </Suspense>{' '}
     </div>
   )
 }
