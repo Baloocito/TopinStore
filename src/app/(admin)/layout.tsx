@@ -10,7 +10,7 @@ export default function AdminLayout({
       {/* Sidebar (Ahora maneja su propia lógica responsiva) */}
       <AdminSidebar />
 
-      {/* Área de Contenido Dinámico */}
+      {/* Área de Contenido Dinámico revisar*/}
       <main className="flex-1 overflow-y-auto w-full md:w-auto">
         {/* En móvil damos un pl-24 para hacer espacio al botón del menú flotante */}
         <header className="p-6 md:p-8 pb-0 pl-24 md:pl-8">
