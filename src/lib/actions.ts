@@ -1,7 +1,8 @@
 'use server'
 
 import { db } from '@/db'
-import { products } from '@/db/schema'
+import { products, categories } from '@/db/schema'
+
 import { eq } from 'drizzle-orm' // <--- EL IMPORT FALTANTE QUE CAUSABA EL ERROR
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
@@ -158,4 +159,34 @@ export async function deleteAbandonedFiles(urls: string[]) {
   if (keys.length > 0) {
     await utapi.deleteFiles(keys)
   }
+}
+
+// --- ACCIONES DE CATEGORÍAS ---
+
+export async function createCategory(formData: FormData) {
+  const name = formData.get('name') as string
+  if (!name) throw new Error('El nombre de la categoría es obligatorio')
+
+  // Usamos la misma función slugify que ya tienes arriba
+  const slug = `${slugify(name)}-${Date.now().toString().slice(-4)}`
+
+  await db.insert(categories).values({
+    name: name,
+    slug: slug,
+  })
+
+  revalidatePath('/dashboard/products')
+}
+
+export async function deleteCategory(formData: FormData) {
+  const idRaw = formData.get('id')
+  if (!idRaw) throw new Error('ID de categoría no proporcionado')
+
+  const id = parseInt(idRaw as string)
+
+  // OJO: Si tienes productos usando esta categoría, la BD podría lanzar un error
+  // de llave foránea dependiendo de cómo configuraste Neon.
+  await db.delete(categories).where(eq(categories.id, id))
+
+  revalidatePath('/dashboard/products')
 }
