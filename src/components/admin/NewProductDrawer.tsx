@@ -352,11 +352,12 @@ export default function NewProductDrawer({
           </div>
         </form>
 
+        {/* Footer de Acciones (NewProductDrawer) */}
         <div className="p-6 border-t-4 border-toon-border bg-slate-50 flex gap-4">
           <button
             type="submit"
             form="create-form"
-            className="w-full bg-toon-lime border-4 border-toon-border py-4 rounded-2xl font-black text-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all flex items-center justify-center gap-2"
+            className="w-full bg-toon-lime border-4 border-toon-border py-4 rounded-2xl font-black text-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:brightness-110 active:shadow-none active:translate-x-1 active:translate-y-1 transition-all flex items-center justify-center gap-2"
           >
             <Plus size={24} /> CREAR PRODUCTO
           </button>

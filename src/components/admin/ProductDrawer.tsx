@@ -392,10 +392,11 @@ export default function ProductDrawer({
 
         {/* Footer de Acciones */}
         <div className="p-6 border-t-4 border-toon-border bg-slate-50 flex gap-4">
+          {/* BOTÓN DE GUARDAR */}
           <button
             type="submit"
             form="edit-form"
-            className="flex-1 bg-toon-lime border-4 border-toon-border py-4 rounded-2xl font-black text-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all flex items-center justify-center gap-2"
+            className="flex-1 bg-toon-lime border-4 border-toon-border py-4 rounded-2xl font-black text-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:brightness-110 active:shadow-none active:translate-x-1 active:translate-y-1 transition-all flex items-center justify-center gap-2"
           >
             <Save size={20} /> GUARDAR CAMBIOS
           </button>
@@ -405,7 +406,7 @@ export default function ProductDrawer({
             <input type="hidden" name="id" value={currentProduct.id} />
             <button
               type="submit"
-              className="p-4 h-full bg-white border-4 border-toon-border rounded-2xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-toon-red hover:text-white transition-all flex items-center justify-center"
+              className="p-4 h-full bg-white border-4 border-toon-border rounded-2xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] text-toon-red hover:bg-slate-200 active:bg-toon-red active:text-white active:shadow-none active:translate-x-1 active:translate-y-1 transition-all flex items-center justify-center"
               title="Eliminar producto"
             >
               <Trash2 size={24} />
