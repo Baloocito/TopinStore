@@ -85,7 +85,6 @@ export default function WelcomeBanner() {
           ball.vy *= 0.98
         } else {
           // Modo Gravedad Cero (Escritorio)
-          // Sistema para que nunca pierdan velocidad y floten siempre
           const speed = Math.hypot(ball.vx, ball.vy)
           if (speed < 2) {
             ball.vx *= 1.05
@@ -148,19 +147,20 @@ export default function WelcomeBanner() {
         <div
           key={ball.id}
           className={cn(
-            'absolute border-4 border-toon-border rounded-full pointer-events-none will-change-transform',
+            // AGREGAMOS top-0 y left-0 PARA SINCRONIZAR LAS COORDENADAS CON EL CONTENEDOR
+            'absolute top-0 left-0 border-4 border-toon-border rounded-full pointer-events-none will-change-transform',
             ball.color,
           )}
           style={{
             width: ball.size,
             height: ball.size,
-            // translate3d activa la aceleración por hardware (GPU) para que corra a 60 FPS fijos
+            // translate3d activa la aceleración por hardware (GPU)
             transform: `translate3d(${ball.x}px, ${ball.y}px, 0)`,
           }}
         />
       ))}
 
-      {/* CONTENIDO DEL BANNER (Con z-index alto para estar sobre las pelotas) */}
+      {/* CONTENIDO DEL BANNER */}
       <div className="relative z-10 space-y-4 text-center md:text-left pointer-events-none">
         {/* BADGE DE NIVEL */}
         <div className="inline-flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border-3 border-toon-border shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
@@ -192,7 +192,7 @@ export default function WelcomeBanner() {
         </p>
       </div>
 
-      {/* BOTÓN DE ACCIÓN (pointer-events-auto para que se pueda clickear) */}
+      {/* BOTÓN DE ACCIÓN */}
       <div className="relative z-10 flex gap-3 w-full md:w-auto mt-2 md:mt-0 pointer-events-auto">
         <Link
           href="/dashboard/products?new=true"
