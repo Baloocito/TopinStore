@@ -1,75 +1,166 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { Star } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 export default function WelcomeBanner() {
-  // Estado para guardar la inclinación (X e Y)
-  const [tilt, setTilt] = useState({ x: 0, y: 0 })
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  // MOTOR DE FÍSICAS: Definimos nuestras 3 pelotas iniciales
+  const ballsRef = useRef([
+    // Esfera Rosa Grande
+    {
+      id: 1,
+      x: 20,
+      y: 20,
+      vx: 2.5,
+      vy: 2,
+      size: 160,
+      color: 'bg-toon-pink opacity-80',
+      bounce: 0.6,
+    },
+    // Esfera Amarilla
+    {
+      id: 2,
+      x: 250,
+      y: 60,
+      vx: -2,
+      vy: 2.5,
+      size: 96,
+      color: 'bg-toon-yellow opacity-80',
+      bounce: 0.7,
+    },
+    // Mini Esfera Blanca
+    {
+      id: 3,
+      x: 150,
+      y: 150,
+      vx: 3,
+      vy: -2,
+      size: 48,
+      color: 'bg-white opacity-20',
+      bounce: 0.8,
+    },
+  ])
+
+  // Estado solo para renderizar visualmente las coordenadas calcualdas
+  const [positions, setPositions] = useState(ballsRef.current)
 
   useEffect(() => {
-    // 1. MOTOR PARA ESCRITORIO (Rastreo de Mouse)
-    const handleMouseMove = (e: MouseEvent) => {
-      // Calculamos la distancia desde el centro de la pantalla
-      const x = (window.innerWidth / 2 - e.pageX) / 30
-      const y = (window.innerHeight / 2 - e.pageY) / 30
-      setTilt({ x, y })
-    }
+    let animationFrameId: number
+    let gravity = { x: 0, y: 0 }
+    let hasGyro = false
 
-    // 2. MOTOR PARA MÓVIL (Giroscopio)
+    // 1. ESCUCHAR EL GIROSCOPIO
     const handleOrientation = (e: DeviceOrientationEvent) => {
-      if (!e.gamma || !e.beta) return
-      // gamma es la inclinación izquierda/derecha
-      // beta es la inclinación adelante/atrás (restamos 40 para simular la forma en que sostienes el teléfono)
-      const x = e.gamma / 1.5
-      const y = (e.beta - 40) / 1.5
-
-      // Limitamos el movimiento máximo para que las esferas no se salgan del banner
-      const clampedX = Math.max(-30, Math.min(30, x))
-      const clampedY = Math.max(-30, Math.min(30, y))
-
-      setTilt({ x: -clampedX, y: -clampedY })
+      // Si el dispositivo envía datos reales (es un celular)
+      if (e.gamma !== null && e.beta !== null) {
+        hasGyro = true
+        // Convertimos los grados de inclinación a fuerza G
+        gravity.x = Math.max(-1, Math.min(1, e.gamma / 45)) * 0.8
+        // Restamos 40 a beta porque solemos sostener el celular inclinado, no plano
+        gravity.y = Math.max(-1, Math.min(1, (e.beta - 40) / 45)) * 0.8
+      }
     }
 
-    // Encendemos los sensores
-    window.addEventListener('mousemove', handleMouseMove)
     window.addEventListener('deviceorientation', handleOrientation)
 
+    // 2. EL BUCLE INFINITO DE FÍSICAS (60 FPS)
+    const updatePhysics = () => {
+      if (!containerRef.current) return
+
+      const { clientWidth: width, clientHeight: height } = containerRef.current
+      const balls = ballsRef.current
+
+      balls.forEach((ball) => {
+        // APLICAR FUERZAS
+        if (hasGyro) {
+          // Modo Gravedad Activa (Celular)
+          ball.vx += gravity.x
+          ball.vy += gravity.y
+          // Fricción del aire y del suelo
+          ball.vx *= 0.98
+          ball.vy *= 0.98
+        } else {
+          // Modo Gravedad Cero (Escritorio)
+          // Sistema para que nunca pierdan velocidad y floten siempre
+          const speed = Math.hypot(ball.vx, ball.vy)
+          if (speed < 2) {
+            ball.vx *= 1.05
+            ball.vy *= 1.05
+          }
+        }
+
+        // Mover la pelota
+        ball.x += ball.vx
+        ball.y += ball.vy
+
+        // COLISIONES CON LAS PAREDES (Rebote)
+        // Pared Izquierda
+        if (ball.x <= 0) {
+          ball.x = 0
+          ball.vx *= -ball.bounce
+        }
+        // Pared Derecha
+        else if (ball.x + ball.size >= width) {
+          ball.x = width - ball.size
+          ball.vx *= -ball.bounce
+        }
+
+        // Techo
+        if (ball.y <= 0) {
+          ball.y = 0
+          ball.vy *= -ball.bounce
+        }
+        // Suelo
+        else if (ball.y + ball.size >= height) {
+          ball.y = height - ball.size
+          ball.vy *= -ball.bounce
+        }
+      })
+
+      // Clonamos el array para forzar el re-render en React
+      setPositions([...balls])
+      animationFrameId = requestAnimationFrame(updatePhysics)
+    }
+
+    // Iniciar el motor
+    animationFrameId = requestAnimationFrame(updatePhysics)
+
+    // Apagar el motor si salimos de la página
     return () => {
-      // Limpieza al desmontar para no consumir batería
-      window.removeEventListener('mousemove', handleMouseMove)
       window.removeEventListener('deviceorientation', handleOrientation)
+      cancelAnimationFrame(animationFrameId)
     }
   }, [])
 
   return (
-    <div className="bg-toon-blue text-white rounded-3xl p-6 md:p-8 flex flex-col md:flex-row justify-between items-center gap-6 border-4 border-toon-border shadow-[8px_8px_0px_0px_rgba(30,30,30,1)] relative overflow-hidden">
+    <div
+      ref={containerRef}
+      className="bg-toon-blue text-white rounded-3xl p-6 md:p-8 flex flex-col md:flex-row justify-between items-center gap-6 border-4 border-toon-border shadow-[8px_8px_0px_0px_rgba(30,30,30,1)] relative overflow-hidden"
+    >
       {/* =======================================================
-          ELEMENTOS FLOTANTES INTERACTIVOS (PARALLAX)
-          Usamos duration-100 ease-out para que el rebote sea suave
+          NUESTRAS PELOTAS CON FÍSICA APLICADA
           ======================================================= */}
+      {positions.map((ball) => (
+        <div
+          key={ball.id}
+          className={cn(
+            'absolute border-4 border-toon-border rounded-full pointer-events-none will-change-transform',
+            ball.color,
+          )}
+          style={{
+            width: ball.size,
+            height: ball.size,
+            // translate3d activa la aceleración por hardware (GPU) para que corra a 60 FPS fijos
+            transform: `translate3d(${ball.x}px, ${ball.y}px, 0)`,
+          }}
+        />
+      ))}
 
-      {/* Esfera Rosa - Capa Lejana (Se mueve rápido: multiplicador 1.5) */}
-      <div
-        className="absolute -right-8 -top-8 w-40 h-40 bg-toon-pink border-4 border-toon-border rounded-full opacity-80 transition-transform duration-100 ease-out"
-        style={{ transform: `translate(${tilt.x * 1.5}px, ${tilt.y * 1.5}px)` }}
-      />
-
-      {/* Esfera Amarilla - Capa Media (Se mueve normal: multiplicador 0.8) */}
-      <div
-        className="absolute right-24 -bottom-10 w-24 h-24 bg-toon-yellow border-4 border-toon-border rounded-full opacity-80 transition-transform duration-100 ease-out"
-        style={{ transform: `translate(${tilt.x * 0.8}px, ${tilt.y * 0.8}px)` }}
-      />
-
-      {/* Mini Esfera Blanca - Capa Cercana (Se mueve invertido para efecto 3D total) */}
-      <div
-        className="absolute left-1/2 top-[-20px] w-12 h-12 bg-white border-4 border-toon-border rounded-full opacity-20 transition-transform duration-100 ease-out"
-        style={{
-          transform: `translate(${tilt.x * -0.5}px, ${tilt.y * -0.5}px)`,
-        }}
-      />
-
+      {/* CONTENIDO DEL BANNER (Con z-index alto para estar sobre las pelotas) */}
       <div className="relative z-10 space-y-4 text-center md:text-left pointer-events-none">
         {/* BADGE DE NIVEL */}
         <div className="inline-flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border-3 border-toon-border shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
@@ -101,8 +192,8 @@ export default function WelcomeBanner() {
         </p>
       </div>
 
-      {/* BOTÓN DE ACCIÓN */}
-      <div className="relative z-10 flex gap-3 w-full md:w-auto mt-2 md:mt-0">
+      {/* BOTÓN DE ACCIÓN (pointer-events-auto para que se pueda clickear) */}
+      <div className="relative z-10 flex gap-3 w-full md:w-auto mt-2 md:mt-0 pointer-events-auto">
         <Link
           href="/dashboard/products?new=true"
           className="flex-1 md:flex-none px-6 py-4 bg-toon-lime border-4 border-toon-border rounded-xl font-black text-toon-border text-sm md:text-base uppercase hover:bg-green-400 transition-colors text-center shadow-[6px_6px_0px_0px_rgba(30,30,30,1)] active:shadow-none active:translate-y-1.5 active:translate-x-1.5"
