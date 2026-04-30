@@ -8,18 +8,21 @@ import {
   LayoutDashboard,
   Package,
   Boxes,
-  ShoppingBag,
+  Receipt, // Cambiamos ShoppingBag por Receipt para los pedidos
   BarChart3,
   Store,
   Menu,
   X,
+  Users,
 } from 'lucide-react'
 
+// ACTUALIZAMOS LOS NOMBRES Y LAS RUTAS AL MODO "JUEGO"
 const MENU_ITEMS = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { label: 'Inventario', href: '/dashboard/products', icon: Package },
-  { label: 'Pack Creator', href: '/dashboard/packs', icon: Boxes },
-  { label: 'Ventas', href: '/dashboard/sales', icon: ShoppingBag },
+  { label: 'Grimorio', href: '/dashboard/packs', icon: Boxes },
+  { label: 'Misiones', href: '/dashboard/orders', icon: Receipt }, // <--- AQUÍ ESTABA EL ERROR
+  { label: 'NPCs', href: '/dashboard/customers', icon: Users },
   { label: 'Métricas', href: '/dashboard/analytics', icon: BarChart3 },
 ]
 
@@ -34,7 +37,7 @@ export default function AdminSidebar() {
 
   return (
     <>
-      {/* BOTÓN MÓVIL ESTILO "PAUSE MENU" (Solo visible en pantallas pequeñas) */}
+      {/* BOTÓN MÓVIL ESTILO "PAUSE MENU" */}
       <button
         onClick={() => setIsOpen(true)}
         className="md:hidden fixed top-6 left-6 z-40 p-3 bg-toon-yellow border-4 border-toon-border rounded-2xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-1 transition-all flex items-center justify-center"
@@ -53,13 +56,12 @@ export default function AdminSidebar() {
       {/* SIDEBAR */}
       <aside
         className={cn(
-          'fixed md:sticky top-0 left-0 h-screen w-72 bg-white border-r-4 border-toon-border flex flex-col p-6 space-y-8 z-50 transition-transform duration-300 ease-in-out',
-          // Lógica de visibilidad: En móvil se traslada fuera de la pantalla si está cerrado. En PC (md:) siempre está en su lugar.
+          'fixed md:sticky top-0 left-0 h-[100dvh] w-72 bg-white border-r-4 border-toon-border flex flex-col py-6 px-4 md:px-6 z-50 transition-transform duration-300 ease-in-out',
           isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
         )}
       >
         {/* Header del Admin */}
-        <div className="flex justify-between items-start">
+        <div className="flex justify-between items-start mb-6 shrink-0">
           <div className="flex flex-col space-y-1">
             <span className="font-black text-3xl tracking-tighter uppercase italic">
               Topin<span className="text-toon-pink">Admin</span>
@@ -70,16 +72,19 @@ export default function AdminSidebar() {
           {/* Botón de Cerrar (Solo Móvil) */}
           <button
             onClick={() => setIsOpen(false)}
-            className="md:hidden p-2 border-3 border-toon-border rounded-xl hover:bg-toon-red shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none transition-all group"
+            className="md:hidden p-2 border-3 border-toon-border rounded-xl hover:bg-toon-red shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none transition-all group shrink-0"
           >
             <X size={20} className="group-hover:text-white" strokeWidth={3} />
           </button>
         </div>
 
-        {/* Navegación Principal */}
-        <nav className="flex-1 space-y-4">
+        {/* NAVEGACIÓN PRINCIPAL */}
+        <nav className="flex-1 flex flex-col justify-center gap-2 md:gap-4 overflow-y-auto no-scrollbar px-2 -mx-2 py-2">
           {MENU_ITEMS.map((item) => {
-            const isActive = pathname === item.href
+            // Verifica si la ruta actual coincide (o empieza con) la ruta del menú
+            const isActive =
+              pathname === item.href ||
+              (pathname.startsWith(item.href) && item.href !== '/dashboard')
             const Icon = item.icon
 
             return (
@@ -87,7 +92,7 @@ export default function AdminSidebar() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  'flex items-center space-x-4 p-4 rounded-2xl border-4 transition-all group',
+                  'flex items-center space-x-4 py-3 px-4 rounded-2xl border-4 transition-all group',
                   isActive
                     ? 'bg-toon-yellow border-toon-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] translate-x-1'
                     : 'bg-white border-transparent hover:border-toon-border/20 hover:translate-x-1',
@@ -95,7 +100,7 @@ export default function AdminSidebar() {
               >
                 <Icon
                   className={cn(
-                    'w-6 h-6 transition-colors',
+                    'w-6 h-6 transition-colors shrink-0',
                     isActive
                       ? 'text-toon-border'
                       : 'text-gray-400 group-hover:text-toon-border',
@@ -104,7 +109,7 @@ export default function AdminSidebar() {
                 />
                 <span
                   className={cn(
-                    'font-black uppercase tracking-tight',
+                    'font-black uppercase tracking-tight truncate',
                     isActive
                       ? 'text-toon-border'
                       : 'text-gray-400 group-hover:text-toon-border',
@@ -118,13 +123,13 @@ export default function AdminSidebar() {
         </nav>
 
         {/* Footer del Sidebar: Volver a la tienda */}
-        <div className="pt-6 border-t-4 border-toon-border/10">
+        <div className="pt-4 mt-2 shrink-0 border-t-4 border-toon-border/10">
           <Link
             href="/"
-            className="flex items-center justify-center space-x-2 w-full py-3 bg-toon-blue border-3 border-toon-border rounded-xl font-black text-sm shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-1 transition-all"
+            className="flex items-center justify-center space-x-2 w-full py-3 md:py-4 bg-toon-blue border-3 border-toon-border rounded-xl font-black text-sm text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-1 transition-all"
           >
-            <Store className="w-4 h-4" />
-            <span>VER TIENDA PÚBLICA</span>
+            <Store className="w-5 h-5 shrink-0" />
+            <span className="truncate">VER TIENDA PÚBLICA</span>
           </Link>
         </div>
       </aside>
