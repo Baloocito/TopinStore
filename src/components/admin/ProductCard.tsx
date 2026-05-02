@@ -19,9 +19,16 @@ export default function ProductCard({ product }: { product: any }) {
     e.stopPropagation()
   }
 
+  // ==========================================
+  // CÁLCULO DE BATTLE STATS (Datos Reales)
+  // ==========================================
+  const sales = product.salesCount || 0
+  const views = product.viewsCount || 0
+  // La conversión solo se calcula si hay vistas (para evitar dividir por cero)
+  const conversionRate = views > 0 ? ((sales / views) * 100).toFixed(1) : '0.0'
+
   return (
     <div
-      // 1. REDUCIMOS LA ALTURA TOTAL DE 500px a 400px
       className="group w-full h-[400px] [perspective:1000px] cursor-pointer"
       onClick={() => setIsFlipped(!isFlipped)}
     >
@@ -35,7 +42,6 @@ export default function ProductCard({ product }: { product: any }) {
             CARA FRONTAL
             ========================================== */}
         <div className="absolute inset-0 w-full h-full bg-white border-4 border-toon-border rounded-3xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex flex-col overflow-hidden [backface-visibility:hidden]">
-          {/* 2. REDUCIMOS LA ALTURA DE LA IMAGEN DE h-52 a h-40 */}
           <div className="h-40 w-full bg-toon-blue/10 border-b-4 border-toon-border relative flex items-center justify-center shrink-0">
             {product.images?.[0] ? (
               <img
@@ -51,7 +57,6 @@ export default function ProductCard({ product }: { product: any }) {
             </span>
           </div>
 
-          {/* 3. AJUSTAMOS PADDINGS INTERNOS (p-4 en vez de p-5) */}
           <div className="p-4 flex-1 flex flex-col relative">
             <div className="absolute top-3 right-3 text-gray-300 group-hover:animate-spin-slow">
               <RotateCcw size={18} strokeWidth={3} />
@@ -102,7 +107,7 @@ export default function ProductCard({ product }: { product: any }) {
         </div>
 
         {/* ==========================================
-            CARA TRASERA (BATTLE STATS)
+            CARA TRASERA (BATTLE STATS REALES)
             ========================================== */}
         <div className="absolute inset-0 w-full h-full bg-white text-toon-border border-4 border-toon-border rounded-3xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex flex-col overflow-hidden [backface-visibility:hidden] [transform:rotateY(180deg)]">
           <div className="p-4 border-b-4 border-toon-border bg-toon-yellow relative">
@@ -117,8 +122,8 @@ export default function ProductCard({ product }: { product: any }) {
             </p>
           </div>
 
-          {/* Reducimos gap-4 a gap-3 y p-6 a p-4 para que quepa perfecto en 400px */}
           <div className="p-4 flex-1 flex flex-col gap-3 justify-center bg-slate-50">
+            {/* IMPACTOS (Ventas Reales) */}
             <div className="bg-white border-3 border-toon-border rounded-2xl p-3 flex items-center gap-3 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
               <div className="p-2.5 bg-toon-lime border-2 border-toon-border rounded-xl">
                 <Crosshair size={18} className="text-toon-border" />
@@ -128,11 +133,12 @@ export default function ProductCard({ product }: { product: any }) {
                   Impactos (Ventas)
                 </p>
                 <p className="font-black text-xl leading-none mt-0.5">
-                  42 Und.
+                  {sales} Und.
                 </p>
               </div>
             </div>
 
+            {/* DEFENSA (Vistas Reales) */}
             <div className="bg-white border-3 border-toon-border rounded-2xl p-3 flex items-center gap-3 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
               <div className="p-2.5 bg-toon-blue border-2 border-toon-border rounded-xl">
                 <Shield size={18} className="text-toon-border" />
@@ -141,10 +147,13 @@ export default function ProductCard({ product }: { product: any }) {
                 <p className="font-black text-[9px] text-gray-500 uppercase tracking-widest">
                   Defensa (Vistas)
                 </p>
-                <p className="font-black text-xl leading-none mt-0.5">1,240</p>
+                <p className="font-black text-xl leading-none mt-0.5">
+                  {views.toLocaleString('es-CL')}
+                </p>
               </div>
             </div>
 
+            {/* MAGIA (Conversión Calculada) */}
             <div className="bg-white border-3 border-toon-border rounded-2xl p-3 flex items-center gap-3 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
               <div className="p-2.5 bg-toon-pink border-2 border-toon-border rounded-xl">
                 <Zap size={18} className="text-toon-border" />
@@ -153,7 +162,9 @@ export default function ProductCard({ product }: { product: any }) {
                 <p className="font-black text-[9px] text-gray-500 uppercase tracking-widest">
                   Magia (Conversión)
                 </p>
-                <p className="font-black text-xl leading-none mt-0.5">3.4%</p>
+                <p className="font-black text-xl leading-none mt-0.5">
+                  {conversionRate}%
+                </p>
               </div>
             </div>
           </div>

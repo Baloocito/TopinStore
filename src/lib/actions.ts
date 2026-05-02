@@ -56,11 +56,12 @@ export async function createProduct(formData: FormData) {
     sku: formData.get('sku') as string,
     slug: slug,
     price: formData.get('price') as string,
+    cost: (formData.get('cost') as string) || '0', // <--- ¡AQUÍ ESTÁ EL NUEVO DATO!
     stock: parseInt(formData.get('stock') as string) || 0,
     categoryId: parseInt(formData.get('categoryId') as string) || null,
     description: formData.get('description') as string,
     images: parseImages(formData.get('images')),
-    specs: parseSpecs(formData.get('specs')), // Ahora soporta specs desde la creación
+    specs: parseSpecs(formData.get('specs')),
   })
 
   revalidatePath('/dashboard/products')
@@ -107,10 +108,11 @@ export async function updateProduct(formData: FormData) {
       name: formData.get('name') as string,
       sku: formData.get('sku') as string,
       price: formData.get('price') as string,
+      cost: (formData.get('cost') as string) || '0', // <--- ¡AQUÍ ESTÁ EL NUEVO DATO!
       stock: parseInt(formData.get('stock') as string) || 0,
       categoryId: parseInt(formData.get('categoryId') as string) || null,
       description: formData.get('description') as string,
-      images: newImages, // <--- Usamos nuestra variable correctamente aquí
+      images: newImages,
       specs: parseSpecs(formData.get('specs')),
     })
     .where(eq(products.id, id))
@@ -125,27 +127,30 @@ export async function deleteProduct(formData: FormData) {
 
   const id = parseInt(idRaw as string)
 
-  // 1. Borramos en Neon y capturamos la data del producto eliminado
-  const [deletedProduct] = await db
-    .delete(products)
+  // SOFT DELETE: En lugar de borrar, actualizamos isArchived a true y lo ocultamos de la tienda
+  await db
+    .update(products)
+    .set({
+      isArchived: true,
+      isAvailable: false, // Inmediatamente dejamos de venderlo
+    })
     .where(eq(products.id, id))
-    .returning() // <--- CRÍTICO: Nos devuelve lo que acabamos de borrar
 
-  // 2. Si el producto tenía imágenes, las eliminamos de UploadThing
-  if (deletedProduct?.images && deletedProduct.images.length > 0) {
-    // UploadThing necesita el "file key", que es la última parte de la URL
-    // Ej: https://utfs.io/f/xyz123 -> xyz123
-    const fileKeys = deletedProduct.images
-      .map((url: string) => url.split('/').pop())
-      .filter(Boolean) as string[]
-
-    if (fileKeys.length > 0) {
-      await utapi.deleteFiles(fileKeys)
-    }
-  }
+  // Nota de Arquitectura: Ya no borramos las imágenes de UploadThing porque
+  // el producto "archivado" las sigue necesitando para mostrarse en recibos antiguos.
 
   revalidatePath('/dashboard/products')
   redirect('/dashboard/products')
+}
+
+// Opcional: Una acción para restaurar un producto si fue un error
+export async function restoreProduct(id: number) {
+  await db
+    .update(products)
+    .set({ isArchived: false })
+    .where(eq(products.id, id))
+
+  revalidatePath('/dashboard/products')
 }
 
 export async function deleteAbandonedFiles(urls: string[]) {
@@ -178,14 +183,23 @@ export async function createCategory(formData: FormData) {
   revalidatePath('/dashboard/products')
 }
 
+// --- ACCIONES DE CATEGORÍAS ---
+// Las categorías no tienen Soft Delete en tu schema actual.
+// Para no complicar la BD ahora mismo, dejaremos que se borren físicamente,
+// PERO las desvincularemos de los productos primero (dejando categoryId en null).
 export async function deleteCategory(formData: FormData) {
   const idRaw = formData.get('id')
   if (!idRaw) throw new Error('ID de categoría no proporcionado')
 
   const id = parseInt(idRaw as string)
 
-  // OJO: Si tienes productos usando esta categoría, la BD podría lanzar un error
-  // de llave foránea dependiendo de cómo configuraste Neon.
+  // 1. Quitar la categoría de todos los productos que la usen (Evita el error de Foranea)
+  await db
+    .update(products)
+    .set({ categoryId: null })
+    .where(eq(products.categoryId, id))
+
+  // 2. Ahora sí, borramos la categoría con seguridad
   await db.delete(categories).where(eq(categories.id, id))
 
   revalidatePath('/dashboard/products')

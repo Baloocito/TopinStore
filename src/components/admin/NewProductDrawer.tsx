@@ -13,6 +13,7 @@ import {
   ArrowRight,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { cn } from '@/lib/utils'
 import { createProduct, deleteAbandonedFiles } from '@/lib/actions'
 import { UploadDropzone } from '@/lib/uploadthing'
@@ -34,6 +35,13 @@ export default function NewProductDrawer({
 
   // Rastrea las imágenes subidas mientas la gaveta está abierta para borrarlas si cancela
   const [pendingUploads, setPendingUploads] = useState<string[]>([])
+
+  // Estado de montaje para evitar errores del Portal en el servidor
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     if (isNew) {
@@ -90,35 +98,36 @@ export default function NewProductDrawer({
     setLocalSpecs(updated)
   }
 
-  // Guard: No renderizar si no se está creando uno nuevo
-  if (!isNew) return null
+  // Guard: No renderizar si no se está creando uno nuevo O si no se ha montado el cliente
+  if (!isNew || !mounted) return null
 
-  return (
+  // USAMOS PORTAL PARA TELETRANSPORTAR LA GAVETA AL RAÍZ DEL DOM
+  return createPortal(
     <>
       <div
-        className="fixed inset-0 bg-toon-border/40 backdrop-blur-sm z-[60] transition-opacity"
+        className="fixed top-0 left-0 w-screen h-[100dvh] bg-toon-border/40 backdrop-blur-sm z-[100] transition-opacity"
         onClick={closeDrawer}
       />
 
-      <div className="fixed right-0 top-0 h-full w-full max-w-xl bg-white border-l-8 border-toon-border z-[70] shadow-[-10px_0px_0px_0px_rgba(0,0,0,0.1)] flex flex-col animate-in slide-in-from-right duration-300">
-        <div className="p-6 border-b-4 border-toon-border flex justify-between items-center bg-toon-yellow/20">
+      <div className="fixed right-0 top-0 h-[100dvh] w-full max-w-xl bg-white border-l-8 border-toon-border z-[110] shadow-[-10px_0px_0px_0px_rgba(0,0,0,0.1)] flex flex-col animate-in slide-in-from-right duration-300">
+        <div className="p-4 md:p-6 border-b-4 border-toon-border flex justify-between items-center bg-toon-yellow/20 shrink-0">
           <div>
-            <h2 className="font-black text-2xl uppercase tracking-tighter">
+            <h2 className="font-black text-xl md:text-2xl uppercase tracking-tighter leading-none">
               Crear Nuevo Tesoro
             </h2>
-            <p className="font-mono text-[10px] text-gray-400 uppercase font-bold">
+            <p className="font-mono text-[10px] text-gray-400 uppercase font-bold mt-1">
               LLENANDO EL INVENTARIO
             </p>
           </div>
           <button
             onClick={closeDrawer}
-            className="p-2 border-3 border-toon-border rounded-xl hover:bg-toon-red shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none transition-all bg-white"
+            className="p-2 border-3 border-toon-border rounded-xl hover:bg-toon-red shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-1 transition-all bg-white shrink-0 group"
           >
-            <X size={20} />
+            <X size={20} className="group-hover:text-white" strokeWidth={3} />
           </button>
         </div>
 
-        <div className="flex p-4 gap-2 bg-white border-b-2 border-toon-border/5">
+        <div className="flex p-4 gap-2 bg-white border-b-2 border-toon-border/5 shrink-0 overflow-x-auto no-scrollbar">
           <TabButton
             active={activeTab === 'info'}
             onClick={() => setActiveTab('info')}
@@ -142,7 +151,7 @@ export default function NewProductDrawer({
         <form
           action={createProduct}
           id="create-form"
-          className="flex-1 overflow-y-auto p-6 space-y-6"
+          className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 no-scrollbar"
         >
           <input type="hidden" name="images" value={localImages.join(',')} />
           <input
@@ -178,19 +187,33 @@ export default function NewProductDrawer({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <label className="text-xs font-black uppercase">
-                  Precio (CLP)
+                <label className="text-xs font-black uppercase text-toon-lime drop-shadow-[1px_1px_0px_rgba(0,0,0,1)]">
+                  Precio Venta
                 </label>
                 <input
                   name="price"
                   type="number"
-                  placeholder="0"
+                  placeholder="Ej: 1500"
                   required
-                  className="w-full p-3 border-3 border-toon-border rounded-xl font-bold"
+                  className="w-full p-3 border-3 border-toon-border rounded-xl font-bold focus:ring-4 ring-toon-lime outline-none"
                 />
               </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-black uppercase text-toon-pink drop-shadow-[1px_1px_0px_rgba(0,0,0,1)]">
+                  Costo Base
+                </label>
+                <input
+                  name="cost"
+                  type="number"
+                  placeholder="Ej: 500"
+                  required
+                  className="w-full p-3 border-3 border-toon-border rounded-xl font-bold focus:ring-4 ring-toon-pink outline-none"
+                />
+              </div>
+
               <div className="space-y-2">
                 <label className="text-xs font-black uppercase">Stock</label>
                 <input
@@ -198,7 +221,7 @@ export default function NewProductDrawer({
                   type="number"
                   placeholder="10"
                   required
-                  className="w-full p-3 border-3 border-toon-border rounded-xl font-bold"
+                  className="w-full p-3 border-3 border-toon-border rounded-xl font-bold focus:ring-4 ring-toon-yellow outline-none"
                 />
               </div>
             </div>
@@ -256,33 +279,49 @@ export default function NewProductDrawer({
                     className="object-cover w-full h-full"
                     alt="Producto"
                   />
-                  <div className="absolute inset-0 bg-toon-border/60 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center gap-2 backdrop-blur-[2px]">
+
+                  {/* EL ARREGLO MAGNÍFICO: 
+                      opacity-100 en móvil (siempre visible). 
+                      md:opacity-0 en PC (oculto hasta el hover). */}
+                  <div className="absolute inset-0 bg-toon-border/30 md:bg-toon-border/60 opacity-100 md:opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center gap-1.5 md:gap-2 backdrop-blur-[1px] md:backdrop-blur-[2px]">
                     <button
                       type="button"
                       onClick={() => moveImageLeft(i)}
                       disabled={i === 0}
-                      className="p-2 bg-white border-2 border-toon-border rounded-xl hover:bg-toon-yellow disabled:opacity-50 disabled:hover:bg-white transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none"
+                      className="p-1.5 md:p-2 bg-white border-2 border-toon-border rounded-xl hover:bg-toon-yellow disabled:opacity-50 disabled:hover:bg-white transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-0.5 active:translate-x-0.5"
                     >
-                      <ArrowLeft size={16} className="text-toon-border" />
+                      <ArrowLeft
+                        size={16}
+                        className="text-toon-border"
+                        strokeWidth={3}
+                      />
                     </button>
+
                     <button
                       type="button"
                       onClick={() => removeImage(i)}
-                      className="p-2 bg-toon-red border-2 border-toon-border rounded-xl hover:bg-red-500 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none text-white"
+                      className="p-1.5 md:p-2 bg-toon-red border-2 border-toon-border rounded-xl hover:bg-red-500 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-0.5 active:translate-x-0.5 text-white"
                     >
-                      <Trash2 size={16} />
+                      <Trash2 size={16} strokeWidth={2.5} />
                     </button>
+
                     <button
                       type="button"
                       onClick={() => moveImageRight(i)}
                       disabled={i === localImages.length - 1}
-                      className="p-2 bg-white border-2 border-toon-border rounded-xl hover:bg-toon-yellow disabled:opacity-50 disabled:hover:bg-white transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none"
+                      className="p-1.5 md:p-2 bg-white border-2 border-toon-border rounded-xl hover:bg-toon-yellow disabled:opacity-50 disabled:hover:bg-white transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-0.5 active:translate-x-0.5"
                     >
-                      <ArrowRight size={16} className="text-toon-border" />
+                      <ArrowRight
+                        size={16}
+                        className="text-toon-border"
+                        strokeWidth={3}
+                      />
                     </button>
                   </div>
+
+                  {/* Agregamos z-10 a la etiqueta de portada para que siempre resalte sobre el fondo oscuro */}
                   {i === 0 && (
-                    <span className="absolute top-2 left-2 bg-toon-yellow border-2 border-toon-border px-2 py-0.5 rounded-full text-[8px] font-black uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                    <span className="absolute top-2 left-2 bg-toon-yellow border-2 border-toon-border px-2 py-0.5 rounded-full text-[8px] font-black uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] z-10">
                       Portada
                     </span>
                   )}
@@ -306,7 +345,40 @@ export default function NewProductDrawer({
                 onUploadError={(error: Error) =>
                   alert(`Error al subir: ${error.message}`)
                 }
-                className="ut-button:bg-toon-pink ut-label:text-toon-border ut-label:font-black border-4 border-dashed border-toon-border bg-slate-50"
+                appearance={{
+                  // La caja principal (zona de drop)
+                  container:
+                    'border-4 border-dashed border-toon-border bg-slate-50 rounded-2xl p-6 hover:bg-slate-100 transition-colors cursor-pointer',
+                  // Textos de ayuda
+                  label:
+                    'text-toon-border font-black uppercase text-sm hover:text-toon-pink transition-colors',
+                  allowedContent:
+                    'text-gray-400 font-bold text-[10px] uppercase mt-2',
+
+                  // 🔥 LA MAGIA AQUÍ: Este botón SOLO aparece cuando hay fotos seleccionadas
+                  button:
+                    'w-full bg-toon-lime text-toon-border font-black text-xs md:text-sm uppercase border-4 border-toon-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] px-6 py-4 mt-6 rounded-xl hover:bg-green-400 hover:translate-y-1 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all focus:ring-0 after:bg-toon-pink animate-in zoom-in-95 duration-300',
+
+                  // El ícono de la nube
+                  uploadIcon: 'text-toon-pink w-12 h-12 mb-2',
+                }}
+                content={{
+                  uploadIcon: (
+                    <ImageIcon
+                      className="w-10 h-10 text-toon-pink mb-2"
+                      strokeWidth={2}
+                    />
+                  ),
+                  label: '1. Arrastra o selecciona tus fotos aquí',
+                  allowedContent: 'Máximo 4 imágenes (4MB c/u)',
+
+                  // Textos dinámicos del botón
+                  button({ ready, isUploading }) {
+                    if (isUploading) return '⏳ Forjando y Subiendo...'
+                    // Este texto es la confirmación visual de que las atrapó
+                    return '✅ 2. Fotos listas - Clic para subir'
+                  },
+                }}
               />
             </div>
           </div>
@@ -320,7 +392,7 @@ export default function NewProductDrawer({
             <button
               type="button"
               onClick={addSpec}
-              className="w-full py-3 bg-toon-blue border-2 border-toon-border rounded-lg font-black text-[10px] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 transition-all flex items-center justify-center gap-2"
+              className="w-full py-3 bg-toon-blue border-2 border-toon-border rounded-lg font-black text-[10px] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 transition-all flex items-center justify-center gap-2 text-white"
             >
               <Plus size={14} /> AÑADIR ATRIBUTO
             </button>
@@ -331,20 +403,20 @@ export default function NewProductDrawer({
                     placeholder="Label (ej. Talla)"
                     value={spec.label}
                     onChange={(e) => updateSpec(i, 'label', e.target.value)}
-                    className="flex-1 p-2 border-2 border-toon-border rounded-lg text-xs font-bold"
+                    className="flex-1 p-2 border-2 border-toon-border rounded-lg text-xs font-bold min-w-0"
                   />
                   <input
                     placeholder="Valor (ej. XL)"
                     value={spec.value}
                     onChange={(e) => updateSpec(i, 'value', e.target.value)}
-                    className="flex-1 p-2 border-2 border-toon-border rounded-lg text-xs font-bold"
+                    className="flex-1 p-2 border-2 border-toon-border rounded-lg text-xs font-bold min-w-0"
                   />
                   <button
                     type="button"
                     onClick={() => removeSpec(i)}
-                    className="p-2 text-toon-red hover:bg-red-50 rounded-lg transition-colors"
+                    className="p-2 text-toon-red hover:bg-red-50 rounded-lg transition-colors shrink-0 border-2 border-transparent hover:border-toon-border"
                   >
-                    <Trash2 size={16} />
+                    <Trash2 size={16} strokeWidth={2.5} />
                   </button>
                 </div>
               ))}
@@ -353,17 +425,18 @@ export default function NewProductDrawer({
         </form>
 
         {/* Footer de Acciones (NewProductDrawer) */}
-        <div className="p-6 border-t-4 border-toon-border bg-slate-50 flex gap-4">
+        <div className="p-4 md:p-6 border-t-4 border-toon-border bg-slate-50 flex gap-4 shrink-0">
           <button
             type="submit"
             form="create-form"
-            className="w-full bg-toon-lime border-4 border-toon-border py-4 rounded-2xl font-black text-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:brightness-110 active:shadow-none active:translate-x-1 active:translate-y-1 transition-all flex items-center justify-center gap-2"
+            className="w-full bg-toon-lime border-4 border-toon-border py-3 md:py-4 rounded-2xl font-black text-lg md:text-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:brightness-110 active:shadow-none active:translate-x-1 active:translate-y-1 transition-all flex items-center justify-center gap-2"
           >
-            <Plus size={24} /> CREAR PRODUCTO
+            <Plus size={24} strokeWidth={3} /> CREAR PRODUCTO
           </button>
         </div>
       </div>
-    </>
+    </>,
+    document.body,
   )
 }
 
@@ -373,9 +446,9 @@ function TabButton({ active, onClick, icon, label }: any) {
       type="button"
       onClick={onClick}
       className={cn(
-        'flex items-center gap-2 px-4 py-2 rounded-xl font-black text-[10px] uppercase transition-all border-2',
+        'flex items-center gap-2 px-4 py-2 rounded-xl font-black text-[10px] uppercase transition-all border-2 shrink-0',
         active
-          ? 'bg-toon-yellow border-toon-border shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]'
+          ? 'bg-toon-yellow border-toon-border shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] text-toon-border'
           : 'border-transparent text-gray-400 hover:text-toon-border',
       )}
     >

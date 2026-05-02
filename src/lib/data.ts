@@ -1,7 +1,6 @@
 import { db } from '@/db'
-import { products, categories, customers } from '@/db/schema' // <-- Agregamos customers
-import { eq, ilike, or, and, gt, lte, desc } from 'drizzle-orm'
-
+import { products, categories, customers } from '@/db/schema'
+import { SQL, eq, ilike, or, and, gt, lte, desc } from 'drizzle-orm'
 // ==========================================
 // UTILIDAD: MOTOR DE STOCK DINÁMICO (Packs)
 // ==========================================
@@ -35,24 +34,35 @@ export async function getProducts(
   page: number = 1,
 ) {
   try {
-    const conditions = []
+    // 2. TIPAMOS EL ARRAY: Le decimos a TS que esto solo aceptará sentencias SQL válidas
+    const conditions: SQL[] = [eq(products.isArchived, false)]
     const ITEMS_PER_PAGE = 12
     const offset = (page - 1) * ITEMS_PER_PAGE
 
     if (query) {
-      conditions.push(
-        or(
-          ilike(products.name, `%${query}%`),
-          ilike(products.sku, `%${query}%`),
-        ),
+      // 3. APLICAMOS LA DEFENSA: Guardamos la condición en una variable primero
+      const queryCondition = or(
+        ilike(products.name, `%${query}%`),
+        ilike(products.sku, `%${query}%`),
       )
+      // Solo la empujamos si realmente existe
+      if (queryCondition) {
+        conditions.push(queryCondition)
+      }
     }
 
     if (stockFilter && stockFilter !== 'todos') {
       if (stockFilter === 'seguro') {
         conditions.push(gt(products.stock, 5))
       } else if (stockFilter === 'critico') {
-        conditions.push(and(gt(products.stock, 0), lte(products.stock, 5)))
+        // Hacemos la misma defensa aquí por si acaso con el and()
+        const criticoCondition = and(
+          gt(products.stock, 0),
+          lte(products.stock, 5),
+        )
+        if (criticoCondition) {
+          conditions.push(criticoCondition)
+        }
       } else if (stockFilter === 'agotado') {
         conditions.push(lte(products.stock, 0))
       }
@@ -71,7 +81,7 @@ export async function getProducts(
     }
 
     const rawData = await db.query.products.findMany({
-      where: conditions.length > 0 ? and(...conditions) : undefined,
+      where: and(...conditions),
       with: {
         category: true,
         bundleComponents: {

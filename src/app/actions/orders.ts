@@ -25,3 +25,29 @@ export async function updateOrderStatusAction(
     }
   }
 }
+
+export async function updateOrderLogisticsAction(
+  orderId: number,
+  courier: string,
+  trackingNumber: string,
+) {
+  try {
+    await db
+      .update(orders)
+      .set({
+        courier,
+        trackingNumber,
+        updatedAt: new Date(),
+      })
+      .where(eq(orders.id, orderId))
+
+    revalidatePath('/dashboard/orders')
+    return { success: true }
+  } catch (error) {
+    console.error('Error actualizando logística:', error)
+    return {
+      success: false,
+      message: 'La carreta se rompió. No pudimos guardar el tracking.',
+    }
+  }
+}

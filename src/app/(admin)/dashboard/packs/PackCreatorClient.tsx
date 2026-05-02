@@ -25,7 +25,6 @@ export type InventoryItem = {
   stock: number
 }
 
-// CRÍTICO: Ahora la receta guarda límites, no cantidades fijas
 type CartItem = InventoryItem & { minQuantity: number; maxQuantity: number }
 
 export default function PackCreatorClient({
@@ -41,13 +40,12 @@ export default function PackCreatorClient({
   // ESTADOS DEL GRIMORIO
   // ==========================================
   const [packName, setPackName] = useState('')
-  const [basePrice, setBasePrice] = useState<number>(3000) // Precio del contenedor vacío
+  const [basePrice, setBasePrice] = useState<number>(3000)
   const [selectedItems, setSelectedItems] = useState<CartItem[]>([])
 
-  // Tiers de Descuento
-  const [tier1, setTier1] = useState<number>(5) // Descuento al 33% de capacidad
-  const [tier2, setTier2] = useState<number>(15) // Descuento al 66% de capacidad
-  const [tier3, setTier3] = useState<number>(30) // Descuento Full 100%
+  const [tier1, setTier1] = useState<number>(5)
+  const [tier2, setTier2] = useState<number>(15)
+  const [tier3, setTier3] = useState<number>(30)
 
   const [searchTerm, setSearchTerm] = useState('')
   const [isPending, setIsPending] = useState(false)
@@ -59,9 +57,7 @@ export default function PackCreatorClient({
   // ==========================================
   const addItem = (item: InventoryItem) => {
     setSelectedItems((prev) => {
-      // Si ya está, no hacemos nada (las reglas se editan en el caldero)
       if (prev.find((i) => i.id === item.id)) return prev
-      // Lo agregamos con regla por defecto: Mín 0, Máx 5 (limitado por stock real)
       const maxDefault = Math.min(5, item.stock)
       return [...prev, { ...item, minQuantity: 0, maxQuantity: maxDefault }]
     })
@@ -80,7 +76,6 @@ export default function PackCreatorClient({
       prev.map((item) => {
         if (item.id === id) {
           const newItem = { ...item, [field]: value }
-          // Lógica de seguridad: min no puede superar max, y max no puede superar stock
           if (newItem.minQuantity > newItem.maxQuantity) {
             if (field === 'minQuantity')
               newItem.maxQuantity = newItem.minQuantity
@@ -97,30 +92,36 @@ export default function PackCreatorClient({
   }
 
   // ==========================================
-  // MECÁNICA DE IMAGEN
+  // MECÁNICA DE IMAGEN (Optimizada)
   // ==========================================
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
+      // Si ya había una foto antes, destruimos su URL falsa para liberar memoria
+      if (packImagePreview) {
+        URL.revokeObjectURL(packImagePreview)
+      }
       setPackImageFile(file)
       setPackImagePreview(URL.createObjectURL(file))
     }
   }
 
   const removeImage = () => {
+    // Destruimos la URL falsa al borrar la foto
+    if (packImagePreview) {
+      URL.revokeObjectURL(packImagePreview)
+    }
     setPackImageFile(null)
     setPackImagePreview(null)
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
-
   // ==========================================
-  // SIMULADOR MATEMÁTICO (XP y Tiers)
+  // SIMULADOR MATEMÁTICO
   // ==========================================
   const filteredInventory = initialInventory.filter((item) =>
     item.name.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
-  // ¿Cuánto costaría el Pack si el cliente elige el MÁXIMO de todo?
   const maxIngredientsValue = selectedItems.reduce(
     (acc, item) => acc + item.price * item.maxQuantity,
     0,
@@ -128,7 +129,7 @@ export default function PackCreatorClient({
   const maxTotalValue = basePrice + maxIngredientsValue
 
   // ==========================================
-  // FLUJO DE GUARDADO (Subir a UploadThing + Neon)
+  // FLUJO DE GUARDADO
   // ==========================================
   const handleSavePack = async () => {
     if (selectedItems.length < 2 || !packName || !packImageFile) {
@@ -147,14 +148,12 @@ export default function PackCreatorClient({
 
       const finalImageUrl = uploadRes[0].ufsUrl
 
-      // Formateamos para el Backend
       const ingredientsParams = selectedItems.map((item) => ({
         id: item.id,
         minQuantity: item.minQuantity,
         maxQuantity: item.maxQuantity,
       }))
 
-      // Llamada usando las nuevas reglas
       const result = await createPackAction(
         packName,
         basePrice,
@@ -180,17 +179,17 @@ export default function PackCreatorClient({
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-6 animate-in fade-in duration-500 pb-10">
       {/* HEADER DEL CREADOR */}
-      <div className="flex items-center gap-3 mb-8">
-        <div className="p-3 bg-toon-pink border-4 border-toon-border rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+      <div className="flex items-center gap-3 mb-4 md:mb-8">
+        <div className="p-3 bg-toon-pink border-4 border-toon-border rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] shrink-0">
           <Wand2 size={28} className="text-white" strokeWidth={3} />
         </div>
         <div>
-          <h1 className="font-black text-3xl uppercase tracking-tighter text-toon-border">
+          <h1 className="font-black text-xl md:text-3xl uppercase tracking-tighter text-toon-border leading-tight">
             Grimorio de Packs
           </h1>
-          <p className="font-bold text-gray-500 text-sm italic">
+          <p className="font-bold text-gray-500 text-xs md:text-sm italic mt-1 leading-snug">
             "Define las reglas, fija los límites y deja que el cliente cocine"
           </p>
         </div>
@@ -200,7 +199,7 @@ export default function PackCreatorClient({
         {/* ==========================================
             ZONA IZQUIERDA: DESPENSA
             ========================================== */}
-        <div className="xl:col-span-5 bg-slate-50 border-4 border-toon-border rounded-3xl p-6 shadow-toon flex flex-col h-[850px]">
+        <div className="xl:col-span-5 bg-slate-50 border-4 border-toon-border rounded-3xl p-4 md:p-6 shadow-toon flex flex-col h-[500px] xl:h-[850px]">
           <h2 className="font-black text-xl uppercase tracking-tight mb-4 flex items-center gap-2">
             Despensa{' '}
             <span className="text-xs bg-toon-border text-white px-2 py-1 rounded-md">
@@ -208,7 +207,7 @@ export default function PackCreatorClient({
             </span>
           </h2>
 
-          <div className="relative mb-6">
+          <div className="relative mb-6 shrink-0">
             <Search
               className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
               size={18}
@@ -241,11 +240,11 @@ export default function PackCreatorClient({
                         : 'border-toon-border bg-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-1',
                     )}
                   >
-                    <div className="flex flex-col">
-                      <span className="font-black text-sm uppercase">
+                    <div className="flex flex-col min-w-0 pr-2">
+                      <span className="font-black text-sm uppercase truncate">
                         {item.name}
                       </span>
-                      <span className="font-bold text-toon-pink drop-shadow-[1px_1px_0px_rgba(0,0,0,0.1)] text-xs">
+                      <span className="font-bold text-toon-pink drop-shadow-[1px_1px_0px_rgba(0,0,0,0.1)] text-xs truncate">
                         ${item.price.toLocaleString('es-CL')} | Stock:{' '}
                         {item.stock}
                       </span>
@@ -255,7 +254,7 @@ export default function PackCreatorClient({
                       onClick={() => addItem(item)}
                       disabled={isAdded || item.stock === 0}
                       className={cn(
-                        'p-2 border-2 border-toon-border rounded-lg transition-all',
+                        'p-2 border-2 border-toon-border rounded-lg transition-all shrink-0',
                         isAdded
                           ? 'bg-gray-200'
                           : 'bg-toon-yellow hover:bg-yellow-300 active:translate-y-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]',
@@ -279,9 +278,9 @@ export default function PackCreatorClient({
         {/* ==========================================
             ZONA DERECHA: REGLAS DEL CALDERO
             ========================================== */}
-        <div className="xl:col-span-7 bg-white border-4 border-toon-border rounded-3xl p-6 shadow-toon flex flex-col h-[850px]">
+        <div className="xl:col-span-7 bg-white border-4 border-toon-border rounded-3xl p-4 md:p-6 shadow-toon flex flex-col h-auto xl:h-[850px]">
           {/* HEADER DEL PACK (Nombre e Imagen) */}
-          <div className="flex gap-4 mb-6">
+          <div className="flex flex-col sm:flex-row items-center sm:items-stretch gap-4 mb-6 shrink-0">
             <input
               type="file"
               accept="image/*"
@@ -289,6 +288,7 @@ export default function PackCreatorClient({
               ref={fileInputRef}
               onChange={handleImageSelect}
             />
+
             <div className="w-24 h-24 shrink-0 relative">
               {packImagePreview ? (
                 <div className="relative w-full h-full border-4 border-toon-border rounded-2xl overflow-hidden shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] group">
@@ -323,16 +323,16 @@ export default function PackCreatorClient({
               )}
             </div>
 
-            <div className="flex-1 flex flex-col gap-2">
+            <div className="flex-1 flex flex-col gap-2 w-full">
               <input
                 type="text"
                 value={packName}
                 onChange={(e) => setPackName(e.target.value)}
                 placeholder="Nombre (Ej: Estuche Super Pro)"
-                className="w-full px-4 py-3 border-4 border-toon-border rounded-xl font-black text-lg focus:ring-4 ring-toon-pink outline-none transition-all"
+                className="w-full px-4 py-3 border-4 border-toon-border rounded-xl font-black text-sm md:text-lg focus:ring-4 ring-toon-pink outline-none transition-all"
               />
-              <div className="flex items-center gap-2 bg-slate-50 border-3 border-toon-border rounded-xl px-3 py-2">
-                <span className="font-bold text-xs uppercase text-gray-500">
+              <div className="flex items-center justify-between gap-2 bg-slate-50 border-3 border-toon-border rounded-xl px-3 py-2">
+                <span className="font-bold text-[10px] md:text-xs uppercase text-gray-500 whitespace-nowrap">
                   Precio Envase Base $
                 </span>
                 <input
@@ -340,16 +340,16 @@ export default function PackCreatorClient({
                   min="0"
                   value={basePrice}
                   onChange={(e) => setBasePrice(Number(e.target.value))}
-                  className="bg-transparent font-black text-toon-border outline-none w-full"
+                  className="bg-transparent font-black text-toon-border outline-none w-24 text-right"
                 />
               </div>
             </div>
           </div>
 
           {/* LISTA DE REGLAS DE INGREDIENTES */}
-          <div className="flex-1 bg-slate-50 border-4 border-dashed border-toon-border/20 rounded-2xl p-4 overflow-y-auto no-scrollbar mb-6">
+          <div className="flex-1 bg-slate-50 border-4 border-dashed border-toon-border/20 rounded-2xl p-3 md:p-4 overflow-y-auto no-scrollbar mb-6 min-h-[200px] max-h-[350px] xl:max-h-none flex flex-col">
             {selectedItems.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-gray-400 opacity-50 space-y-2">
+              <div className="flex-1 flex flex-col items-center justify-center text-gray-400 opacity-50 space-y-2 min-h-[150px]">
                 <Settings2 size={40} />
                 <p className="font-black uppercase text-center text-xs">
                   Define los ingredientes permitidos
@@ -360,19 +360,18 @@ export default function PackCreatorClient({
                 {selectedItems.map((item) => (
                   <div
                     key={item.id}
-                    className="flex flex-col md:flex-row md:items-center justify-between bg-white border-3 border-toon-border p-3 rounded-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] gap-3"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between bg-white border-3 border-toon-border p-3 rounded-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] gap-3"
                   >
-                    <div className="flex flex-col flex-1 truncate pr-2">
-                      <span className="font-black text-sm uppercase truncate">
+                    <div className="flex flex-col flex-1 min-w-0 pr-2">
+                      <span className="font-black text-sm md:text-base uppercase truncate">
                         {item.name}
                       </span>
-                      <span className="font-bold text-gray-400 text-[10px]">
+                      <span className="font-bold text-gray-400 text-[10px] md:text-xs truncate">
                         ${item.price.toLocaleString('es-CL')} c/u
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-3 shrink-0">
-                      {/* Control Min */}
+                    <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 w-full sm:w-auto pt-3 sm:pt-0 border-t-2 sm:border-t-0 border-dashed border-toon-border/10">
                       <div className="flex flex-col items-center">
                         <span className="text-[9px] font-black uppercase text-gray-400 mb-1">
                           Mínimo
@@ -393,7 +392,6 @@ export default function PackCreatorClient({
                         />
                       </div>
 
-                      {/* Control Max */}
                       <div className="flex flex-col items-center">
                         <span className="text-[9px] font-black uppercase text-gray-400 mb-1">
                           Máximo
@@ -416,7 +414,7 @@ export default function PackCreatorClient({
 
                       <button
                         onClick={() => removeItem(item.id)}
-                        className="p-2 ml-1 border-2 border-toon-border rounded-lg bg-slate-50 hover:bg-toon-red hover:text-white transition-colors self-end"
+                        className="p-2 sm:ml-1 border-2 border-toon-border rounded-lg bg-slate-50 hover:bg-toon-red hover:text-white transition-colors self-end"
                       >
                         <Trash2 size={16} strokeWidth={3} />
                       </button>
@@ -427,18 +425,18 @@ export default function PackCreatorClient({
             )}
           </div>
 
-          {/* SIMULADOR DE TIERS Y DESCUENTOS */}
-          <div className="bg-[#fffdf5] border-4 border-toon-border rounded-2xl p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col gap-4">
+          {/* SIMULADOR DE TIERS Y DESCUENTOS (SOLUCIONADO PARA ESCRITORIO) */}
+          <div className="bg-[#fffdf5] border-4 border-toon-border rounded-2xl p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col gap-4 shrink-0">
             <div className="flex justify-between items-end border-b-4 border-toon-border/10 pb-3">
               <div>
                 <span className="block font-bold text-[10px] text-gray-500 uppercase tracking-widest">
-                  Simulador: Valor Máximo Posible
+                  Simulador: Valor Máximo
                 </span>
-                <span className="block font-black text-2xl text-gray-400">
+                <span className="block font-black text-xl md:text-2xl text-gray-400">
                   ${maxTotalValue.toLocaleString('es-CL')}
                 </span>
               </div>
-              <div className="text-right">
+              <div className="text-right hidden sm:block">
                 <span className="block font-bold text-[10px] text-toon-blue uppercase tracking-widest">
                   Descuento a fijar
                 </span>
@@ -446,28 +444,24 @@ export default function PackCreatorClient({
             </div>
 
             {/* Los 3 Niveles */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-3">
               {/* TIER 1 */}
-              <div className="bg-white border-3 border-toon-border rounded-xl p-3 text-center shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex flex-col justify-between">
-                <span className="block text-[10px] font-black uppercase text-gray-400 mb-1">
+              <div className="bg-white border-3 border-toon-border rounded-xl p-3 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex flex-row xl:flex-col items-center xl:justify-center gap-3">
+                <span className="w-1/3 xl:w-auto text-[10px] font-black uppercase text-gray-400 text-left xl:text-center">
                   Tier 1 (33%)
                 </span>
-
-                {/* Precios (Antes y Después) */}
-                <div className="mb-2">
-                  <span className="block text-xs font-bold text-gray-400 line-through decoration-toon-red decoration-2">
+                <div className="flex-1 xl:flex-none text-center">
+                  <span className="block text-[10px] md:text-xs font-bold text-gray-400 line-through decoration-toon-red decoration-2">
                     ${Math.round(maxTotalValue * 0.33).toLocaleString('es-CL')}
                   </span>
-                  <span className="block text-sm font-black text-toon-border">
+                  <span className="block text-sm md:text-base font-black text-toon-border">
                     $
                     {Math.round(
                       maxTotalValue * 0.33 * (1 - tier1 / 100),
                     ).toLocaleString('es-CL')}
                   </span>
                 </div>
-
-                {/* Input de Descuento */}
-                <div className="flex justify-center items-center bg-slate-100 border-2 border-toon-border rounded-md px-2 py-1 w-20 mx-auto">
+                <div className="flex justify-center items-center bg-slate-100 border-2 border-toon-border rounded-md px-2 py-1 w-20 shrink-0 mx-0 xl:mx-auto">
                   <input
                     type="number"
                     min="0"
@@ -481,26 +475,22 @@ export default function PackCreatorClient({
               </div>
 
               {/* TIER 2 */}
-              <div className="bg-white border-3 border-toon-border rounded-xl p-3 text-center shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex flex-col justify-between">
-                <span className="block text-[10px] font-black uppercase text-gray-400 mb-1">
+              <div className="bg-white border-3 border-toon-border rounded-xl p-3 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex flex-row xl:flex-col items-center xl:justify-center gap-3">
+                <span className="w-1/3 xl:w-auto text-[10px] font-black uppercase text-gray-400 text-left xl:text-center">
                   Tier 2 (66%)
                 </span>
-
-                {/* Precios (Antes y Después) */}
-                <div className="mb-2">
-                  <span className="block text-xs font-bold text-gray-400 line-through decoration-toon-red decoration-2">
+                <div className="flex-1 xl:flex-none text-center">
+                  <span className="block text-[10px] md:text-xs font-bold text-gray-400 line-through decoration-toon-red decoration-2">
                     ${Math.round(maxTotalValue * 0.66).toLocaleString('es-CL')}
                   </span>
-                  <span className="block text-sm font-black text-toon-border">
+                  <span className="block text-sm md:text-base font-black text-toon-border">
                     $
                     {Math.round(
                       maxTotalValue * 0.66 * (1 - tier2 / 100),
                     ).toLocaleString('es-CL')}
                   </span>
                 </div>
-
-                {/* Input de Descuento */}
-                <div className="flex justify-center items-center bg-slate-100 border-2 border-toon-border rounded-md px-2 py-1 w-20 mx-auto">
+                <div className="flex justify-center items-center bg-slate-100 border-2 border-toon-border rounded-md px-2 py-1 w-20 shrink-0 mx-0 xl:mx-auto">
                   <input
                     type="number"
                     min="0"
@@ -514,26 +504,22 @@ export default function PackCreatorClient({
               </div>
 
               {/* TIER 3 (FULL) */}
-              <div className="bg-toon-yellow border-3 border-toon-border rounded-xl p-3 text-center shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex flex-col justify-between">
-                <span className="block text-[10px] font-black uppercase text-toon-border/70 mb-1">
+              <div className="bg-toon-yellow border-3 border-toon-border rounded-xl p-3 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex flex-row xl:flex-col items-center xl:justify-center gap-3">
+                <span className="w-1/3 xl:w-auto text-[10px] font-black uppercase text-toon-border/70 text-left xl:text-center">
                   Full (100%)
                 </span>
-
-                {/* Precios (Antes y Después) */}
-                <div className="mb-2">
-                  <span className="block text-xs font-bold text-toon-border/50 line-through decoration-toon-red decoration-2">
+                <div className="flex-1 xl:flex-none text-center">
+                  <span className="block text-[10px] md:text-xs font-bold text-toon-border/50 line-through decoration-toon-red decoration-2">
                     ${maxTotalValue.toLocaleString('es-CL')}
                   </span>
-                  <span className="block text-lg font-black text-toon-border drop-shadow-[1px_1px_0px_rgba(255,255,255,1)]">
+                  <span className="block text-sm md:text-xl font-black text-toon-border drop-shadow-[1px_1px_0px_rgba(255,255,255,1)]">
                     $
                     {Math.round(
                       maxTotalValue * (1 - tier3 / 100),
                     ).toLocaleString('es-CL')}
                   </span>
                 </div>
-
-                {/* Input de Descuento */}
-                <div className="flex justify-center items-center bg-white border-2 border-toon-border rounded-md px-2 py-1 w-20 mx-auto">
+                <div className="flex justify-center items-center bg-white border-2 border-toon-border rounded-md px-2 py-1 w-20 shrink-0 mx-0 xl:mx-auto">
                   <input
                     type="number"
                     min="0"
@@ -555,12 +541,11 @@ export default function PackCreatorClient({
                 !packImageFile ||
                 isPending
               }
-              className="mt-2 w-full flex items-center justify-center gap-2 bg-toon-lime border-4 border-toon-border text-toon-border font-black uppercase text-lg py-4 rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-green-400 disabled:opacity-50 disabled:grayscale transition-all active:translate-y-1 active:shadow-none"
+              className="mt-2 w-full flex items-center justify-center gap-2 bg-toon-lime border-4 border-toon-border text-toon-border font-black uppercase text-base md:text-lg py-4 rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-green-400 disabled:opacity-50 disabled:grayscale transition-all active:translate-y-1 active:shadow-none"
             >
               {isPending ? (
                 <>
-                  <Loader2 className="animate-spin" size={20} /> GUARDANDO
-                  REGLAS...
+                  <Loader2 className="animate-spin" size={20} /> GUARDANDO...
                 </>
               ) : (
                 <>

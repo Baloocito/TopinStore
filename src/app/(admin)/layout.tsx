@@ -1,4 +1,5 @@
 import AdminSidebar from '@/components/admin/AdminSidebar'
+import { Toaster } from 'sonner'
 
 export default function AdminLayout({
   children,
@@ -9,7 +10,24 @@ export default function AdminLayout({
     <div className="flex min-h-screen bg-slate-50 selection:bg-toon-pink relative">
       {/* Sidebar (Ahora maneja su propia lógica responsiva) */}
       <AdminSidebar />
-
+      <Toaster
+        position="bottom-right" // Se mostrarán abajo a la derecha
+        toastOptions={{
+          // Clases base para TODAS las notificaciones (Tu estilo Neobrutalista)
+          className:
+            'bg-white border-4 border-toon-border rounded-2xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] font-black uppercase text-sm',
+          classNames: {
+            // Estilo para alertas de Éxito
+            success: 'bg-toon-lime text-toon-border',
+            // Estilo para alertas de Error
+            error: 'bg-toon-red text-white',
+            // Estilo para alertas de Información
+            info: 'bg-toon-blue text-white',
+            // Estilo para alertas de Advertencia
+            warning: 'bg-toon-yellow text-toon-border',
+          },
+        }}
+      />
       {/* Área de Contenido Dinámico revisar*/}
       <main className="flex-1 overflow-y-auto w-full md:w-auto">
         {/* En móvil damos un pl-24 para hacer espacio al botón del menú flotante */}
