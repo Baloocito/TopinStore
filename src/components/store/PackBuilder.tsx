@@ -1,394 +1,298 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import Image from 'next/image'
-import { Plus, Minus, ShoppingCart, Sparkles, AlertCircle } from 'lucide-react'
+import { useState } from 'react'
+import { Minus, Plus, ShoppingCart, Sparkles, TrendingDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
+// 1. IMPORTAMOS EL CEREBRO DEL INVENTARIO
+import { useCartStore } from '@/store/cartStore'
 
-// ==========================================
-// TIPOS (Basados en nuestro esquema de Drizzle)
-// ==========================================
-type ProductIngredient = {
-  id: number
-  name: string
-  price: number
-  stock: number
-  images: string[]
-}
+export default function PackBuilder({ pack }: { pack: any }) {
+  // Conectamos con Zustand
+  const { addItem, openCart } = useCartStore()
 
-type BundleComponent = {
-  minQuantity: number
-  maxQuantity: number
-  product: ProductIngredient
-}
-
-type PackData = {
-  id: number
-  name: string
-  price: number // Precio Base (Envase)
-  images: string[]
-  description: string | null
-  tier1Discount: number
-  tier2Discount: number
-  tier3Discount: number
-  bundleComponents: BundleComponent[]
-}
-
-// ==========================================
-// EL COMPONENTE PRINCIPAL
-// ==========================================
-export default function PackBuilder({ pack }: { pack: PackData }) {
-  // Estado para llevar la cuenta de qué ingredientes ha elegido el cliente
-  // Llave: ID del producto ingrediente, Valor: Cantidad seleccionada
-  const [selections, setSelections] = useState<Record<number, number>>({})
-
-  // 1. INICIALIZAR EL CARRITO CON LOS MÍNIMOS OBLIGATORIOS
-  useEffect(() => {
-    const initialSelections: Record<number, number> = {}
-    pack.bundleComponents.forEach((comp) => {
-      // Forzamos al cliente a empezar con el mínimo que dictaste en el Grimorio
-      initialSelections[comp.product.id] = comp.minQuantity
+  // 1. INICIALIZAR ESTADOS (Arrancamos con las cantidades mínimas exigidas)
+  const [quantities, setQuantities] = useState<Record<number, number>>(() => {
+    const initial: Record<number, number> = {}
+    pack.bundleComponents?.forEach((comp: any) => {
+      initial[comp.product.id] = comp.minQuantity || 0
     })
-    setSelections(initialSelections)
-  }, [pack])
+    return initial
+  })
 
-  // ==========================================
-  // MATEMÁTICAS DEL JUEGO
-  // ==========================================
-  const basePrice = Number(pack.price)
+  // 2. MATEMÁTICAS DEL CALDERO
+  const basePrice = Number(pack.price) || 0
 
-  // A. Calcular el Valor Máximo Posible (La meta del nivel 100)
-  const maxIngredientsValue = pack.bundleComponents.reduce(
-    (acc, comp) => acc + Number(comp.product.price) * comp.maxQuantity,
-    0,
-  )
+  // Calculamos el valor MÁXIMO posible (para saber cuál es el 100% de la barra)
+  const maxIngredientsValue =
+    pack.bundleComponents?.reduce((acc: number, comp: any) => {
+      return acc + Number(comp.product.price) * comp.maxQuantity
+    }, 0) || 0
   const maxTotalValue = basePrice + maxIngredientsValue
 
-  // B. Calcular el Valor Actual (Lo que lleva armado el cliente)
-  const currentIngredientsValue = pack.bundleComponents.reduce((acc, comp) => {
-    const qty = selections[comp.product.id] || 0
-    return acc + Number(comp.product.price) * qty
-  }, 0)
-  const currentValue = basePrice + currentIngredientsValue
+  // Calculamos el valor ACTUAL según lo que el usuario ha seleccionado
+  const currentIngredientsValue =
+    pack.bundleComponents?.reduce((acc: number, comp: any) => {
+      const qty = quantities[comp.product.id] || 0
+      return acc + Number(comp.product.price) * qty
+    }, 0) || 0
+  const currentTotalValue = basePrice + currentIngredientsValue
 
-  // C. Calcular la Barra de Progreso (0% a 100%)
-  const progressPercent =
-    maxTotalValue > 0 ? (currentValue / maxTotalValue) * 100 : 0
+  // 3. MOTOR DE TIERS Y DESCUENTOS
+  const capacityRatio =
+    maxTotalValue > 0 ? currentTotalValue / maxTotalValue : 0
+  const capacityPercent = Math.min(capacityRatio * 100, 100)
 
-  // D. Determinar qué Nivel de Descuento (Tier) ha desbloqueado
-  let activeDiscount = 0
-  let currentTierText = 'Sin Descuento'
+  let discountPercent = 0
+  let activeTier = 0
 
-  if (progressPercent >= 100) {
-    activeDiscount = pack.tier3Discount
-    currentTierText = '¡NIVEL MÁXIMO DESBLOQUEADO!'
-  } else if (progressPercent >= 66) {
-    activeDiscount = pack.tier2Discount
-    currentTierText = '¡NIVEL PLATA DESBLOQUEADO!'
-  } else if (progressPercent >= 33) {
-    activeDiscount = pack.tier1Discount
-    currentTierText = '¡NIVEL BRONCE DESBLOQUEADO!'
+  if (capacityRatio >= 1) {
+    discountPercent = pack.tier3Discount || 0
+    activeTier = 3
+  } else if (capacityRatio >= 0.66) {
+    discountPercent = pack.tier2Discount || 0
+    activeTier = 2
+  } else if (capacityRatio >= 0.33) {
+    discountPercent = pack.tier1Discount || 0
+    activeTier = 1
   }
 
-  // E. Calcular Precio Final a Pagar
-  const discountAmount = Math.round(currentValue * (activeDiscount / 100))
-  const finalPrice = currentValue - discountAmount
+  const discountAmount = Math.round(currentTotalValue * (discountPercent / 100))
+  const finalPrice = currentTotalValue - discountAmount
 
-  // ==========================================
-  // CONTROLES DEL JUGADOR
-  // ==========================================
-  const handleQuantityChange = (
-    productId: number,
+  // 4. HANDLERS
+  const updateQuantity = (
+    id: number,
     delta: number,
     min: number,
     max: number,
     stock: number,
   ) => {
-    setSelections((prev) => {
-      const current = prev[productId] || 0
-      let next = current + delta
+    setQuantities((prev) => {
+      const current = prev[id] || 0
+      const next = current + delta
+      const actualMax = Math.min(max, stock) // Nunca dejar que compren más del stock real
 
-      // Reglas de colisión: No puede bajar del mínimo ni subir del máximo (o del stock físico)
-      if (next < min) next = min
-      const absoluteMax = Math.min(max, stock)
-      if (next > absoluteMax) next = absoluteMax
-
-      return { ...prev, [productId]: next }
+      if (next >= min && next <= actualMax) {
+        return { ...prev, [id]: next }
+      }
+      return prev
     })
   }
 
-  // Comprobar si al menos cumplió con algún mínimo global para dejarlo comprar
-  // (Por si tu base de datos permitía un pack donde TODO es opcional)
-  const isCartEmpty = currentIngredientsValue === 0
-
   const handleAddToCart = () => {
-    // Aquí conectarías con tu contexto de carrito (Zustand, Context API, etc.)
-    console.log('Agregando al carrito:', {
-      packId: pack.id,
-      finalPrice,
-      ingredients: selections,
+    // A. PREPARAMOS LA RECETA (Solo los ítems que el usuario seleccionó con cantidad > 0)
+    const selectedIngredients = pack.bundleComponents
+      ?.map((comp: any) => ({
+        id: comp.product.id,
+        name: comp.product.name,
+        qty: quantities[comp.product.id] || 0,
+      }))
+      .filter((item: any) => item.qty > 0)
+
+    // B. AÑADIMOS A LA MOCHILA
+    addItem({
+      // Usamos Date.now() para que pueda agregar varios packs iguales pero con distintas configuraciones
+      cartItemId: `pack-${pack.id}-${Date.now()}`,
+      productId: pack.id,
+      name: pack.name,
+      price: finalPrice, // El precio final ya con el descuento aplicado
+      quantity: 1, // Añadimos 1 pack armado
+      image: pack.images?.[0] || '',
+      type: 'pack',
+      maxStock: pack.stock, // Depende del stock maestro del pack
+      packConfig: { items: selectedIngredients }, // Guardamos la receta
     })
-    alert('¡Botín agregado al carrito!')
+
+    // C. ABRIMOS LA MOCHILA
+    openCart()
+
+    // 🧰 EL COFRE ÉPICO
+    toast.custom(
+      (t) => (
+        <div className="w-full bg-[#fffdf5] border-4 border-toon-border rounded-2xl p-4 md:p-5 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex items-center gap-4 relative overflow-hidden animate-in zoom-in-95 duration-300">
+          <div className="absolute -right-4 -top-4 opacity-10 text-8xl pointer-events-none rotate-12">
+            🧰
+          </div>
+          <div className="text-5xl animate-bounce relative z-10 drop-shadow-[2px_2px_0px_rgba(0,0,0,1)]">
+            🧰
+          </div>
+          <div className="relative z-10">
+            <h3 className="font-black text-lg md:text-xl uppercase text-toon-border tracking-tighter leading-none mb-1">
+              ¡Receta Forjada!
+            </h3>
+            <p className="font-bold text-xs md:text-sm text-gray-500 uppercase tracking-widest">
+              Pack añadido a tu cofre
+            </p>
+          </div>
+        </div>
+      ),
+      { duration: 3000 },
+    )
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 max-w-7xl mx-auto p-4 md:p-8 animate-in fade-in duration-500">
-      {/* ==========================================
-          COLUMNA IZQUIERDA: EL PRODUCTO Y LA BARRA DE XP
-          ========================================== */}
-      <div className="lg:col-span-5 flex flex-col gap-6 sticky top-8">
-        {/* FOTO PRINCIPAL */}
-        <div className="bg-toon-pink/10 border-4 border-toon-border rounded-3xl p-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] relative aspect-square">
-          <Image
-            src={pack.images[0] || '/placeholder.png'}
-            alt={pack.name}
-            fill
-            className="object-cover rounded-2xl"
-          />
-          <div className="absolute top-4 left-4 bg-toon-yellow border-3 border-toon-border px-3 py-1 rounded-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] rotate-[-5deg]">
-            <span className="font-black text-sm uppercase text-toon-border">
-              Pack Dinámico
-            </span>
-          </div>
-        </div>
-
-        {/* INFO Y PRECIO */}
-        <div className="bg-white border-4 border-toon-border rounded-3xl p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-          <h1 className="font-black text-3xl lg:text-4xl uppercase tracking-tighter text-toon-border mb-2 leading-none">
-            {pack.name}
-          </h1>
-          <p className="font-bold text-gray-500 text-sm mb-6">
-            {pack.description ||
-              'Arma este pack a tu medida. ¡Mientras más agregues, más descuento ganas!'}
+    <div className="bg-slate-50 border-4 border-toon-border p-4 md:p-6 rounded-3xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] space-y-6">
+      {/* HEADER DE CRAFTEO */}
+      <div className="flex items-center gap-2 border-b-4 border-toon-border/10 pb-4">
+        <Sparkles className="text-toon-pink" size={24} />
+        <div>
+          <h2 className="font-black text-xl uppercase text-toon-border tracking-tighter">
+            Forjar Pack
+          </h2>
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+            Añade ítems para desbloquear descuentos
           </p>
-
-          {/* LA BARRA DE EXPERIENCIA (TIERS) */}
-          <div className="mb-8">
-            <div className="flex justify-between items-end mb-2">
-              <span className="font-black text-[10px] uppercase tracking-widest text-toon-blue">
-                Progreso del Botín
-              </span>
-              <span className="font-black text-xs text-toon-border">
-                {Math.round(progressPercent)}%
-              </span>
-            </div>
-
-            {/* Contenedor de la barra */}
-            <div className="h-6 w-full bg-slate-200 border-3 border-toon-border rounded-full relative overflow-hidden">
-              {/* Relleno dinámico */}
-              <div
-                className="h-full bg-toon-lime transition-all duration-500 ease-out border-r-3 border-toon-border"
-                style={{ width: `${progressPercent}%` }}
-              />
-
-              {/* Marcas de los Tiers (33%, 66%) */}
-              <div className="absolute top-0 left-1/3 w-1 h-full bg-toon-border/20" />
-              <div className="absolute top-0 left-2/3 w-1 h-full bg-toon-border/20" />
-            </div>
-
-            {/* Leyenda de Tiers */}
-            <div className="flex justify-between mt-2 px-1">
-              <span
-                className={cn(
-                  'text-[9px] font-black uppercase transition-colors',
-                  progressPercent >= 33 ? 'text-toon-lime' : 'text-gray-400',
-                )}
-              >
-                33% (-{pack.tier1Discount}%)
-              </span>
-              <span
-                className={cn(
-                  'text-[9px] font-black uppercase transition-colors',
-                  progressPercent >= 66 ? 'text-toon-lime' : 'text-gray-400',
-                )}
-              >
-                66% (-{pack.tier2Discount}%)
-              </span>
-              <span
-                className={cn(
-                  'text-[9px] font-black uppercase transition-colors',
-                  progressPercent >= 100 ? 'text-toon-yellow' : 'text-gray-400',
-                )}
-              >
-                FULL (-{pack.tier3Discount}%)
-              </span>
-            </div>
-          </div>
-
-          {/* MATEMÁTICAS DEL CLIENTE */}
-          <div className="bg-slate-50 border-3 border-dashed border-toon-border/30 rounded-2xl p-4 mb-6">
-            <div className="flex justify-between items-center mb-2">
-              <span className="font-bold text-xs text-gray-500">
-                Valor Envase:
-              </span>
-              <span className="font-black text-sm text-gray-400">
-                ${basePrice.toLocaleString('es-CL')}
-              </span>
-            </div>
-            <div className="flex justify-between items-center mb-2">
-              <span className="font-bold text-xs text-gray-500">
-                Valor Ingredientes:
-              </span>
-              <span className="font-black text-sm text-gray-400">
-                ${currentIngredientsValue.toLocaleString('es-CL')}
-              </span>
-            </div>
-
-            {activeDiscount > 0 && (
-              <div className="flex justify-between items-center mb-2 text-toon-pink animate-in slide-in-from-left-2">
-                <span className="font-black text-xs uppercase">
-                  {currentTierText}:
-                </span>
-                <span className="font-black text-sm">
-                  -${discountAmount.toLocaleString('es-CL')}
-                </span>
-              </div>
-            )}
-
-            <div className="h-1 w-full bg-toon-border/10 rounded-full my-3" />
-
-            <div className="flex justify-between items-end">
-              <span className="font-black text-sm uppercase text-toon-border">
-                Total a pagar:
-              </span>
-              <div className="text-right">
-                {activeDiscount > 0 && (
-                  <span className="block text-xs font-bold text-gray-400 line-through decoration-toon-red decoration-2">
-                    ${currentValue.toLocaleString('es-CL')}
-                  </span>
-                )}
-                <span className="block font-black text-4xl text-toon-border tracking-tighter">
-                  ${finalPrice.toLocaleString('es-CL')}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* BOTÓN DE COMPRA */}
-          <button
-            onClick={handleAddToCart}
-            disabled={isCartEmpty && basePrice === 0}
-            className="w-full flex items-center justify-center gap-2 bg-toon-yellow border-4 border-toon-border text-toon-border font-black uppercase text-xl py-5 rounded-2xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-yellow-300 hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all disabled:opacity-50"
-          >
-            <ShoppingCart strokeWidth={3} />
-            Agregar al Carrito
-          </button>
         </div>
       </div>
 
-      {/* ==========================================
-          COLUMNA DERECHA: LOS INGREDIENTES
-          ========================================== */}
-      <div className="lg:col-span-7 flex flex-col gap-4">
-        <h2 className="font-black text-2xl uppercase tracking-tight flex items-center gap-2 mb-2">
-          <Sparkles className="text-toon-pink" />
-          Elige tu Contenido
-        </h2>
+      {/* BARRA DE PROGRESO DE DESCUENTOS (XP BAR) */}
+      <div className="bg-white border-3 border-toon-border rounded-2xl p-4 shadow-inner">
+        <div className="flex justify-between items-end mb-2">
+          <span className="font-black text-xs uppercase text-gray-500">
+            Progreso de Descuento
+          </span>
+          <span className="font-black text-sm text-toon-pink">
+            {discountPercent}% OFF
+          </span>
+        </div>
 
-        {pack.bundleComponents.map((comp) => {
-          const product = comp.product
-          const currentQty = selections[product.id] || 0
-          const maxAllowed = Math.min(comp.maxQuantity, product.stock)
-          const isAtMax = currentQty >= maxAllowed
-          const isAtMin = currentQty <= comp.minQuantity
-          const isRequired = comp.minQuantity > 0
+        <div className="h-6 w-full bg-slate-100 border-2 border-toon-border rounded-full relative overflow-hidden flex">
+          <div
+            className={cn(
+              'h-full bg-toon-pink transition-all duration-500 relative',
+              capacityPercent < 100 ? 'border-r-2 border-toon-border' : '',
+            )}
+            style={{ width: `${capacityPercent}%` }}
+          >
+            <div className="absolute top-0 left-0 right-0 h-2 bg-white/30" />
+          </div>
+
+          {/* Marcadores de Tiers */}
+          <div className="absolute left-[33%] top-0 bottom-0 border-l-2 border-toon-border border-dashed z-10 flex items-center justify-center -ml-[1px]">
+            {activeTier >= 1 && (
+              <div className="absolute -top-6 text-[10px] font-black bg-toon-border text-white px-1 rounded">
+                T1
+              </div>
+            )}
+          </div>
+          <div className="absolute left-[66%] top-0 bottom-0 border-l-2 border-toon-border border-dashed z-10 flex items-center justify-center -ml-[1px]">
+            {activeTier >= 2 && (
+              <div className="absolute -top-6 text-[10px] font-black bg-toon-border text-white px-1 rounded">
+                T2
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* LISTA DE INGREDIENTES */}
+      <div className="space-y-3">
+        {pack.bundleComponents?.map((comp: any) => {
+          const item = comp.product
+          const qty = quantities[item.id] || 0
+          const actualMax = Math.min(comp.maxQuantity, item.stock)
 
           return (
             <div
-              key={product.id}
-              className={cn(
-                'flex flex-col sm:flex-row items-start sm:items-center justify-between bg-white border-4 p-4 rounded-3xl transition-all gap-4',
-                currentQty > 0
-                  ? 'border-toon-lime shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]'
-                  : 'border-toon-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] opacity-80 hover:opacity-100',
-              )}
+              key={item.id}
+              className="flex items-center justify-between bg-white border-3 border-toon-border p-3 rounded-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] gap-2"
             >
-              {/* INFO DEL INGREDIENTE */}
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-slate-100 border-3 border-toon-border rounded-xl relative overflow-hidden shrink-0">
-                  <Image
-                    src={product.images[0] || '/placeholder.png'}
-                    alt={product.name}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <div className="flex items-center gap-2">
-                    <span className="font-black text-sm md:text-base uppercase leading-tight">
-                      {product.name}
-                    </span>
-                    {isRequired && (
-                      <span className="bg-toon-pink text-white text-[8px] font-black uppercase px-2 py-0.5 rounded-full border-2 border-toon-border">
-                        Fijo x{comp.minQuantity}
-                      </span>
-                    )}
-                  </div>
-                  <span className="font-bold text-gray-500 text-xs">
-                    +${Number(product.price).toLocaleString('es-CL')} c/u
-                  </span>
-
-                  {/* Etiqueta de Stock Crítico */}
-                  {product.stock > 0 && product.stock <= 5 && (
-                    <span className="flex items-center gap-1 text-[9px] font-bold text-toon-red mt-1">
-                      <AlertCircle size={10} /> ¡Quedan solo {product.stock}!
-                    </span>
-                  )}
-                  {product.stock === 0 && (
-                    <span className="text-[10px] font-black uppercase text-toon-red mt-1">
-                      Agotado temporalmente
-                    </span>
-                  )}
-                </div>
+              {/* Info Ítem */}
+              <div className="flex-1 min-w-0 pr-2">
+                <span className="font-black text-sm uppercase text-toon-border truncate block">
+                  {item.name}
+                </span>
+                <span className="font-bold text-[10px] text-gray-400 uppercase tracking-widest">
+                  + ${Number(item.price).toLocaleString('es-CL')} c/u
+                </span>
               </div>
 
-              {/* CONTROLES DE CANTIDAD */}
-              <div className="flex flex-col items-end shrink-0 w-full sm:w-auto">
-                <div className="flex items-center bg-slate-50 border-3 border-toon-border rounded-xl p-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] w-full sm:w-auto justify-between sm:justify-start">
-                  <button
-                    onClick={() =>
-                      handleQuantityChange(
-                        product.id,
-                        -1,
-                        comp.minQuantity,
-                        comp.maxQuantity,
-                        product.stock,
-                      )
-                    }
-                    disabled={isAtMin}
-                    className="w-10 h-10 flex items-center justify-center bg-white border-2 border-toon-border rounded-lg hover:bg-slate-100 active:translate-y-0.5 disabled:opacity-30 disabled:hover:bg-white transition-all"
-                  >
-                    <Minus size={18} strokeWidth={3} />
-                  </button>
+              {/* Controles de Cantidad */}
+              <div className="flex items-center gap-3 shrink-0 bg-slate-50 border-2 border-toon-border rounded-lg p-1">
+                <button
+                  onClick={() =>
+                    updateQuantity(
+                      item.id,
+                      -1,
+                      comp.minQuantity,
+                      comp.maxQuantity,
+                      item.stock,
+                    )
+                  }
+                  disabled={qty <= comp.minQuantity}
+                  className="w-8 h-8 flex items-center justify-center bg-white border-2 border-toon-border rounded hover:bg-toon-red hover:text-white disabled:opacity-30 disabled:hover:bg-white disabled:hover:text-black transition-colors"
+                >
+                  <Minus size={16} strokeWidth={3} />
+                </button>
 
-                  <span className="w-12 text-center font-black text-xl text-toon-border">
-                    {currentQty}
-                  </span>
-
-                  <button
-                    onClick={() =>
-                      handleQuantityChange(
-                        product.id,
-                        1,
-                        comp.minQuantity,
-                        comp.maxQuantity,
-                        product.stock,
-                      )
-                    }
-                    disabled={isAtMax}
-                    className="w-10 h-10 flex items-center justify-center bg-toon-lime border-2 border-toon-border rounded-lg hover:brightness-110 active:translate-y-0.5 disabled:opacity-30 disabled:hover:brightness-100 transition-all"
-                  >
-                    <Plus size={18} strokeWidth={3} />
-                  </button>
-                </div>
-
-                <span className="text-[9px] font-bold text-gray-400 mt-2 uppercase text-right w-full">
-                  Máximo permitido: {comp.maxQuantity}
+                <span className="font-black text-sm w-4 text-center">
+                  {qty}
                 </span>
+
+                <button
+                  onClick={() =>
+                    updateQuantity(
+                      item.id,
+                      1,
+                      comp.minQuantity,
+                      comp.maxQuantity,
+                      item.stock,
+                    )
+                  }
+                  disabled={qty >= actualMax}
+                  className="w-8 h-8 flex items-center justify-center bg-white border-2 border-toon-border rounded hover:bg-toon-lime transition-colors disabled:opacity-30 disabled:hover:bg-white"
+                >
+                  <Plus size={16} strokeWidth={3} />
+                </button>
               </div>
             </div>
           )
         })}
+      </div>
+
+      {/* RESUMEN FINAL Y BOTÓN DE COMPRA */}
+      <div className="pt-4 border-t-4 border-dashed border-toon-border/20 space-y-4">
+        <div className="flex justify-between items-center text-gray-500 font-bold text-sm">
+          <span>Envase Base</span>
+          <span>${basePrice.toLocaleString('es-CL')}</span>
+        </div>
+
+        {discountAmount > 0 && (
+          <div className="flex justify-between items-center text-toon-red font-black text-sm bg-toon-red/10 p-2 rounded-lg border-2 border-toon-red/30">
+            <span className="flex items-center gap-1">
+              <TrendingDown size={16} /> Ahorro (Tier {activeTier})
+            </span>
+            <span>- ${discountAmount.toLocaleString('es-CL')}</span>
+          </div>
+        )}
+
+        <div className="flex justify-between items-end pt-2">
+          <span className="font-black text-xs uppercase text-gray-400 tracking-widest">
+            Total Forjado
+          </span>
+          <div className="text-right">
+            {discountAmount > 0 && (
+              <span className="block text-sm font-bold text-gray-400 line-through decoration-toon-red decoration-2 mb-1">
+                ${currentTotalValue.toLocaleString('es-CL')}
+              </span>
+            )}
+            <span className="block font-black text-3xl md:text-4xl text-toon-border drop-shadow-[2px_2px_0px_rgba(0,0,0,0.1)] leading-none">
+              ${finalPrice.toLocaleString('es-CL')}
+            </span>
+          </div>
+        </div>
+
+        <button
+          onClick={handleAddToCart}
+          className="w-full bg-toon-lime border-4 border-toon-border text-toon-border font-black text-xl uppercase py-4 rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-green-400 transition-all active:translate-y-1 active:shadow-none flex items-center justify-center gap-2 group"
+        >
+          <ShoppingCart
+            strokeWidth={3}
+            className="group-hover:-rotate-12 transition-transform"
+          />
+          Añadir al Cofre
+        </button>
       </div>
     </div>
   )

@@ -29,10 +29,20 @@ export default async function ShopPage() {
               product.stock === 0 && 'opacity-75 grayscale',
             )}
           >
-            {/* Imagen / Placeholder */}
-            <div className="aspect-square bg-toon-blue/20 border-b-4 border-toon-border flex items-center justify-center text-7xl group-hover:scale-110 transition-transform">
-              {/* Aquí luego irá la imagen real de la DB */}
-              {product.type === 'pack' ? '📦' : '✨'}
+            {/* Imagen Real de la DB */}
+            <div className="aspect-square bg-slate-50 border-b-4 border-toon-border relative overflow-hidden flex items-center justify-center text-7xl">
+              {product.images && product.images.length > 0 ? (
+                <img
+                  src={product.images[0]}
+                  alt={product.name}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+              ) : (
+                // Fallback si por alguna razón no tiene foto
+                <span className="group-hover:scale-110 transition-transform">
+                  {product.type === 'pack' ? '📦' : '✨'}
+                </span>
+              )}
             </div>
 
             {/* Contenido */}

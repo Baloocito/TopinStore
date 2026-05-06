@@ -19,3 +19,87 @@
 }
 
 /* Cualquier otro CSS extra que tuvieras abajo (si lo hay) lo dejas aquí */
+/* ==========================================
+   SISTEMA DE BARRAS DE HP/XP (SCROLLBARS)
+   ========================================== */
+
+/* 1. Grosor de la barra */
+::-webkit-scrollbar {
+  width: 16px;
+  height: 16px;
+}
+
+/* 2. El carril o "cápsula vacía" */
+::-webkit-scrollbar-track {
+  background-color: #f8fafc; /* Un gris muy claro, como el slate-50 */
+  border-left: 3px solid #1e293b; /* Borde oscuro para separarlo del contenido */
+}
+
+/* 3. La barra de XP/HP en sí */
+::-webkit-scrollbar-thumb {
+  background-color: #bef264; /* Color toon-lime base */
+  border: 3px solid #1e293b; /* Borde negro estilo Neobrutalista */
+  border-radius: 10px; /* Bordes redondeados como una píldora */
+  /* Este brillo interior le da el efecto 3D estilo consola retro */
+  box-shadow: inset 0px 4px 0px 0px rgba(255, 255, 255, 0.5);
+}
+
+/* 4. Efecto al pasar el mouse (Hover) */
+::-webkit-scrollbar-thumb:hover {
+  background-color: #a3e635; /* Un verde un poco más intenso */
+}
+
+/* 5. Efecto al hacer clic y arrastrar (Active - ¡Cambia a Rosa!) */
+::-webkit-scrollbar-thumb:active {
+  background-color: #f472b6; /* toon-pink */
+  box-shadow: inset 0px -4px 0px 0px rgba(0, 0, 0, 0.1); /* Invertimos el brillo para que se "hunda" */
+}
+
+/* 6. Ajuste para el scroll horizontal (El Kanban) */
+::-webkit-scrollbar-track:horizontal {
+  border-top: 3px solid #1e293b;
+  border-left: none;
+}
+
+/* Compatibilidad extra para Firefox (Limitada a colores sólidos) */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #bef264 #f8fafc;
+}
+
+/* ==========================================
+   SISTEMA DE CURSORES GAMER
+   ========================================== */
+
+/* 1. Cursor Global (Reemplaza la flecha aburrida) */
+* {
+  /* Por ahora usa un emoji de espada para probar, pero luego pondremos un PNG */
+  cursor:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><text y='24' font-size='24'>🗡️</text></svg>")
+      0 0,
+    auto;
+}
+
+/* 2. Cursor Interactivo (La Mano Gamer para los botones) */
+a,
+button,
+input[type='submit'],
+input[type='file'],
+[role='button'],
+.cursor-pointer,
+.group:hover {
+  /* ¡Importante el !important para sobreescribir estilos por defecto! */
+  cursor:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><text y='24' font-size='24'>👆</text></svg>")
+      12 0,
+    pointer !important;
+}
+
+/* 3. Cursor de Texto (Para cuando editas inputs) */
+input[type='text'],
+input[type='number'],
+textarea {
+  cursor: text !important;
+}
+
+/* Cualquier otro CSS extra que tuvieras abajo (si lo hay) lo dejas aquí */
