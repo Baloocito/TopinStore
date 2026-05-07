@@ -123,6 +123,10 @@ export const orders = pgTable('orders', {
     .default('unpaid'),
   paymentMethod: varchar('payment_method', { length: 50 }),
 
+  // 🔥 NUEVO: CONECTORES DE LA PASARELA DE PAGO
+  gatewayToken: varchar('gateway_token', { length: 255 }), // El token temporal para ir a pagar
+  gatewayPaymentId: varchar('gateway_payment_id', { length: 255 }), // El ID definitivo del voucher del banco
+
   // MATEMÁTICAS
   subtotal: decimal('subtotal', { precision: 10, scale: 0 }).notNull(),
   discount: decimal('discount', { precision: 10, scale: 0 }).default('0'),
@@ -131,8 +135,9 @@ export const orders = pgTable('orders', {
   ),
   total: decimal('total', { precision: 10, scale: 0 }).notNull(),
 
-  // LOGÍSTICA
-  shippingAddress: text('shipping_address').notNull(),
+  // 🔥 MEJORADO: LOGÍSTICA
+  // Cambiamos 'text' por 'jsonb' para guardar { calle: "...", comuna: "...", region: "..." }
+  shippingAddress: jsonb('shipping_address').notNull(),
   trackingNumber: varchar('tracking_number', { length: 100 }),
   courier: varchar('courier', { length: 50 }),
   customerNotes: text('customer_notes'),

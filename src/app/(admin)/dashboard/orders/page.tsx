@@ -44,43 +44,57 @@ export default async function OrdersPage() {
   }
 
   // 4. Formatear la data e inyectar el nombre real a la receta
-  const formattedOrders: OrderData[] = rawOrders.map((order) => ({
-    id: order.id,
-    orderNumber: order.orderNumber,
-    customerName: order.customer?.name || 'Jugador Anónimo',
-    total: Number(order.total),
-    status: order.status,
-    itemsCount: order.items.length,
-    shippingAddress: order.shippingAddress,
-    customerNotes: order.customerNotes || null,
-    trackingNumber: order.trackingNumber || null,
-    courier: order.courier || null,
-    createdAt: order.createdAt || new Date(),
-    items: order.items.map((item) => {
-      // Aseguramos el tipo para poder mutarlo sin que TS se enoje
-      const recipe = item.packRecipe as {
-        items?: { id: number; qty: number; name?: string }[]
-      } | null
-
-      // Creamos una copia profunda (Deep Copy) para no mutar el objeto original de Drizzle
-      let enrichedRecipe = recipe ? JSON.parse(JSON.stringify(recipe)) : null
-
-      if (enrichedRecipe && enrichedRecipe.items) {
-        enrichedRecipe.items = enrichedRecipe.items.map((rItem: any) => ({
-          ...rItem,
-          name: recipeProductsMap[rItem.id] || `Reliquia Perdida #${rItem.id}`,
-        }))
+  const formattedOrders: OrderData[] = rawOrders.map((order) => {
+    // 🔥 EL TRADUCTOR DE DIRECCIONES (De JSON a String legible)
+    let readableAddress = 'Dirección no registrada'
+    if (order.shippingAddress) {
+      if (typeof order.shippingAddress === 'string') {
+        readableAddress = order.shippingAddress
+      } else {
+        // Si ya viene como el nuevo objeto JSON del Checkout
+        const addr = order.shippingAddress as any
+        const deptoText = addr.depto ? ` (Depto: ${addr.depto})` : ''
+        readableAddress = `${addr.address}${deptoText}, ${addr.comuna}, Región ${addr.region}`
       }
+    }
 
-      return {
-        id: item.id,
-        productName: item.productName,
-        priceAtTime: Number(item.priceAtTime),
-        quantity: item.quantity,
-        packRecipe: enrichedRecipe, // <--- Ahora pasamos el JSON ya con nombres incrustados
-      }
-    }),
-  }))
+    return {
+      id: order.id,
+      orderNumber: order.orderNumber,
+      customerName: order.customer?.name || 'Jugador Anónimo',
+      total: Number(order.total),
+      status: order.status,
+      itemsCount: order.items.length,
+      shippingAddress: readableAddress, // <--- Aquí pasamos el string ya limpio
+      customerNotes: order.customerNotes || null,
+      trackingNumber: order.trackingNumber || null,
+      courier: order.courier || null,
+      createdAt: order.createdAt || new Date(),
+      items: order.items.map((item) => {
+        const recipe = item.packRecipe as {
+          items?: { id: number; qty: number; name?: string }[]
+        } | null
+
+        let enrichedRecipe = recipe ? JSON.parse(JSON.stringify(recipe)) : null
+
+        if (enrichedRecipe && enrichedRecipe.items) {
+          enrichedRecipe.items = enrichedRecipe.items.map((rItem: any) => ({
+            ...rItem,
+            name:
+              recipeProductsMap[rItem.id] || `Reliquia Perdida #${rItem.id}`,
+          }))
+        }
+
+        return {
+          id: item.id,
+          productName: item.productName,
+          priceAtTime: Number(item.priceAtTime),
+          quantity: item.quantity,
+          packRecipe: enrichedRecipe,
+        }
+      }),
+    }
+  })
 
   return <OrdersKanbanClient initialOrders={formattedOrders} />
 }
