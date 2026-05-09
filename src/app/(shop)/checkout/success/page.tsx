@@ -1,10 +1,14 @@
-import { Link } from 'lucide-react'
+'use client'
 
-export default function SuccessPage({
-  searchParams,
-}: {
-  searchParams: { order: string }
-}) {
+import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
+import { Suspense } from 'react'
+
+// 1. Separamos el contenido que usa la URL (searchParams)
+function SuccessContent() {
+  const searchParams = useSearchParams()
+  const orderNumber = searchParams.get('order') || 'ORDEN-DESCONOCIDA'
+
   return (
     <div className="max-w-2xl mx-auto py-20 text-center space-y-8">
       <div className="bg-toon-lime border-4 border-toon-border p-8 rounded-3xl shadow-toon animate-bounce-slow inline-block">
@@ -21,9 +25,7 @@ export default function SuccessPage({
         </p>
         <div className="flex justify-between border-b-2 border-dashed border-gray-200 pb-2">
           <span className="font-bold">Nro. de Orden:</span>
-          <span className="font-black text-toon-blue">
-            {searchParams.order}
-          </span>
+          <span className="font-black text-toon-blue">{orderNumber}</span>
         </div>
         <p className="mt-4 text-sm font-bold text-gray-500">
           Te hemos enviado un pergamino (correo) con el detalle de tu botín y
@@ -31,7 +33,8 @@ export default function SuccessPage({
         </p>
       </div>
 
-      <div className="flex gap-4 justify-center">
+      <div className="flex gap-4 justify-center flex-wrap">
+        {/* Este es el botón que Vercel no entendía sin el 'use client' */}
         <button
           onClick={() => window.print()}
           className="bg-white border-3 border-toon-border px-6 py-2 rounded-xl font-black uppercase text-sm shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-1 transition-all"
@@ -46,5 +49,20 @@ export default function SuccessPage({
         </Link>
       </div>
     </div>
+  )
+}
+
+// 2. Exportamos la página envuelta en Suspense (Requisito de Next.js para usar useSearchParams)
+export default function SuccessPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="py-20 text-center font-black text-2xl animate-pulse text-toon-border">
+          Preparando el botín...
+        </div>
+      }
+    >
+      <SuccessContent />
+    </Suspense>
   )
 }
