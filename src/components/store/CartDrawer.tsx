@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 
 export default function CartDrawer() {
   const { isOpen, closeCart, items, removeItem, updateQuantity, getTotal } =
@@ -175,7 +176,12 @@ export default function CartDrawer() {
               </div>
             </div>
 
-            <button className="w-full bg-toon-lime border-4 border-toon-border text-toon-border font-black text-xl uppercase py-4 rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-green-400 transition-all active:translate-y-1 active:shadow-none flex items-center justify-center gap-2 group overflow-hidden relative">
+            {/* AHORA ES UN LINK HACIA EL CHECKOUT */}
+            <Link
+              href="/checkout"
+              onClick={closeCart} // Cerramos la mochila al cambiar de página
+              className="w-full bg-toon-lime border-4 border-toon-border text-toon-border font-black text-xl uppercase py-4 rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-green-400 transition-all active:translate-y-1 active:shadow-none flex items-center justify-center gap-2 group overflow-hidden relative block text-center"
+            >
               <span className="relative z-10 flex items-center gap-2">
                 Ir al Mercader{' '}
                 <ArrowRight
@@ -183,7 +189,7 @@ export default function CartDrawer() {
                   className="group-hover:translate-x-2 transition-transform"
                 />
               </span>
-            </button>
+            </Link>
           </div>
         )}
       </div>

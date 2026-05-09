@@ -90,27 +90,30 @@ export default async function ProductDetailPage({
               <PackBuilder pack={product} />
             ) : (
               <div className="bg-slate-50 border-4 border-toon-border p-5 md:p-6 rounded-3xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] space-y-6">
-                <div className="flex justify-between items-end border-b-4 border-dashed border-toon-border/20 pb-4">
-                  <div>
-                    <span className="block font-bold text-[10px] text-gray-400 uppercase tracking-widest mb-1">
+                {/* ZONA DE PRECIO Y STOCK RESPONSIVA */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 border-b-4 border-dashed border-toon-border/20 pb-4">
+                  <div className="flex flex-col">
+                    <span className="font-bold text-[10px] text-gray-400 uppercase tracking-widest mb-1">
                       Inversión requerida
                     </span>
                     <span className="font-black text-4xl text-toon-lime drop-shadow-[2px_2px_0px_rgba(0,0,0,1)] leading-none">
                       ${Number(product.price).toLocaleString('es-CL')}
                     </span>
                   </div>
-                  <div className="text-right">
+
+                  {/* El Badge de Stock ahora es flexible */}
+                  <div className="shrink-0">
                     <span
                       className={cn(
-                        'font-black uppercase text-xs md:text-sm px-3 py-1 rounded-lg border-2 border-toon-border shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]',
+                        'font-black uppercase text-[10px] md:text-xs px-3 py-1.5 rounded-lg border-2 border-toon-border shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] inline-block',
                         product.stock > 0
                           ? 'bg-white text-toon-blue'
                           : 'bg-toon-red text-white',
                       )}
                     >
                       {product.stock > 0
-                        ? `${product.stock} en stock`
-                        : 'Agotado'}
+                        ? `${product.stock} DISPONIBLES`
+                        : 'AGOTADO'}
                     </span>
                   </div>
                 </div>

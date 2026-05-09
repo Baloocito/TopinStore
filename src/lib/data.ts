@@ -188,3 +188,16 @@ export async function getCustomers(query?: string, page: number = 1) {
     return []
   }
 }
+// ==========================================
+// 4. EL CÓDICE DE CATEGORÍAS (Para Filtros)
+// ==========================================
+export async function getCategories() {
+  try {
+    return await db.query.categories.findMany({
+      orderBy: [desc(categories.name)],
+    })
+  } catch (error) {
+    console.error('Error fetching categories:', error)
+    return []
+  }
+}

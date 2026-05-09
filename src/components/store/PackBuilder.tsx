@@ -186,7 +186,7 @@ export default function PackBuilder({ pack }: { pack: any }) {
         </div>
       </div>
 
-      {/* LISTA DE INGREDIENTES */}
+      {/* LISTA DE INGREDIENTES (Actualizada para evitar texto cortado) */}
       <div className="space-y-3">
         {pack.bundleComponents?.map((comp: any) => {
           const item = comp.product
@@ -196,20 +196,20 @@ export default function PackBuilder({ pack }: { pack: any }) {
           return (
             <div
               key={item.id}
-              className="flex items-center justify-between bg-white border-3 border-toon-border p-3 rounded-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] gap-2"
+              className="flex items-center justify-between bg-white border-3 border-toon-border p-3 rounded-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] gap-3"
             >
-              {/* Info Ítem */}
-              <div className="flex-1 min-w-0 pr-2">
-                <span className="font-black text-sm uppercase text-toon-border truncate block">
+              {/* Info Ítem: Eliminamos truncate y ajustamos el flujo del texto */}
+              <div className="flex-1 min-w-0">
+                <span className="font-black text-xs md:text-sm uppercase text-toon-border block leading-tight mb-1">
                   {item.name}
                 </span>
-                <span className="font-bold text-[10px] text-gray-400 uppercase tracking-widest">
+                <span className="font-bold text-[9px] md:text-[10px] text-gray-400 uppercase tracking-widest block">
                   + ${Number(item.price).toLocaleString('es-CL')} c/u
                 </span>
               </div>
 
-              {/* Controles de Cantidad */}
-              <div className="flex items-center gap-3 shrink-0 bg-slate-50 border-2 border-toon-border rounded-lg p-1">
+              {/* Controles de Cantidad: Reducimos un poco el gap en móvil para dar más espacio al texto */}
+              <div className="flex items-center gap-1 md:gap-3 shrink-0 bg-slate-50 border-2 border-toon-border rounded-lg p-0.5 md:p-1">
                 <button
                   onClick={() =>
                     updateQuantity(
@@ -221,12 +221,12 @@ export default function PackBuilder({ pack }: { pack: any }) {
                     )
                   }
                   disabled={qty <= comp.minQuantity}
-                  className="w-8 h-8 flex items-center justify-center bg-white border-2 border-toon-border rounded hover:bg-toon-red hover:text-white disabled:opacity-30 disabled:hover:bg-white disabled:hover:text-black transition-colors"
+                  className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center bg-white border-2 border-toon-border rounded hover:bg-toon-red hover:text-white disabled:opacity-30 transition-colors"
                 >
-                  <Minus size={16} strokeWidth={3} />
+                  <Minus size={14} strokeWidth={3} />
                 </button>
 
-                <span className="font-black text-sm w-4 text-center">
+                <span className="font-black text-xs md:text-sm w-5 text-center">
                   {qty}
                 </span>
 
@@ -241,9 +241,9 @@ export default function PackBuilder({ pack }: { pack: any }) {
                     )
                   }
                   disabled={qty >= actualMax}
-                  className="w-8 h-8 flex items-center justify-center bg-white border-2 border-toon-border rounded hover:bg-toon-lime transition-colors disabled:opacity-30 disabled:hover:bg-white"
+                  className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center bg-white border-2 border-toon-border rounded hover:bg-toon-lime transition-colors disabled:opacity-30"
                 >
-                  <Plus size={16} strokeWidth={3} />
+                  <Plus size={14} strokeWidth={3} />
                 </button>
               </div>
             </div>
