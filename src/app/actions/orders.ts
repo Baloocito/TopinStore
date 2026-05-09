@@ -4,12 +4,27 @@ import { db } from '@/db'
 import { orders } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
+// 🛡️ Importamos las herramientas de seguridad
+import { getServerSession } from 'next-auth/next'
+import { authOptions } from '@/lib/auth'
 
 export async function updateOrderStatusAction(
   orderId: number,
   newStatus: string,
 ) {
   try {
+    // 🛡️ EL PORTERO DEL GREMIO
+    const session = await getServerSession(authOptions)
+    if (!session || session.user?.email !== process.env.ADMIN_EMAIL) {
+      console.warn(
+        `Intento de acceso no autorizado a updateOrderStatusAction por: ${session?.user?.email || 'Anónimo'}`,
+      )
+      return {
+        success: false,
+        message: '❌ Magia oscura detectada. No eres el Maestro del Gremio.',
+      }
+    }
+
     await db
       .update(orders)
       .set({ status: newStatus, updatedAt: new Date() })
@@ -32,6 +47,18 @@ export async function updateOrderLogisticsAction(
   trackingNumber: string,
 ) {
   try {
+    // 🛡️ EL PORTERO DEL GREMIO
+    const session = await getServerSession(authOptions)
+    if (!session || session.user?.email !== process.env.ADMIN_EMAIL) {
+      console.warn(
+        `Intento de acceso no autorizado a updateOrderLogisticsAction por: ${session?.user?.email || 'Anónimo'}`,
+      )
+      return {
+        success: false,
+        message: '❌ Magia oscura detectada. No eres el Maestro del Gremio.',
+      }
+    }
+
     await db
       .update(orders)
       .set({

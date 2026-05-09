@@ -4,6 +4,9 @@ import { db } from '@/db'
 import { products, bundleItems } from '@/db/schema'
 import { revalidatePath } from 'next/cache'
 import { eq } from 'drizzle-orm'
+// 🛡️ Importamos las herramientas de seguridad
+import { getServerSession } from 'next-auth/next'
+import { authOptions } from '@/lib/auth'
 
 // La nueva estructura que recibiremos del cliente (Min y Max)
 type RecipeIngredient = {
@@ -22,6 +25,18 @@ export async function createPackAction(
   imageUrl: string,
 ) {
   try {
+    // 🛡️ EL PORTERO DEL GREMIO
+    const session = await getServerSession(authOptions)
+    if (!session || session.user?.email !== process.env.ADMIN_EMAIL) {
+      console.warn(
+        `Intento de acceso no autorizado a createPackAction por: ${session?.user?.email || 'Anónimo'}`,
+      )
+      return {
+        success: false,
+        message: '❌ Magia oscura detectada. No eres el Maestro del Gremio.',
+      }
+    }
+
     // 1. GENERAR SLUGS (Usando una lógica de limpieza similar a tu actions.ts)
     const baseSlug = name
       .toLowerCase()

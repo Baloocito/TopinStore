@@ -34,7 +34,13 @@ export default function PackCreatorClient({
 }) {
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const { startUpload } = useUploadThing('productImage')
+  const { startUpload } = useUploadThing('productImage', {
+    onUploadError: (error) => {
+      // Le ponemos un micrófono al error para que nos diga la verdad
+      console.error('🚨 Error de UploadThing:', error.message)
+      alert(`La Aduana rechazó la imagen: ${error.message}`)
+    },
+  })
 
   // ==========================================
   // ESTADOS DEL GRIMORIO
@@ -143,8 +149,13 @@ export default function PackCreatorClient({
 
     try {
       const uploadRes = await startUpload([packImageFile])
-      if (!uploadRes || !uploadRes[0])
-        throw new Error('Falló subida de imagen.')
+
+      // Si uploadRes no existe, el onUploadError de arriba ya saltó y avisó al usuario.
+      // Solo detenemos la ejecución de la función.
+      if (!uploadRes || !uploadRes[0]) {
+        setIsPending(false)
+        return
+      }
 
       const finalImageUrl = uploadRes[0].ufsUrl
 

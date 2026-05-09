@@ -2,13 +2,15 @@
 
 import { db } from '@/db'
 import { orders, orderItems, customers, products } from '@/db/schema'
-import { eq, sql } from 'drizzle-orm'
+import { eq, sql, inArray } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { MercadoPagoConfig, Preference } from 'mercadopago'
 
 // Iniciamos el cliente de forma segura
 const mpToken = process.env.MP_ACCESS_TOKEN
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+let siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+// Limpiamos la URL por si tiene un slash final
+if (siteUrl.endsWith('/')) siteUrl = siteUrl.slice(0, -1)
 
 const client = new MercadoPagoConfig({
   accessToken: mpToken || '',
@@ -24,13 +26,61 @@ export async function createOrderAction(
   cartItems: any[],
 ): Promise<ActionResponse> {
   try {
-    // 🛑 1. VALIDACIÓN DE TOKEN
+    // 🛑 1. VALIDACIÓN DE TOKEN BANCARIO
     if (!mpToken) {
       console.error('CRÍTICO: No hay MP_ACCESS_TOKEN en el .env.local')
       return { success: false, message: 'Falta la llave secreta del banco.' }
     }
 
-    // 🛡️ 2. OPERACIONES DE BASE DE DATOS (Secuenciales en lugar de Transacción)
+    if (!cartItems || cartItems.length === 0) {
+      return { success: false, message: 'La mochila está vacía.' }
+    }
+
+    // 🛡️ 2. EL ESCUDO ANTI-HACKERS: Extraer IDs y buscar la VERDAD en la Base de Datos
+    const productIds = cartItems.map((item) => item.productId)
+    const realProductsDB = await db.query.products.findMany({
+      where: inArray(products.id, productIds),
+    })
+
+    // Variable para calcular el TOTAL REAL, no el del cliente
+    let realTotal = 0
+    const validatedItems = []
+
+    for (const item of cartItems) {
+      // Buscamos el producto real en la DB
+      const dbProduct = realProductsDB.find((p) => p.id === item.productId)
+
+      // Validaciones de seguridad
+      if (!dbProduct) {
+        return {
+          success: false,
+          message: `El producto ${item.name} ya no existe en el Gremio.`,
+        }
+      }
+      if (dbProduct.stock < item.quantity) {
+        return {
+          success: false,
+          message: `No hay stock suficiente de ${dbProduct.name}. Solo quedan ${dbProduct.stock}.`,
+        }
+      }
+
+      // 🛠️ EL PARCHE: Convertimos explícitamente a número para evitar que TypeScript llore
+      // y prevenir que Drizzle nos pase un string matemático.
+      const realPrice = Number(dbProduct.price)
+      const quantity = Number(item.quantity)
+
+      // Sumamos usando el PRECIO REAL de la base de datos
+      realTotal += realPrice * quantity
+
+      // Guardamos el item validado para procesarlo después
+      validatedItems.push({
+        ...item,
+        realPrice: realPrice, // Forzamos el precio de la DB ya como número
+        realName: dbProduct.name,
+      })
+    }
+
+    // 🛡️ 3. OPERACIONES DE BASE DE DATOS (Secuenciales)
 
     // A. Manejar al Cliente
     let customer = await db.query.customers.findFirst({
@@ -49,12 +99,8 @@ export async function createOrderAction(
       customer = insertedCustomers[0]
     }
 
-    // B. Crear la Orden
+    // B. Crear la Orden (Usando el realTotal validado)
     const generatedOrderNumber = `TOPIN-${nanoid(6).toUpperCase()}`
-    const total = cartItems.reduce(
-      (acc, item) => acc + item.price * item.quantity,
-      0,
-    )
 
     const [insertedOrder] = await db
       .insert(orders)
@@ -63,8 +109,8 @@ export async function createOrderAction(
         customerId: customer.id,
         status: 'pending',
         paymentStatus: 'unpaid',
-        subtotal: total.toString(),
-        total: total.toString(),
+        subtotal: realTotal.toString(),
+        total: realTotal.toString(),
         shippingAddress: formData,
       })
       .returning()
@@ -72,18 +118,18 @@ export async function createOrderAction(
     // C. Insertar Items y Preparar Mercado Pago
     const preparedMpItems = []
 
-    for (const item of cartItems) {
+    for (const item of validatedItems) {
       // Guardar Item en la orden
       await db.insert(orderItems).values({
         orderId: insertedOrder.id,
         productId: item.productId,
-        productName: item.name,
-        priceAtTime: item.price.toString(),
+        productName: item.realName, // Usamos nombre real
+        priceAtTime: item.realPrice.toString(), // Usamos precio real
         quantity: item.quantity,
         packRecipe: item.packConfig || null,
       })
 
-      // Actualizar Stock del producto
+      // Actualizar Stock del producto (De forma atómica matemática)
       await db
         .update(products)
         .set({
@@ -92,24 +138,23 @@ export async function createOrderAction(
         })
         .where(eq(products.id, item.productId))
 
-      // Empaquetar para Mercado Pago
+      // Empaquetar para Mercado Pago (Con precio real)
       preparedMpItems.push({
         id: item.productId.toString(),
-        title: item.name,
+        title: item.realName,
         quantity: item.quantity,
-        unit_price: Number(item.price),
+        unit_price: Number(item.realPrice),
         currency_id: 'CLP', // Oro chileno
       })
     }
 
-    // 🚀 3. LLAMADA A MERCADO PAGO
+    // 🚀 4. LLAMADA A MERCADO PAGO
     try {
-      // 1. HARDCODING CON HTTPS (Engañando al guardia de MP)
-      // Usaremos una URL ficticia con HTTPS solo para ver si nos deja pasar
-      const successUrl = `https://topinstore-test.vercel.app/checkout/success?order=${generatedOrderNumber}`
-      const failureUrl = `https://topinstore-test.vercel.app/checkout?error=payment_failed`
-      const pendingUrl = `https://topinstore-test.vercel.app/checkout/success?order=${generatedOrderNumber}&status=pending`
-      // 2. ARMAMOS EL PAQUETE CON MUCHO CUIDADO
+      // Armamos URLs dinámicas usando la variable de entorno
+      const successUrl = `${siteUrl}/checkout/success?order=${generatedOrderNumber}`
+      const failureUrl = `${siteUrl}/checkout?error=payment_failed`
+      const pendingUrl = `${siteUrl}/checkout/success?order=${generatedOrderNumber}&status=pending`
+
       const preferenceBody = {
         items: preparedMpItems,
         payer: {
@@ -125,18 +170,8 @@ export async function createOrderAction(
         external_reference: insertedOrder.id.toString(),
       }
 
-      // 3. EL RAYO LÁSER: Imprimimos el paquete antes de enviarlo
-      console.log('======================================')
-      console.log('📦 ENVIANDO A MERCADO PAGO:')
-      console.log(JSON.stringify(preferenceBody, null, 2))
-      console.log('======================================')
-
       const preference = new Preference(client)
-
-      // 4. EL ENVÍO REAL
-      const mpResponse = await preference.create({
-        body: preferenceBody,
-      })
+      const mpResponse = await preference.create({ body: preferenceBody })
 
       if (!mpResponse.init_point) {
         throw new Error('La API de Mercado Pago no devolvió la URL de pago.')
@@ -149,10 +184,7 @@ export async function createOrderAction(
         initPoint: mpResponse.init_point,
       }
     } catch (mpError: any) {
-      console.error('======================================')
-      console.error('🔥 ERROR DE MERCADO PAGO 🔥')
-      console.error(mpError.message || mpError)
-      console.error('======================================')
+      console.error('🔥 ERROR DE MERCADO PAGO 🔥', mpError.message || mpError)
       return {
         success: false,
         message: 'Fallo al generar el link de pago con Mercado Pago.',
@@ -162,7 +194,7 @@ export async function createOrderAction(
     console.error('Error interno de la forja:', error)
     return {
       success: false,
-      message: 'Fallo al guardar la orden en la base de datos.',
+      message: 'Fallo al guardar la orden. Revisa el stock.',
     }
   }
 }
