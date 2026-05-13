@@ -20,18 +20,19 @@ import {
   PackageOpen,
   Save,
   Loader2,
+  Clock,
+  Wallet,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-// ==========================================
-// TIPOS ACTUALIZADOS (Con datos para el Modal)
-// ==========================================
 export type OrderData = {
   id: number
   orderNumber: string
   customerName: string
+  subtotal: number // NUEVO
   total: number
   status: string
+  paymentStatus: string // NUEVO (paid | unpaid)
   itemsCount: number
   shippingAddress: string
   customerNotes: string | null
@@ -85,31 +86,30 @@ export default function OrdersKanbanClient({
 }) {
   const [orders, setOrders] = useState<OrderData[]>(initialOrders)
   const [draggedOrderId, setDraggedOrderId] = useState<number | null>(null)
-
-  // ESTADOS DEL MODAL
   const [selectedOrder, setSelectedOrder] = useState<OrderData | null>(null)
   const [isMounted, setIsMounted] = useState(false)
   const [isSavingLogistics, setIsSavingLogistics] = useState(false)
-
-  // Datos del formulario logística
   const [courier, setCourier] = useState('')
   const [trackingNumber, setTrackingNumber] = useState('')
 
-  useEffect(() => {
-    setIsMounted(true)
-  }, [])
+  useEffect(() => setIsMounted(true), [])
 
-  // ==========================================
-  // LÓGICA DEL MODAL
-  // ==========================================
   const openModal = (order: OrderData) => {
     setSelectedOrder(order)
     setCourier(order.courier || '')
     setTrackingNumber(order.trackingNumber || '')
   }
 
-  const closeModal = () => {
-    setSelectedOrder(null)
+  const closeModal = () => setSelectedOrder(null)
+
+  // Función para formatear fechas épicas
+  const formatDate = (date: Date) => {
+    return new Intl.DateTimeFormat('es-CL', {
+      day: '2-digit',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(new Date(date))
   }
 
   const handleSaveLogistics = async (e: React.FormEvent) => {
@@ -117,16 +117,12 @@ export default function OrdersKanbanClient({
     if (!selectedOrder) return
 
     setIsSavingLogistics(true)
-    // toast.loading te permite mostrar que algo está cargando
     const loadingToastId = toast.loading('Guardando datos de la carreta...')
-
     const result = await updateOrderLogisticsAction(
       selectedOrder.id,
       courier,
       trackingNumber,
     )
-
-    // Quitamos el loading manual
     toast.dismiss(loadingToastId)
 
     if (result.success) {
@@ -138,19 +134,13 @@ export default function OrdersKanbanClient({
       setSelectedOrder((prev) =>
         prev ? { ...prev, courier, trackingNumber } : null,
       )
-
-      // 🚀 AQUÍ ESTÁ EL TOAST DE ÉXITO
       toast.success('¡Datos de carreta guardados con éxito!')
     } else {
-      // 🚨 AQUÍ ESTÁ EL TOAST DE ERROR
       toast.error(result.message || 'La carreta se rompió.')
     }
     setIsSavingLogistics(false)
   }
 
-  // ==========================================
-  // LÓGICA DE DRAG & DROP
-  // ==========================================
   const handleDragStart = (e: React.DragEvent, orderId: number) => {
     setDraggedOrderId(orderId)
     e.currentTarget.classList.add('opacity-50', 'scale-95')
@@ -159,10 +149,6 @@ export default function OrdersKanbanClient({
   const handleDragEnd = (e: React.DragEvent) => {
     setDraggedOrderId(null)
     e.currentTarget.classList.remove('opacity-50', 'scale-95')
-  }
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault()
   }
 
   const handleDrop = async (e: React.DragEvent, targetStatus: string) => {
@@ -177,14 +163,11 @@ export default function OrdersKanbanClient({
         o.id === draggedOrderId ? { ...o, status: targetStatus } : o,
       ),
     )
-
     const result = await updateOrderStatusAction(draggedOrderId, targetStatus)
 
     if (result.success) {
-      // Opcional: Un pequeño toast de información cuando se mueve una misión
       toast.info(`Misión enviada a: ${targetStatus}`)
     } else {
-      // 🚨 AQUÍ ESTÁ EL TOAST DE ERROR
       toast.error('Magia inestable. Revertiendo movimiento.')
       setOrders((prev) =>
         prev.map((o) =>
@@ -196,7 +179,6 @@ export default function OrdersKanbanClient({
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-10">
-      {/* HEADER DEL GREMIO */}
       <div className="flex items-center gap-3 mb-8">
         <div className="p-3 bg-toon-border border-4 border-toon-border rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
           <Receipt size={28} className="text-white" strokeWidth={3} />
@@ -211,7 +193,6 @@ export default function OrdersKanbanClient({
         </div>
       </div>
 
-      {/* TABLERO KANBAN */}
       <div className="flex flex-col xl:flex-row gap-6 overflow-x-auto pb-8 snap-x snap-mandatory">
         {COLUMNS.map((column) => {
           const ColumnIcon = column.icon
@@ -225,10 +206,9 @@ export default function OrdersKanbanClient({
             <div
               key={column.id}
               className="flex-1 min-w-[300px] xl:min-w-0 bg-slate-50 border-4 border-toon-border rounded-3xl flex flex-col h-[700px] shadow-toon snap-center overflow-hidden"
-              onDragOver={handleDragOver}
+              onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => handleDrop(e, column.id)}
             >
-              {/* CABECERA DE LA COLUMNA */}
               <div
                 className={cn(
                   'p-4 border-b-4 border-toon-border flex flex-col gap-2',
@@ -260,7 +240,6 @@ export default function OrdersKanbanClient({
                 </div>
               </div>
 
-              {/* ZONA DE DROP (TARJETAS) */}
               <div className="flex-1 p-4 overflow-y-auto space-y-4 no-scrollbar bg-[url('/grid-pattern.svg')]">
                 {columnOrders.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-gray-300 opacity-50 space-y-2 border-4 border-dashed border-gray-300 rounded-2xl">
@@ -271,7 +250,6 @@ export default function OrdersKanbanClient({
                   </div>
                 ) : (
                   columnOrders.map((order) => (
-                    /* TARJETA DE MISIÓN (DRAGGABLE & CLICKABLE) */
                     <div
                       key={order.id}
                       draggable
@@ -289,12 +267,32 @@ export default function OrdersKanbanClient({
                         <span className="bg-slate-100 text-toon-border font-black text-[10px] px-2 py-1 rounded-md border-2 border-toon-border tracking-widest pointer-events-none">
                           {order.orderNumber}
                         </span>
+                        {/* ESTADO DE PAGO */}
+                        <span
+                          className={cn(
+                            'font-black text-[9px] uppercase px-2 py-1 rounded border-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]',
+                            order.paymentStatus === 'paid'
+                              ? 'bg-toon-lime border-toon-border text-toon-border'
+                              : 'bg-toon-red border-toon-border text-white',
+                          )}
+                        >
+                          {order.paymentStatus === 'paid'
+                            ? 'Pagado'
+                            : 'Pendiente'}
+                        </span>
                       </div>
 
-                      <div className="flex items-center gap-2 mb-4 pointer-events-none">
+                      <div className="flex items-center gap-2 mb-2 pointer-events-none">
                         <UserCircle className="text-gray-400" size={16} />
                         <span className="font-black text-sm text-toon-border uppercase truncate">
                           {order.customerName}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2 mb-4 pointer-events-none">
+                        <Clock className="text-gray-400" size={12} />
+                        <span className="font-bold text-[10px] text-gray-500 uppercase">
+                          {formatDate(order.createdAt)}
                         </span>
                       </div>
 
@@ -322,9 +320,6 @@ export default function OrdersKanbanClient({
         })}
       </div>
 
-      {/* ==========================================
-          MODAL: PERGAMINO DE MISIÓN
-          ========================================== */}
       {isMounted &&
         selectedOrder &&
         createPortal(
@@ -334,15 +329,20 @@ export default function OrdersKanbanClient({
               onClick={closeModal}
             />
             <div className="fixed right-0 top-0 h-[100dvh] w-full max-w-lg bg-white border-l-8 border-toon-border z-[110] shadow-[-10px_0px_0px_0px_rgba(0,0,0,0.1)] flex flex-col animate-in slide-in-from-right duration-300">
-              {/* Header del Modal */}
               <div className="p-6 border-b-4 border-toon-border flex justify-between items-center bg-toon-pink/20 shrink-0">
                 <div>
                   <h2 className="font-black text-2xl uppercase tracking-tighter leading-none">
                     Detalles de Misión
                   </h2>
-                  <p className="font-mono text-[10px] text-gray-500 uppercase font-bold mt-1 tracking-widest">
-                    {selectedOrder.orderNumber}
-                  </p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <p className="font-mono text-[10px] text-gray-500 uppercase font-bold tracking-widest">
+                      {selectedOrder.orderNumber}
+                    </p>
+                    <span className="text-gray-300">|</span>
+                    <p className="text-[10px] font-bold text-gray-500 uppercase">
+                      {formatDate(selectedOrder.createdAt)}
+                    </p>
+                  </div>
                 </div>
                 <button
                   onClick={closeModal}
@@ -357,7 +357,57 @@ export default function OrdersKanbanClient({
               </div>
 
               <div className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar">
-                {/* 1. INFO DEL CLIENTE */}
+                {/* 1. LA TESORERÍA (NUEVA SECCIÓN DE PAGO) */}
+                <section className="bg-toon-yellow/20 border-4 border-toon-border rounded-2xl p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                  <h3 className="font-black text-xs uppercase mb-3 text-toon-border flex items-center gap-2">
+                    <Wallet size={16} strokeWidth={3} /> Tesorería y Cobros
+                  </h3>
+
+                  <div className="flex justify-between items-center bg-white border-2 border-toon-border p-3 rounded-xl mb-3 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                    <span className="font-bold text-[10px] uppercase text-gray-500">
+                      Estado del Pago
+                    </span>
+                    {selectedOrder.paymentStatus === 'paid' ? (
+                      <span className="bg-toon-lime text-toon-border px-3 py-1 rounded-md font-black text-xs uppercase border-2 border-toon-border">
+                        <CheckCircle2
+                          size={12}
+                          className="inline mr-1 mb-0.5"
+                        />{' '}
+                        Pagado Exitosamente
+                      </span>
+                    ) : (
+                      <span className="bg-toon-red text-white px-3 py-1 rounded-md font-black text-xs uppercase border-2 border-toon-border">
+                        Pago Pendiente
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="bg-white border-2 border-toon-border rounded-xl p-3 space-y-2">
+                    <div className="flex justify-between text-xs font-bold text-gray-500">
+                      <span>Subtotal Productos</span>
+                      <span>
+                        ${selectedOrder.subtotal.toLocaleString('es-CL')}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-xs font-bold text-gray-500">
+                      <span>Envío / Descuentos</span>
+                      <span>$0</span>
+                    </div>
+                    <div className="border-t-2 border-dashed border-gray-200 pt-2 flex justify-between items-end">
+                      <span className="font-black text-sm uppercase text-toon-border">
+                        Total Recibido
+                      </span>
+                      <span className="font-black text-xl text-toon-border">
+                        ${selectedOrder.total.toLocaleString('es-CL')}
+                      </span>
+                    </div>
+                    <p className="text-[9px] text-gray-400 font-bold uppercase text-right pt-1">
+                      Método: Mercado Pago
+                    </p>
+                  </div>
+                </section>
+
+                {/* 2. INFO DEL CLIENTE */}
                 <section className="bg-slate-50 border-4 border-toon-border rounded-2xl p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                   <h3 className="font-black text-xs uppercase mb-3 text-toon-blue flex items-center gap-2">
                     <MapPin size={16} strokeWidth={3} /> Objetivo (Destino)
@@ -380,7 +430,7 @@ export default function OrdersKanbanClient({
                   )}
                 </section>
 
-                {/* 2. BOTÍN (ÍTEMS) */}
+                {/* 3. BOTÍN (ÍTEMS) */}
                 <section className="bg-white border-4 border-toon-border rounded-2xl p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                   <h3 className="font-black text-xs uppercase mb-4 text-toon-pink flex items-center gap-2">
                     <PackageOpen size={16} strokeWidth={3} /> Botín a Empacar
@@ -399,8 +449,10 @@ export default function OrdersKanbanClient({
                             x{item.quantity}
                           </span>
                         </div>
+                        <span className="font-bold text-[10px] text-gray-400 -mt-1">
+                          ${item.priceAtTime.toLocaleString('es-CL')} c/u
+                        </span>
 
-                        {/* Si es un Pack y tiene receta, mostramos qué eligió el cliente */}
                         {item.packRecipe && item.packRecipe.items && (
                           <div className="mt-2 pt-2 border-t-2 border-dashed border-slate-200">
                             <span className="block text-[9px] font-black uppercase text-toon-blue mb-1">
@@ -430,7 +482,7 @@ export default function OrdersKanbanClient({
                   </div>
                 </section>
 
-                {/* 3. LOGÍSTICA (FORMULARIO) */}
+                {/* 4. LOGÍSTICA (FORMULARIO) */}
                 <section className="bg-slate-50 border-4 border-toon-border rounded-2xl p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                   <h3 className="font-black text-xs uppercase mb-4 text-toon-border flex items-center gap-2">
                     <Truck size={16} strokeWidth={3} /> Preparar Carreta
@@ -469,7 +521,7 @@ export default function OrdersKanbanClient({
                         <Loader2 size={16} className="animate-spin" />
                       ) : (
                         <Save size={16} strokeWidth={3} />
-                      )}
+                      )}{' '}
                       Guardar Datos de Envío
                     </button>
                   </form>

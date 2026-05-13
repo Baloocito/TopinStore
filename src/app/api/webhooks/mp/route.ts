@@ -96,7 +96,22 @@ export async function POST(request: Request) {
                   totalAmount: Number(orderData.total).toLocaleString('es-CL'),
                 }),
               })
+              // 🔥 NUEVO: Alerta Interna para el Maestro del Gremio
+              if (process.env.ADMIN_EMAIL) {
+                await resend.emails.send({
+                  from: 'Topin Bot <ventas@tudominio.cl>',
+                  to: process.env.ADMIN_EMAIL,
+                  subject: `💰 ¡NUEVA VENTA! $${Number(orderData.total).toLocaleString('es-CL')} - ${orderData.orderNumber}`,
+                  html: `
+                    <h2>¡Ha entrado oro a la bóveda!</h2>
+                    <p><strong>Cliente:</strong> ${orderData.customer.name}</p>
+                    <p><strong>Total:</strong> $${Number(orderData.total).toLocaleString('es-CL')}</p>
+                    <a href="${process.env.NEXT_PUBLIC_SITE_URL}/dashboard/orders">Ir al Tablero de Misiones</a>
+                  `,
+                })
+              }
             }
+
             console.log(
               `✅ ¡ORO RECIBIDO! Orden ${orderData.orderNumber} procesada y sellada.`,
             )

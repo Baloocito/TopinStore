@@ -102,6 +102,9 @@ export async function createOrderAction(
     // B. Crear la Orden (Usando el realTotal validado)
     const generatedOrderNumber = `TOPIN-${nanoid(6).toUpperCase()}`
 
+    // ⏱️ Calculamos la hora de expiración (Ahora + 30 minutos)
+    const expirationTime = new Date(Date.now() + 30 * 60 * 1000)
+
     const [insertedOrder] = await db
       .insert(orders)
       .values({
@@ -152,8 +155,8 @@ export async function createOrderAction(
     try {
       // Armamos URLs dinámicas usando la variable de entorno
       const successUrl = `${siteUrl}/checkout/success?order=${generatedOrderNumber}`
-      const failureUrl = `${siteUrl}/checkout?error=payment_failed`
-      const pendingUrl = `${siteUrl}/checkout/success?order=${generatedOrderNumber}&status=pending`
+      const failureUrl = `${siteUrl}/checkout/error`
+      const pendingUrl = `${siteUrl}/checkout/pending`
 
       const preferenceBody = {
         items: preparedMpItems,
@@ -162,11 +165,11 @@ export async function createOrderAction(
           email: formData.email,
         },
         back_urls: {
-          success: successUrl,
-          failure: failureUrl,
-          pending: pendingUrl,
+          success: `${siteUrl}/checkout/success`,
+          failure: `${siteUrl}/checkout/error`,
+          pending: `${siteUrl}/checkout/pending`,
         },
-        auto_return: 'approved',
+        auto_return: 'approved', // Esto hace que si es exitoso, los mande a Success solo
         external_reference: insertedOrder.id.toString(),
       }
 

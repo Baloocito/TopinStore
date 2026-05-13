@@ -145,6 +145,9 @@ export const orders = pgTable('orders', {
 
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
+
+  // ⏱️ EL NUEVO RELOJ DE ARENA
+  expiresAt: timestamp('expires_at'),
 })
 
 // ==========================================

@@ -3,61 +3,110 @@
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
+import { PartyPopper, Truck, Mail, Printer, ShoppingBag } from 'lucide-react'
 
-// 1. Separamos el contenido que usa la URL (searchParams)
 function SuccessContent() {
   const searchParams = useSearchParams()
-  const orderNumber = searchParams.get('order') || 'ORDEN-DESCONOCIDA'
+  const orderNumber = searchParams.get('order') || 'TOPIN-XXXXXX'
 
   return (
-    <div className="max-w-2xl mx-auto py-20 text-center space-y-8">
-      <div className="bg-toon-lime border-4 border-toon-border p-8 rounded-3xl shadow-toon animate-bounce-slow inline-block">
-        <span className="text-7xl">🎁</span>
+    <div className="max-w-3xl mx-auto py-12 px-4 text-center space-y-10 animate-in fade-in zoom-in duration-500">
+      {/* Icono Animado */}
+      <div className="relative inline-block">
+        <div className="bg-toon-lime border-4 border-toon-border p-8 rounded-3xl shadow-toon animate-bounce-slow relative z-10">
+          <PartyPopper
+            size={64}
+            className="text-toon-border"
+            strokeWidth={2.5}
+          />
+        </div>
+        <div className="absolute -top-4 -right-4 bg-toon-yellow border-2 border-toon-border p-2 rounded-full shadow-sm animate-pulse">
+          <span className="text-xl">✨</span>
+        </div>
       </div>
 
-      <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tighter">
-        ¡Misión Cumplida!
-      </h1>
+      <div className="space-y-2">
+        <h1 className="text-5xl md:text-7xl font-black uppercase tracking-tighter text-toon-border italic">
+          ¡Misión Cumplida!
+        </h1>
+        <p className="text-xl font-bold text-gray-500">
+          Tu botín ha sido asegurado con éxito.
+        </p>
+      </div>
 
-      <div className="bg-white border-4 border-toon-border p-6 rounded-2xl shadow-toon text-left">
-        <p className="font-black text-xs uppercase text-gray-400 mb-4">
-          Comprobante de Gremio
-        </p>
-        <div className="flex justify-between border-b-2 border-dashed border-gray-200 pb-2">
-          <span className="font-bold">Nro. de Orden:</span>
-          <span className="font-black text-toon-blue">{orderNumber}</span>
+      <div className="bg-white border-4 border-toon-border p-8 rounded-3xl shadow-toon text-left relative overflow-hidden">
+        {/* Marca de agua decorativa */}
+        <div className="absolute -right-8 -bottom-8 opacity-5 rotate-12">
+          <ShoppingBag size={150} />
         </div>
-        <p className="mt-4 text-sm font-bold text-gray-500">
-          Te hemos enviado un pergamino (correo) con el detalle de tu botín y
-          los pasos para el seguimiento.
-        </p>
+
+        <div className="relative z-10 space-y-6">
+          <div className="flex justify-between items-center border-b-4 border-dashed border-slate-100 pb-4">
+            <span className="font-black text-sm uppercase text-gray-400">
+              Código de Misión
+            </span>
+            <span className="font-black text-2xl text-toon-blue tracking-widest">
+              {orderNumber}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex gap-4">
+              <div className="bg-toon-blue/10 p-3 rounded-xl h-fit">
+                <Mail className="text-toon-blue" size={24} />
+              </div>
+              <div>
+                <p className="font-black text-sm uppercase">
+                  Pergamino en camino
+                </p>
+                <p className="text-xs font-bold text-gray-500 leading-tight mt-1">
+                  Revisa tu correo (y el SPAM). Ahí está el detalle de tu
+                  compra.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+              <div className="bg-toon-lime/10 p-3 rounded-xl h-fit">
+                <Truck className="text-toon-lime" size={24} />
+              </div>
+              <div>
+                <p className="font-black text-sm uppercase">
+                  Preparando Carreta
+                </p>
+                <p className="text-xs font-bold text-gray-500 leading-tight mt-1">
+                  En un máximo de 48h hábiles tu pedido saldrá de la forja hacia
+                  tu destino.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="flex gap-4 justify-center flex-wrap">
-        {/* Este es el botón que Vercel no entendía sin el 'use client' */}
         <button
           onClick={() => window.print()}
-          className="bg-white border-3 border-toon-border px-6 py-2 rounded-xl font-black uppercase text-sm shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-1 transition-all"
+          className="flex items-center gap-2 bg-white border-4 border-toon-border px-8 py-4 rounded-2xl font-black uppercase text-sm shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:translate-y-1 hover:shadow-none transition-all"
         >
-          Descargar PDF
+          <Printer size={20} strokeWidth={3} /> Guardar Comprobante
         </button>
         <Link
           href="/"
-          className="bg-toon-yellow border-3 border-toon-border px-6 py-2 rounded-xl font-black uppercase text-sm shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-1 transition-all"
+          className="flex items-center gap-2 bg-toon-yellow border-4 border-toon-border px-8 py-4 rounded-2xl font-black uppercase text-sm shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:translate-y-1 hover:shadow-none transition-all"
         >
-          Volver a la Tienda
+          <ShoppingBag size={20} strokeWidth={3} /> Seguir Comprando
         </Link>
       </div>
     </div>
   )
 }
 
-// 2. Exportamos la página envuelta en Suspense (Requisito de Next.js para usar useSearchParams)
 export default function SuccessPage() {
   return (
     <Suspense
       fallback={
-        <div className="py-20 text-center font-black text-2xl animate-pulse text-toon-border">
+        <div className="py-20 text-center font-black text-2xl animate-pulse">
           Preparando el botín...
         </div>
       }

@@ -1,11 +1,12 @@
 import {
-  Html,
-  Head,
   Body,
   Container,
-  Text,
-  Section,
+  Head,
   Heading,
+  Html,
+  Preview,
+  Section,
+  Text,
   Hr,
 } from '@react-email/components'
 import * as React from 'react'
@@ -16,151 +17,155 @@ interface ReceiptEmailProps {
   totalAmount: string
 }
 
-export default function ReceiptEmail({
+export const ReceiptEmail = ({
   customerName = 'Aventurero',
   orderNumber = 'TOPIN-XXXXXX',
   totalAmount = '0',
-}: ReceiptEmailProps) {
+}: ReceiptEmailProps) => {
   return (
     <Html>
       <Head />
+      <Preview>¡Oro recibido! Tu botín de Topin Store está asegurado.</Preview>
       <Body style={main}>
         <Container style={container}>
+          {/* Cabecera del correo */}
           <Section style={header}>
-            <Heading style={headerText}>TOPIN STORE 🧸</Heading>
+            <Heading style={h1}>¡ORO RECIBIDO!</Heading>
+            <Text style={subtitle}>Tu misión ha sido confirmada.</Text>
           </Section>
 
-          <Section style={content}>
-            <Text style={title}>¡Misión Cumplida, {customerName}!</Text>
-            <Text style={text}>
-              Tu oro ha sido recibido en las arcas del gremio y tu botín ya se
-              está preparando en nuestra forja.
-            </Text>
+          <Text style={text}>Hola {customerName},</Text>
+          <Text style={text}>
+            Los duendes de nuestra tesorería han confirmado tu pago. ¡Gracias
+            por tu compra! Ya estamos preparando tu botín en la forja.
+          </Text>
 
-            <Section style={receiptBox}>
-              <Text style={receiptLabel}>Comprobante de Gremio</Text>
-              <Hr style={divider} />
-              <Text style={receiptRow}>
-                <strong>Nro. de Orden:</strong>{' '}
-                <span style={highlight}>{orderNumber}</span>
-              </Text>
-              <Text style={receiptRow}>
-                <strong>Total Pagado:</strong> ${totalAmount} CLP
-              </Text>
+          {/* Caja de detalles de la orden */}
+          <Section style={receiptBox}>
+            <Text style={receiptTitle}>Comprobante de Gremio</Text>
+
+            <Section style={row}>
+              <Text style={label}>Nro. de Orden:</Text>
+              <Text style={value}>{orderNumber}</Text>
             </Section>
 
-            <Text style={text}>
-              Los mercaderes enviarán tu paquete pronto. Te enviaremos otro
-              pergamino cuando el botín esté en camino hacia tu zona de envío.
-            </Text>
+            <Hr style={divider} />
+
+            <Section style={row}>
+              <Text style={label}>Total Pagado:</Text>
+              <Text style={totalValue}>${totalAmount}</Text>
+            </Section>
           </Section>
 
-          <Section style={footer}>
-            <Text style={footerText}>Topin Store SpA - Santiago, Chile</Text>
-          </Section>
+          <Text style={text}>
+            Te enviaremos otro pergamino en cuanto tu paquete sea entregado a
+            los mensajeros (Courier) con tu número de seguimiento.
+          </Text>
+
+          <Text style={footer}>
+            Topin Store • Si tienes dudas, simplemente responde a este correo.
+          </Text>
         </Container>
       </Body>
     </Html>
   )
 }
 
-// ESTILOS NEO-BRUTALISTAS (Seguros para Email)
+export default ReceiptEmail
+
+// ==========================================
+// ESTILOS NEO-BRUTALISTAS PARA EMAIL
+// ==========================================
 const main = {
-  backgroundColor: '#fffdf5',
+  backgroundColor: '#f8fafc',
   fontFamily: 'system-ui, -apple-system, sans-serif',
-  padding: '20px 0',
 }
-
 const container = {
-  backgroundColor: '#ffffff',
-  border: '4px solid #1e1e1e',
-  borderRadius: '16px',
-  boxShadow: '6px 6px 0px 0px rgba(30,30,30,1)',
   margin: '0 auto',
+  padding: '40px 20px',
   maxWidth: '600px',
-  overflow: 'hidden',
 }
-
 const header = {
-  backgroundColor: '#ffde59', // toon-yellow
-  borderBottom: '4px solid #1e1e1e',
-  padding: '20px',
+  backgroundColor: '#f472b6', // toon-pink
+  border: '4px solid #0f172a', // toon-border
+  borderRadius: '16px',
+  padding: '30px 20px',
   textAlign: 'center' as const,
+  marginBottom: '32px',
+  boxShadow: '6px 6px 0px 0px rgba(15,23,42,1)', // Sombra neo-brutalista
 }
-
-const headerText = {
-  color: '#1e1e1e',
-  fontSize: '24px',
+const h1 = {
+  color: '#0f172a',
+  fontSize: '36px',
   fontWeight: '900',
-  margin: '0',
   textTransform: 'uppercase' as const,
+  margin: '0 0 10px 0',
   letterSpacing: '-1px',
 }
-
-const content = {
-  padding: '30px',
+const subtitle = {
+  color: '#0f172a',
+  fontSize: '18px',
+  fontWeight: '700',
+  margin: '0',
 }
-
-const title = {
-  color: '#1e1e1e',
-  fontSize: '20px',
-  fontWeight: '900',
-  textTransform: 'uppercase' as const,
-  marginBottom: '15px',
-}
-
 const text = {
-  color: '#4a4a4a',
-  fontSize: '15px',
-  lineHeight: '1.5',
-  fontWeight: '600',
+  color: '#334155',
+  fontSize: '16px',
+  lineHeight: '26px',
+  marginBottom: '24px',
 }
-
 const receiptBox = {
-  backgroundColor: '#f8fafc',
-  border: '3px solid #1e1e1e',
+  backgroundColor: '#ffffff',
+  border: '4px solid #0f172a',
   borderRadius: '12px',
-  padding: '20px',
-  margin: '30px 0',
+  padding: '24px',
+  marginBottom: '32px',
 }
-
-const receiptLabel = {
-  color: '#9ca3af',
-  fontSize: '12px',
+const receiptTitle = {
+  fontSize: '14px',
   fontWeight: '900',
   textTransform: 'uppercase' as const,
+  color: '#94a3b8',
+  margin: '0 0 20px 0',
   letterSpacing: '1px',
-  margin: '0 0 10px 0',
 }
-
-const divider = {
-  borderColor: '#e5e7eb',
-  borderStyle: 'dashed',
+const row = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
   margin: '10px 0',
 }
-
-const receiptRow = {
-  color: '#1e1e1e',
+const label = {
   fontSize: '16px',
-  margin: '5px 0',
-}
-
-const highlight = {
-  color: '#3b82f6', // toon-blue
-  fontWeight: '900',
-}
-
-const footer = {
-  backgroundColor: '#f8fafc',
-  borderTop: '4px solid #1e1e1e',
-  padding: '20px',
-  textAlign: 'center' as const,
-}
-
-const footerText = {
-  color: '#9ca3af',
-  fontSize: '12px',
-  fontWeight: '900',
-  textTransform: 'uppercase' as const,
+  fontWeight: '700',
+  color: '#475569',
   margin: '0',
+}
+const value = {
+  fontSize: '16px',
+  fontWeight: '900',
+  color: '#0f172a',
+  margin: '0',
+  textAlign: 'right' as const,
+}
+const totalValue = {
+  fontSize: '24px',
+  fontWeight: '900',
+  color: '#f59e0b', // toon-yellow
+  textShadow: '1px 1px 0px rgba(15,23,42,0.2)',
+  margin: '0',
+  textAlign: 'right' as const,
+}
+const divider = {
+  borderColor: '#e2e8f0',
+  borderStyle: 'dashed',
+  borderWidth: '2px',
+  margin: '20px 0',
+}
+const footer = {
+  color: '#64748b',
+  fontSize: '12px',
+  textAlign: 'center' as const,
+  marginTop: '48px',
+  fontWeight: '700',
 }
