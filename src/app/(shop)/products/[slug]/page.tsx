@@ -20,7 +20,9 @@ export default async function ProductDetailPage({
     return notFound()
   }
 
-  recordProductView(product.id)
+  recordProductView(product.id).catch((err) =>
+    console.error('Error en radar:', err),
+  )
 
   // Parseo seguro de Specs
   const parsedSpecs = Array.isArray(product.specs)
