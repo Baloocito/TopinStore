@@ -1,8 +1,7 @@
 {
   "crons": [
     {
-      "path": "/api/cron/release-stock",
-      "schedule": "*/15 * * * *"
+      "path": "/api/cron/release-stock"
     }
   ]
 }
