@@ -6,9 +6,15 @@ import { eq, and, lt, sql } from 'drizzle-orm'
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: Request) {
-  // 🛡️ PROTECCIÓN CRÍTICA: Solo permitimos que Vercel ejecute este Cron
+  // 🛡️ PROTECCIÓN CRÍTICA
   const authHeader = request.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  const systemSecret = process.env.CRON_SECRET
+
+  // Log de emergencia para ver en los servidores de Vercel qué está llegando
+  console.log('--- AUDITORÍA CRON ---')
+  console.log('¿Existe secret en servidor?:', !!systemSecret)
+
+  if (!authHeader || authHeader !== `Bearer ${systemSecret}`) {
     return new NextResponse('No autorizado', { status: 401 })
   }
 
