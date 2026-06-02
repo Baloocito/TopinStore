@@ -1,8 +1,8 @@
 'use server'
 
 import { db } from '@/db'
-import { orders } from '@/db/schema'
-import { eq } from 'drizzle-orm'
+import { orders, products } from '@/db/schema'
+import { eq, sql } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 // 🛡️ Importamos las herramientas de seguridad
 import { getServerSession } from 'next-auth/next'
@@ -94,5 +94,51 @@ export async function updateOrderLogisticsAction(
   } catch (error) {
     console.error('Error actualizando logística:', error)
     return { success: false, message: 'La carreta se rompió.' }
+  }
+}
+
+export async function deleteOrderAndReleaseStockAction(orderId: number) {
+  try {
+    // 1. Buscamos los ítems de la orden para saber qué devolver
+    const orderWithItems = await db.query.orders.findFirst({
+      where: eq(orders.id, orderId),
+      with: { items: true },
+    })
+
+    if (!orderWithItems) {
+      return {
+        success: false,
+        message: 'La misión no existe en los registros.',
+      }
+    }
+
+    // 2. Usamos una transacción SQL idéntica a la del limpiador
+    await db.transaction(async (tx) => {
+      for (const item of orderWithItems.items) {
+        if (!item.productId) continue
+
+        await tx
+          .update(products)
+          .set({
+            stock: sql`${products.stock} + ${item.quantity}`,
+          })
+          .where(eq(products.id, item.productId))
+      }
+
+      // 3. Modificamos el estado a 'expired' (o puedes usar tx.delete(orders) si prefieres borrarla)
+      await tx
+        .update(orders)
+        .set({
+          status: 'expired',
+          updatedAt: new Date(),
+        })
+        .where(eq(orders.id, orderId))
+    })
+
+    revalidatePath('/admin/orders') // Ajusta esta ruta a la de tu panel kanban
+    return { success: true }
+  } catch (error) {
+    console.error('Error al revocar misión manualmente:', error)
+    return { success: false, message: 'La magia de la base de datos falló.' }
   }
 }

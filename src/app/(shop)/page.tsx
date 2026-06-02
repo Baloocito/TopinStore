@@ -35,7 +35,7 @@ export default async function ShopPage() {
 
           <h1 className="text-5xl md:text-7xl font-black tracking-tighter uppercase text-white drop-shadow-[4px_4px_0px_rgba(0,0,0,1)] leading-none">
             Tesoros &<br />
-            Cosas Kawaii
+            Gadgets
           </h1>
 
           <p className="text-lg md:text-xl font-bold text-white/90 max-w-lg leading-snug">

@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import {
   updateOrderStatusAction,
   updateOrderLogisticsAction,
+  deleteOrderAndReleaseStockAction, // 👈 Importación de la nueva acción manual
 } from '@/app/actions/orders'
 import {
   Swords,
@@ -22,6 +23,7 @@ import {
   Loader2,
   Clock,
   Wallet,
+  Trash2, // 👈 Icono para la eliminación manual
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -29,10 +31,10 @@ export type OrderData = {
   id: number
   orderNumber: string
   customerName: string
-  subtotal: number // NUEVO
+  subtotal: number
   total: number
   status: string
-  paymentStatus: string // NUEVO (paid | unpaid)
+  paymentStatus: string // (paid | unpaid)
   itemsCount: number
   shippingAddress: string
   customerNotes: string | null
@@ -89,10 +91,15 @@ export default function OrdersKanbanClient({
   const [selectedOrder, setSelectedOrder] = useState<OrderData | null>(null)
   const [isMounted, setIsMounted] = useState(false)
   const [isSavingLogistics, setIsSavingLogistics] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false) // 👈 Estado de carga aislado para la eliminación
   const [courier, setCourier] = useState('')
   const [trackingNumber, setTrackingNumber] = useState('')
 
-  useEffect(() => setIsMounted(true), [])
+  // Sincroniza el estado local si los datos del componente de servidor cambian
+  useEffect(() => {
+    setIsMounted(true)
+    setOrders(initialOrders)
+  }, [initialOrders])
 
   const openModal = (order: OrderData) => {
     setSelectedOrder(order)
@@ -110,6 +117,31 @@ export default function OrdersKanbanClient({
       hour: '2-digit',
       minute: '2-digit',
     }).format(new Date(date))
+  }
+
+  // 👈 Función manejadora para revocar la misión y reponer inventario
+  const handleDeleteOrder = async () => {
+    if (!selectedOrder) return
+
+    const confirmar = confirm(
+      `¿Estás seguro de que deseas eliminar la misión ${selectedOrder.orderNumber}? Esto DEVOLVERÁ inmediatamente el stock a la tienda.`,
+    )
+    if (!confirmar) return
+
+    setIsDeleting(true)
+    const toastId = toast.loading('Devolviendo botín al inventario...')
+
+    const result = await deleteOrderAndReleaseStockAction(selectedOrder.id)
+    toast.dismiss(toastId)
+
+    if (result.success) {
+      setOrders((prev) => prev.filter((o) => o.id !== selectedOrder.id))
+      toast.success('¡Stock restaurado y misión archivada con éxito!')
+      closeModal()
+    } else {
+      toast.error(result.message || 'La magia de la base de datos falló.')
+    }
+    setIsDeleting(false)
   }
 
   const handleSaveLogistics = async (e: React.FormEvent) => {
@@ -267,7 +299,6 @@ export default function OrdersKanbanClient({
                         <span className="bg-slate-100 text-toon-border font-black text-[10px] px-2 py-1 rounded-md border-2 border-toon-border tracking-widest pointer-events-none">
                           {order.orderNumber}
                         </span>
-                        {/* ESTADO DE PAGO */}
                         <span
                           className={cn(
                             'font-black text-[9px] uppercase px-2 py-1 rounded border-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]',
@@ -357,13 +388,13 @@ export default function OrdersKanbanClient({
               </div>
 
               <div className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar">
-                {/* 1. LA TESORERÍA (NUEVA SECCIÓN DE PAGO) */}
-                <section className="bg-toon-yellow/20 border-4 border-toon-border rounded-2xl p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                  <h3 className="font-black text-xs uppercase mb-3 text-toon-border flex items-center gap-2">
+                {/* 1. LA TESORERÍA (CON BOTÓN DE ELIMINACIÓN Y DEVOLUCIÓN MANUAL) */}
+                <section className="bg-toon-yellow/20 border-4 border-toon-border rounded-2xl p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] space-y-3">
+                  <h3 className="font-black text-xs uppercase text-toon-border flex items-center gap-2">
                     <Wallet size={16} strokeWidth={3} /> Tesorería y Cobros
                   </h3>
 
-                  <div className="flex justify-between items-center bg-white border-2 border-toon-border p-3 rounded-xl mb-3 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                  <div className="flex justify-between items-center bg-white border-2 border-toon-border p-3 rounded-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
                     <span className="font-bold text-[10px] uppercase text-gray-500">
                       Estado del Pago
                     </span>
@@ -405,6 +436,21 @@ export default function OrdersKanbanClient({
                       Método: Mercado Pago
                     </p>
                   </div>
+
+                  {/* 🔥 BOTÓN TOON-RED PARA BORRAR Y LIBERAR STOCK */}
+                  <button
+                    type="button"
+                    disabled={isDeleting}
+                    onClick={handleDeleteOrder}
+                    className="w-full py-2.5 bg-toon-red text-white border-3 border-toon-border rounded-xl font-black text-xs uppercase shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:bg-red-500 active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:pointer-events-none"
+                  >
+                    {isDeleting ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      <Trash2 size={14} strokeWidth={3} />
+                    )}
+                    Eliminar Misión y Devolver Stock
+                  </button>
                 </section>
 
                 {/* 2. INFO DEL CLIENTE */}
@@ -468,9 +514,10 @@ export default function OrdersKanbanClient({
                                     <span className="text-xs font-bold text-gray-500 truncate flex-1">
                                       - {ing.name || `Ítem ID: ${ing.id}`}
                                     </span>
-                                    <span className="font-black text-xs text-toon-border bg-slate-100 border-2 border-toon-border/20 px-1.5 rounded-md shrink-0 shadow-[1px_1px_0px_0px_rgba(0,0,0,0.1)]">
+                                    <span className="font-black text-xs text-toon-border bg-slate-100 border-2 border-toon-border/20 px-1.5 rounded-md shrink-0 shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]">
                                       x{ing.qty}
                                     </span>
+                                    nesting: true{' '}
                                   </li>
                                 ),
                               )}
