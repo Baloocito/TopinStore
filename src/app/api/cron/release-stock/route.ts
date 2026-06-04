@@ -21,12 +21,14 @@ export async function GET(request: Request) {
   try {
     const now = new Date()
 
-    // 🕵️ 1. BUSCAR MISIONES EXPIRADAS
-    // Órdenes en 'pending' cuya fecha de expiración ya pasó
+    // 🕵️ 1. BUSCAR MISIONES EXPIRADAS (Versión Adaptada Opción A + Limpieza Histórica)
     const expiredOrders = await db.query.orders.findMany({
-      where: and(eq(orders.status, 'pending'), lt(orders.expiresAt, now)),
+      where: and(
+        eq(orders.status, 'pending'),
+        sql`(${orders.expiresAt} < ${now} OR ${orders.expiresAt} IS NULL OR ${orders.createdAt} < ${now} - INTERVAL '2 hours')`,
+      ),
       with: {
-        items: true, // Traemos los productos de cada orden
+        items: true,
       },
     })
 
