@@ -7,6 +7,7 @@ import { useCartStore } from '@/store/cartStore'
 import CartDrawer from '@/components/store/CartDrawer'
 import CategorySidebar from '@/components/store/CategorySidebar'
 import Link from 'next/link'
+import Image from 'next/image' // 👈 Importamos el componente de optimización de imágenes
 
 export default function ShopLayoutClient({
   children,
@@ -27,12 +28,27 @@ export default function ShopLayoutClient({
     <div className="min-h-screen bg-toon-bg">
       <nav className="sticky top-0 z-50 bg-white border-b-4 border-toon-border p-3 md:p-4 shadow-[0px_4px_0px_0px_rgba(0,0,0,1)] w-full">
         <div className="container mx-auto flex justify-between items-center gap-2">
-          {/* LOGO - Ahora con Link real */}
+          {/* 🔥 LOGO + ISOTIPO TOON INTEGRADO */}
           <Link
             href="/"
-            className="font-black text-xl md:text-2xl tracking-tighter cursor-pointer hover:-translate-y-0.5 transition-transform shrink-0"
+            className="flex items-center gap-3 group transition-transform active:translate-y-0.5 shrink-0"
           >
-            TOPIN STORE 🧸
+            {/* Contenedor del sticker del logo - ¡Agrandado para que respire el Rinoceronte! */}
+            <div className="relative w-14 h-14 md:w-16 md:h-16 bg-toon-yellow border-3 border-toon-border rounded-xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] group-hover:-translate-y-0.5 group-hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all overflow-hidden flex items-center justify-center shrink-0">
+              <Image
+                src="/logo.png"
+                alt="Topin Store Logo"
+                fill
+                sizes="(max-width: 768px) 96px, 96px"
+                className="object-contain scale-250" // 👈 Agregamos "scale-150" (o scale-[1.6]) para forzar el zoom del dibujo
+                priority
+              />
+            </div>
+
+            {/* Texto de la Marca Toon */}
+            <span className="font-black text-xl md:text-2xl tracking-tighter uppercase text-toon-border">
+              TOPIN STORE
+            </span>
           </Link>
 
           <div className="flex items-center gap-2 md:gap-4 font-bold shrink-0">

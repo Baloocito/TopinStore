@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import { getProducts } from '@/lib/data'
 import { cn } from '@/lib/utils'
@@ -25,7 +26,7 @@ export default async function ShopPage() {
       <section className="bg-toon-purple border-4 border-toon-border p-8 md:p-12 rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden flex flex-col md:flex-row items-center gap-8 justify-between">
         {/* Fondo decorativo */}
         <div className="absolute -right-20 -top-20 text-[200px] opacity-10 pointer-events-none rotate-12">
-          🧸
+          🐱‍👤
         </div>
 
         <div className="flex flex-col items-start text-left space-y-6 relative z-10 w-full md:w-2/3">
@@ -39,8 +40,8 @@ export default async function ShopPage() {
           </h1>
 
           <p className="text-lg md:text-xl font-bold text-white/90 max-w-lg leading-snug">
-            Desde la feria de las pulgas directamente a tu setup. Arma tu
-            inventario con packs dinámicos y joyas únicas.
+            Desde las mazmorras direcamente a tu setup. Arma tu inventario con
+            packs dinámicos y joyas únicas.
           </p>
 
           <Link
@@ -57,8 +58,15 @@ export default async function ShopPage() {
 
         {/* Imagen Gigante Hero */}
         <div className="w-full md:w-1/3 flex justify-center relative z-10 hidden md:flex">
-          <div className="w-64 h-64 bg-toon-pink border-4 border-toon-border rounded-full shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center text-9xl animate-bounce-slow">
-            ✨
+          <div className="w-64 h-64 bg-toon-pink border-4 border-toon-border rounded-full shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center animate-bounce-slow overflow-hidden group">
+            <Image
+              src="/logo.png" // 👈 Pon tu ilustración toon aquí en la carpeta /public
+              alt="Ilustración Épica Topin Store"
+              width={900} // Ajusta el tamaño para que respire dentro del círculo
+              height={900}
+              className="object-contain transform group-hover:scale-110 transition-transform duration-300"
+              priority // Fuerza a Next.js a cargar esta imagen de inmediato por estar al inicio de la página
+            />
           </div>
         </div>
       </section>

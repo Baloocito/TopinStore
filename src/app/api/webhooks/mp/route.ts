@@ -86,8 +86,9 @@ export async function POST(request: Request) {
 
             // Enviamos el Cuervo Mensajero (Correo)
             if (orderData.customer) {
+              // ✉️ A. Correo para el Cliente (Usando tu dominio oficial)
               await resend.emails.send({
-                from: 'Topin Store <onboarding@resend.dev>', // Cámbialo cuando verifiques tu dominio
+                from: 'Topin Store <ventas@drpipa.cl>', // 🔥 CAMBIADO: Dominio real listo para producción
                 to: orderData.customer.email,
                 subject: `¡Botín Asegurado! Orden ${orderData.orderNumber}`,
                 react: ReceiptEmail({
@@ -96,17 +97,24 @@ export async function POST(request: Request) {
                   totalAmount: Number(orderData.total).toLocaleString('es-CL'),
                 }),
               })
-              // 🔥 NUEVO: Alerta Interna para el Maestro del Gremio
+
+              // ✉️ B. Alerta Interna para ti (Maestro del Gremio)
               if (process.env.ADMIN_EMAIL) {
                 await resend.emails.send({
-                  from: 'Topin Bot <ventas@tudominio.cl>',
+                  from: 'Topin Bot <sistema@drpipa.cl>', // 🔥 CAMBIADO: Remitente verificado
                   to: process.env.ADMIN_EMAIL,
                   subject: `💰 ¡NUEVA VENTA! $${Number(orderData.total).toLocaleString('es-CL')} - ${orderData.orderNumber}`,
                   html: `
-                    <h2>¡Ha entrado oro a la bóveda!</h2>
-                    <p><strong>Cliente:</strong> ${orderData.customer.name}</p>
-                    <p><strong>Total:</strong> $${Number(orderData.total).toLocaleString('es-CL')}</p>
-                    <a href="${process.env.NEXT_PUBLIC_SITE_URL}/dashboard/orders">Ir al Tablero de Misiones</a>
+                    <div style="font-family: sans-serif; border: 4px solid #1c1917; padding: 24px; border-radius: 16px; max-width: 500px;">
+                      <h2 style="margin-top: 0; color: #10b981;">⚔️ ¡Ha entrado oro a la bóveda!</h2>
+                      <p><strong>Cliente:</strong> ${orderData.customer.name}</p>
+                      <p><strong>Misión:</strong> ${orderData.orderNumber}</p>
+                      <p><strong>Total Recaudado:</strong> $${Number(orderData.total).toLocaleString('es-CL')} CLP</p>
+                      <hr style="border: none; border-top: 2px dashed #1c1917; margin: 20px 0;" />
+                      <a href="https://www.drpipa.cl/dashboard" style="display: inline-block; background-color: #3b82f6; color: white; padding: 10px 20px; font-weight: bold; text-decoration: none; border: 2px solid #1c1917; border-radius: 8px; box-shadow: 3px 3px 0px #1c1917;">
+                        Ir al Tablero de Misiones
+                      </a>
+                    </div>
                   `,
                 })
               }
