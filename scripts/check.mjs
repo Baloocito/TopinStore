@@ -7,6 +7,6 @@ for (const it of items) {
   if (!it.id || !/^[a-z0-9-]+$/.test(it.id)) throw new Error(`id inválido: ${it.id}`);
   if (ids.has(it.id)) throw new Error(`id repetido: ${it.id}`);
   ids.add(it.id);
-  new URL(it.url);
+  new URL(it.url, 'https://drpipa.cl');
 }
 console.log(`links.json OK · ${items.length} enlaces`);

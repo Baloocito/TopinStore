@@ -32,9 +32,9 @@
       "id": "faro",
       "kicker": "Videojuego",
       "title": "Faro Hundido",
-      "text": "Roguelike de acción en 32 bits. En desarrollo.",
-      "cta": "Seguir el desarrollo",
-      "url": "https://www.instagram.com/xiombo",
+      "text": "Roguelike de acción en 32 bits. Tu luz es tu vida.",
+      "cta": "Ver el juego",
+      "url": "/faro",
       "color": "teal",
       "icon": "gamepad",
       "progress": {

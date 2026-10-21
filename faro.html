@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Faro Hundido · TopinGames</title>
+<meta name="description" content="Faro Hundido: roguelike de acción en 32 bits. Tu luz es tu vida, tu vista y tu dinero. En desarrollo por TopinGames.">
+<meta name="theme-color" content="#0a1219">
+<meta property="og:title" content="Faro Hundido · TopinGames">
+<meta property="og:description" content="Roguelike de acción en 32 bits. Tu luz es tu vida, tu vista y tu dinero.">
+<meta property="og:image" content="/assets/img/tg.png">
+<link rel="icon" href="/assets/favicon.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+/* Una sola columna que baja como el faro: superficie → abismo. Identidad del juego, no del hub. */
+:root{
+  --abyss:#0a1219; --hull:#101c26; --hull2:#152532; --ink:#dfe6e3; --mute:#8fa4a8;
+  --lamp:#ffb547; --lamp-dim:#a8742a; --brine:#5fb3a5; --rule:#22364a; --coral:#e57a5c; --violet:#c79ae0;
+  --f-display:"Pixelify Sans","Courier New",monospace;
+  --f-body:"Atkinson Hyperlegible","Segoe UI",system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{background:var(--abyss);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.6;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--abyss)}
+a{color:var(--brine)}
+:focus-visible{outline:2px solid var(--lamp);outline-offset:3px}
+.wrap{max-width:720px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 calc(48px + env(safe-area-inset-bottom,0px))}
+h1,h2,h3{font-family:var(--f-display);font-weight:600;line-height:1.1;text-wrap:balance}
+h2{font-size:clamp(1.7rem,7vw,2.3rem);color:var(--lamp)}
+h3{font-size:1.15rem}
+p{max-width:62ch}
+.mute{color:var(--mute)}
+
+/* barra */
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;display:flex;justify-content:space-between;align-items:center;gap:12px;
+  margin:0 calc(-1 * max(16px,env(safe-area-inset-left,0px)));padding:10px max(16px,env(safe-area-inset-left,0px));
+  background:color-mix(in srgb,var(--abyss) 90%,transparent);backdrop-filter:blur(6px);border-bottom:1px solid var(--rule)}
+.bar a{display:inline-flex;align-items:center;gap:8px;text-decoration:none;color:var(--ink);font-family:var(--f-display);font-size:.95rem;min-height:36px}
+.bar img{width:26px;height:auto}
+.bar .pill{font-family:var(--f-display);font-size:.8rem;color:var(--abyss);background:var(--lamp);padding:4px 10px;border-radius:2px}
+
+/* hero */
+.hero{padding-block:28px 8px;display:grid;gap:16px}
+.eyebrow{font-family:var(--f-display);font-size:.85rem;letter-spacing:.12em;text-transform:uppercase;color:var(--brine)}
+h1{font-size:clamp(3rem,15vw,5.4rem);font-weight:700;color:var(--lamp);letter-spacing:.02em;text-shadow:0 0 28px rgba(255,181,71,.35);line-height:.95}
+.lede{font-size:1.15rem}
+.stage{background:#05090d;border:1px solid var(--rule);padding:8px;display:grid;gap:10px}
+.stage.hit{animation:shake .3s steps(4)}
+.stage canvas{width:100%;height:auto;image-rendering:pixelated;display:block}
+.hud{display:flex;align-items:center;gap:10px;font-family:var(--f-display)}
+.hud .lab{color:var(--lamp);font-size:.95rem}
+.meter{flex:1;height:14px;border:2px solid var(--lamp-dim);padding:2px}
+.meter i{display:block;height:100%;background:repeating-linear-gradient(90deg,var(--lamp) 0 6px,transparent 6px 8px);transition:width .25s steps(6)}
+.hud output{min-width:3.5ch;text-align:right;color:var(--lamp);font-variant-numeric:tabular-nums}
+.acts{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.acts button{font-family:var(--f-display);font-size:.85rem;line-height:1.15;min-height:52px;padding:6px 4px;border-radius:2px;cursor:pointer;
+  background:var(--hull2);color:var(--ink);border:1px solid var(--rule);display:grid;place-items:center;gap:2px}
+.acts button small{font-size:.75rem;color:var(--mute)}
+.acts button:active{transform:translateY(1px);background:var(--hull)}
+.acts .neg small{color:var(--coral)} .acts .pos small{color:var(--brine)}
+.msg{font-size:.9rem;color:var(--mute);min-height:2.9em}
+.msg b{color:var(--lamp);font-weight:700}
+
+.facts{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--rule);border:1px solid var(--rule)}
+.facts div{background:var(--hull);padding:10px 12px}
+.facts b{display:block;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);font-weight:400}
+.facts span{font-family:var(--f-display);font-size:1.05rem}
+
+section{padding-block:44px 0;display:grid;gap:16px;scroll-margin-top:64px}
+.depth{font-family:var(--f-display);font-size:.8rem;letter-spacing:.12em;color:var(--brine)}
+
+.trio{display:grid;gap:12px}
+.trio div{border-left:3px solid var(--lamp);padding:2px 0 2px 14px;display:grid;gap:2px}
+.trio h3{color:var(--lamp)}
+
+/* biomas */
+.biomes{display:grid;gap:12px}
+.biome{border:1px solid var(--rule);background:var(--hull);display:grid;grid-template-columns:10px 1fr}
+.biome .band{background:linear-gradient(var(--c1),var(--c2))}
+.biome div.txt{padding:14px;display:grid;gap:6px}
+.biome .lvl{font-family:var(--f-display);font-size:.8rem;color:var(--mute)}
+.biome h3{color:var(--c2)}
+.biome .sw{display:flex;gap:3px;margin-top:4px}
+.biome .sw i{width:18px;height:18px;border:1px solid rgba(0,0,0,.4)}
+.biome .idea{font-size:.92rem;color:var(--ink);border-top:1px dashed var(--rule);padding-top:8px}
+.biome .idea b{color:var(--lamp);font-family:var(--f-display);font-weight:600}
+
+/* bestiario */
+.dex{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.mon{background:var(--hull);border:1px solid var(--rule);padding:12px;display:grid;gap:6px;justify-items:center;text-align:center}
+.mon canvas{image-rendering:pixelated;width:80px;height:auto;background:repeating-conic-gradient(#0c1720 0 25%,#0f1d28 0 50%) 0 0/10px 10px}
+.mon b{font-family:var(--f-display);font-weight:600}
+.mon small{color:var(--mute);font-size:.82rem;line-height:1.35}
+.mon.hero-spr{grid-column:1/-1;grid-template-columns:auto 1fr;text-align:left;justify-items:start;align-items:center;gap:14px}
+.mon.hero-spr canvas{width:96px}
+.bosses{display:grid;gap:10px}
+.boss{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;padding:12px 0;border-bottom:1px solid var(--rule)}
+.boss .n{font-family:var(--f-display);color:var(--coral);font-size:1.4rem;line-height:1;grid-row:span 2}
+.boss h3{color:var(--ink)}
+.boss p{color:var(--mute);font-size:.94rem}
+
+/* arsenal */
+.arms{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.arm{background:var(--hull);border:1px solid var(--rule);padding:12px;display:grid;gap:4px;align-content:start}
+.arm b{font-family:var(--f-display);font-weight:600;color:var(--lamp);font-size:1.05rem}
+.arm small{font-size:.85rem;color:var(--mute);line-height:1.4}
+.tags{display:flex;flex-wrap:wrap;gap:8px}
+.tag{font-family:var(--f-display);font-size:.85rem;padding:5px 10px;border:1px solid var(--rule);border-radius:2px;background:var(--hull)}
+.tag em{font-style:normal;color:var(--mute);font-size:.78rem;margin-left:4px}
+.legend-relic{background:linear-gradient(135deg,rgba(255,181,71,.14),transparent);border:1px solid var(--lamp-dim);padding:14px;display:grid;gap:4px}
+.legend-relic b{font-family:var(--f-display);color:var(--lamp);font-size:1.1rem}
+
+/* mapa */
+.tool{background:var(--hull);border:1px solid var(--rule);padding:12px;display:grid;gap:12px}
+#mapc{width:100%;height:auto;image-rendering:pixelated;background:#05090d;border:1px solid var(--rule)}
+.btn{font-family:var(--f-display);font-size:1.05rem;min-height:48px;padding:0 18px;border-radius:2px;cursor:pointer;border:0;background:var(--lamp);color:var(--abyss);display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none}
+.btn:active{transform:translateY(1px)}
+.maprow{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.seed{font-family:var(--f-display);color:var(--lamp)}
+.maplegend{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:.8rem;color:var(--mute)}
+.maplegend i{display:inline-block;width:11px;height:11px;margin-right:5px;vertical-align:-1px}
+
+/* progreso */
+.road{display:grid;gap:0}
+.step{display:grid;grid-template-columns:28px 1fr;gap:4px 12px;padding:10px 0}
+.step .dot{width:16px;height:16px;border:2px solid var(--rule);margin-top:4px;grid-row:span 2;justify-self:center}
+.step.done .dot{background:var(--brine);border-color:var(--brine)}
+.step.now .dot{background:var(--lamp);border-color:var(--lamp);animation:glow 1.4s ease-in-out infinite}
+.step h3{font-size:1rem}
+.step.done h3{color:var(--brine)} .step.now h3{color:var(--lamp)}
+.step p{color:var(--mute);font-size:.92rem}
+
+.cta{margin-top:44px;border:2px solid var(--lamp);background:radial-gradient(circle at 50% 0,rgba(255,181,71,.18),transparent 70%),var(--hull);padding:22px 18px;display:grid;gap:12px;text-align:center;justify-items:center}
+.cta h2{font-size:1.8rem}
+.cta .row{display:grid;gap:8px;width:100%;max-width:360px}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--rule)}
+footer{margin-top:32px;text-align:center;color:var(--mute);font-size:.85rem;display:grid;gap:4px}
+footer a{color:var(--mute)}
+
+@keyframes shake{25%{transform:translate(-3px,1px)}50%{transform:translate(3px,-1px)}75%{transform:translate(-2px,0)}}
+@keyframes glow{50%{box-shadow:0 0 0 5px rgba(255,181,71,.2)}}
+@media (min-width:600px){.trio{grid-template-columns:repeat(3,1fr)}.dex{grid-template-columns:repeat(3,1fr)}.facts{grid-template-columns:repeat(4,1fr)}}
+@media (prefers-reduced-motion:reduce){*,*::before{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="bar">
+  <a href="/"><img src="/assets/img/tg.webp" width="26" height="28" alt="">‹ TopinGames</a>
+  <span class="pill">EN DESARROLLO</span>
+</header>
+
+<header class="hero">
+  <div class="eyebrow">Roguelike de acción · 32 bits</div>
+  <h1>FARO<br>HUNDIDO</h1>
+  <p class="lede">Tu luz es tu vida, tu vista y tu dinero. Cada golpe que recibes y cada cosa que compras te deja ver un poco menos del abismo.</p>
+
+  <div class="stage" id="stage">
+    <canvas id="hero" width="240" height="144" aria-label="Isla, la farera, en el Muelle Ahogado iluminada por su farol"></canvas>
+    <div class="hud">
+      <span class="lab">LUZ</span>
+      <div class="meter" aria-hidden="true"><i id="meterFill"></i></div>
+      <output id="luzv" aria-live="polite">70</output>
+    </div>
+    <div class="acts">
+      <button type="button" class="neg" data-d="-12" data-m="Un Ahogado te alcanza. <b>Pierdes vida y también ves menos.</b>">Recibir golpe<small>−12 luz</small></button>
+      <button type="button" class="neg" data-d="-25" data-m="Compraste un exvoto. <b>Más poder, pero más frágil y más ciego.</b>">Comprar reliquia<small>−25 luz</small></button>
+      <button type="button" class="pos" data-d="30" data-m="Encendiste el refugio del piso. <b>La oscuridad retrocede.</b>">Llegar al refugio<small>+30 luz</small></button>
+    </div>
+    <p class="msg" id="msg">Pruébalo: así funciona la luz en el juego. Toca las acciones y mira cómo cambia lo que alcanzas a ver.</p>
+  </div>
+
+  <div class="facts">
+    <div><b>Partidas</b><span>30–40 min</span></div>
+    <div><b>Mundos</b><span>4 biomas</span></div>
+    <div><b>Vista</b><span>Cenital por salas</span></div>
+    <div><b>Plataformas</b><span>PC y Android</span></div>
+  </div>
+</header>
+
+<section id="historia">
+  <div class="depth">−0 m · LA SUPERFICIE</div>
+  <h2>La noche que el mar se tragó la ciudad</h2>
+  <p>Puerto Velatorio vivía de su faro. Una noche la lámpara se apagó y el mar se tragó la ciudad entera. El faro no cayó: se hundió de cabeza, y su torre ahora baja hacia el abismo como un pozo.</p>
+  <p>Eres <b>Isla</b>, la última farera. Bajas por la torre invertida para volver a encender la Lámpara Madre. Pero cuanto más bajas, más sospechas que la luz no espanta a lo que vive allá abajo.</p>
+</section>
+
+<section id="como">
+  <div class="depth">−40 m · CÓMO SE JUEGA</div>
+  <h2>Un recurso. Tres usos.</h2>
+  <div class="trio">
+    <div><h3>Vida</h3><p>Cada golpe te quita luz. Si llega a cero, la llama se apaga.</p></div>
+    <div><h3>Vista</h3><p>Tu radio de luz depende de cuánta te queda. Con poca, el abismo se cierra sobre ti.</p></div>
+    <div><h3>Dinero</h3><p>Las reliquias y mejoras se pagan con luz. Hacerte fuerte te deja frágil.</p></div>
+  </div>
+  <p class="mute">Combate legible: todo ataque enemigo avisa antes de golpear. Si mueres, sabes por qué. Cada piso se genera distinto y tú eliges la ruta: más salas, más luz, más riesgo.</p>
+</section>
+
+<section id="biomas">
+  <div class="depth">−200 m · EL DESCENSO</div>
+  <h2>Cuatro mundos bajo el agua</h2>
+  <div class="biomes" id="biomes"></div>
+</section>
+
+<section id="bestiario">
+  <div class="depth">−600 m · LO QUE TE ESPERA</div>
+  <h2>Bestiario</h2>
+  <div class="dex" id="dex"></div>
+  <h3 style="margin-top:12px;color:var(--coral)">Jefes</h3>
+  <div class="bosses" id="bosses"></div>
+</section>
+
+<section id="arsenal">
+  <div class="depth">−900 m · TU ARSENAL</div>
+  <h2>Armas y reliquias</h2>
+  <div class="arms">
+    <div class="arm"><b>Farol de mano</b><small>Rápido, combo de 3 golpes. El último quema.</small></div>
+    <div class="arm"><b>Arpón</b><small>A distancia y perfora. Hay que ir a buscarlo.</small></div>
+    <div class="arm"><b>Ancla</b><small>Lenta y brutal. Estrella enemigos contra las paredes.</small></div>
+    <div class="arm"><b>Campana</b><small>Aturde en área y revela lo invisible.</small></div>
+  </div>
+  <p>Todas comparten <b style="color:var(--lamp)">el Haz</b>: un rayo que lo atraviesa todo, a cambio de un poco de tu luz.</p>
+  <p class="mute">Las reliquias se llaman <b style="color:var(--ink)">exvotos</b>. Junta tres de la misma familia y desbloqueas un poder de conjunto. Así nace tu build, sin árboles de habilidades.</p>
+  <div class="tags">
+    <span class="tag">Fuego<em>la quemadura se propaga</em></span>
+    <span class="tag">Sal<em>tus golpes ralentizan</em></span>
+    <span class="tag">Marea<em>el dash recarga al matar</em></span>
+    <span class="tag">Hueso<em>remata a los heridos</em></span>
+  </div>
+  <div class="legend-relic"><b>Ojo del farero</b><span class="mute">Legendario · Tu radio de luz deja de depender de tu vida. Si lo encuentras, el abismo ya no te asusta.</span></div>
+</section>
+
+<section id="mapa">
+  <div class="depth">−1.200 m · NINGÚN DESCENSO SE REPITE</div>
+  <h2>Genera tu propio piso</h2>
+  <p class="mute">Cada piso se arma al azar. Al llegar al refugio ves el mapa completo y decides por dónde bajar. Cada semilla se puede compartir con tus amigos.</p>
+  <div class="tool">
+    <canvas id="mapc" width="288" height="168" aria-label="Mapa de un piso generado al azar"></canvas>
+    <div class="maprow">
+      <span>Semilla <span class="seed" id="seed">–</span></span>
+      <button class="btn" id="mGo" type="button">⟳ Nuevo piso</button>
+    </div>
+    <p class="mute" id="mStats" style="font-size:.9rem"></p>
+    <div class="maplegend">
+      <span><i style="background:#ffe39a"></i>Inicio</span><span><i style="background:#5b6c7a"></i>Combate</span>
+      <span><i style="background:#e57a5c"></i>Élite</span><span><i style="background:#5fb3a5"></i>Tienda</span>
+      <span><i style="background:#c792ea"></i>Tesoro</span><span><i style="background:#ffb547"></i>Refugio</span>
+      <span><i style="background:#b23a3a"></i>Jefe</span><span><i style="background:#2a3a48;outline:1px dashed #8fa4a8"></i>Secreta</span>
+    </div>
+  </div>
+</section>
+
+<section id="desarrollo">
+  <div class="depth">−∞ · DIARIO DE DESARROLLO</div>
+  <h2>Dónde va el juego</h2>
+  <div class="road">
+    <div class="step done"><span class="dot"></span><h3>Prototipo · listo</h3><p>Movimiento, dash, farol y la luz con tramado. Ya corre en el teléfono.</p></div>
+    <div class="step now"><span class="dot"></span><h3>Núcleo roguelike · ahora</h3><p>Pisos al azar, tienda, reliquias, la luz como moneda y el primer jefe: la Sirena de Brea.</p></div>
+    <div class="step"><span class="dot"></span><h3>Muelle y Catedral</h3><p>Arte final de los dos primeros mundos, más enemigos y el Santuario.</p></div>
+    <div class="step"><span class="dot"></span><h3>Archivo y Raíz</h3><p>El descenso completo, los tres finales y las 40 botellas con mensaje.</p></div>
+    <div class="step"><span class="dot"></span><h3>Pulido y beta</h3><p>Dificultades, controles táctiles, sonido y pruebas con jugadores.</p></div>
+  </div>
+</section>
+
+<div class="cta">
+  <h2>Baja con nosotros</h2>
+  <p class="mute">Avances, gifs y pruebas del juego los publico primero en mis redes. Síguelo para ser de los primeros en jugarlo.</p>
+  <div class="row">
+    <a class="btn" href="/go/ig?src=faro">Seguir el desarrollo en Instagram</a>
+    <a class="btn ghost" href="/">‹ Volver a TopinGames</a>
+  </div>
+</div>
+
+<footer>
+  <span>Faro Hundido · un juego de TopinGames en desarrollo</span>
+  <span>Título y contenido de trabajo, pueden cambiar.</span>
+</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+const P={k:"#0b1420",d:"#1b2a3a",c:"#2f4a5c",C:"#4d7186",s:"#e0b48a",S:"#a8714e",h:"#3a2a22",
+a:"#ffb547",A:"#ffe39a",o:"#d9731f",w:"#f4ecd8",g:"#3f7f6e",G:"#73b59a",p:"#6e4a96",P:"#c79ae0",
+r:"#b23a3a",b:"#d8cfb4",B:"#9b917a",t:"#2c3946",T:"#4a5b6a",u:"#1b4a60",U:"#2f7590"};
+const SPR={
+farera:["......kkkk......",".....kccCCk.....","....kcCCCCck....","....kcsssssk....","....kcskskSk....","....kcssssSk....",".....kcSSck.....","....kccccCCk....","...kcCcccCCck...","...kcCcccCCck.k.","..kscCcccCCcskk.","..kSkcccccCkkAak","...kkcccccCkkaAk","....kcccccCkkook","....kcccccCckkk.","....kccccCCCk...","...kccccCCCCck..","...kcccccCCCck..","...kddddddddk...","....kddk.kddk...","....kddk.kddk...","....kddk.kddk...","....khhk.khhk...","....kkkk.kkkk..."],
+ahogado:[".....kkkkk......","....kgGGGgk.....","...kgGwGwGgk....","...kgGGGGGgk....","...kgkrrrkgk....","....kggggggk....","..kkdgGgGgdkk...",".kGkddgggddkGk..",".kgkduddduddkgk.",".kk.kdddddddk.kk","....kduuuudk.....","....kdddddddk...","....kdk...kdk...","....kgk...kgk...","...kggk...kggk..","...kkkk...kkkk.."],
+medusa:[".....kkkkkk.....","...kkPPPPPPkk...","..kPPPwwPPPPPk..",".kPPPwAAwPPPPPk.",".kPPPwAAwPPPPPk.",".kpPPPwwPPPPPpk.",".kppPPPPPPPPppk.","..kkpppppppppkk.","...kpkpkpkpkpk..","...kp.kp.kp.kp..","....kp.kp.kp.k..","...kp.kp.kp.kp..","....kp..kp..kp..",".....k...k...k..","................","................"],
+cangrejo:["................","..kk........kk..",".krrk......krrk.",".krk.kkkkkk.krk.","..kkkbbbbbbkkk..","....kbaBBabk....","...kbBbAAbBbk...","..kbbBbaabBbbk..","..krbbbbbbbbrk..",".krrkrrrrrrkrrk.",".kk.krwrrwrk.kk.","....krrrrrrk....","...kr.kkkk.rk...","..kr........rk..","..kk........kk..","................"],
+aceite:["................",".......kk.......","......kAk.......","......kak.......",".....kaAak......","....kaAAaak.....","....kaAaaok.....","...kaAaaaook....","...kaaaaaook....","...kaaaaoook....","....kaaoook.....","....kaooook.....",".....kkkkk......","................","................","................"]
+};
+function spr(grid){const cv=document.createElement("canvas");cv.width=16;cv.height=grid.length;const x=cv.getContext("2d");
+  grid.forEach((row,j)=>{for(let i=0;i<16;i++){const ch=row[i];if(ch&&P[ch]){x.fillStyle=P[ch];x.fillRect(i,j,1,1);}}});return cv;}
+function rng(seed){let a=seed>>>0;return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function tile(type,seed){const cv=document.createElement("canvas");cv.width=16;cv.height=16;const x=cv.getContext("2d");const r=rng(seed);
+  if(type==="floor"){x.fillStyle=P.t;x.fillRect(0,0,16,16);for(let i=0;i<14;i++){x.fillStyle=r()<.5?P.T:"#25313c";x.fillRect((r()*16)|0,(r()*16)|0,1,1);}
+    x.fillStyle="#1a232c";x.fillRect(0,7,16,1);x.fillRect(0,15,16,1);x.fillRect(7,0,1,7);x.fillRect(15,8,1,7);}
+  else if(type==="wet"){x.fillStyle=P.u;x.fillRect(0,0,16,16);x.fillStyle=P.U;for(let i=0;i<3;i++){const yy=2+((r()*12)|0),xx=(r()*8)|0;x.fillRect(xx,yy,4+((r()*5)|0),1);}x.fillStyle="#123a4c";x.fillRect(0,15,16,1);}
+  else{x.fillStyle=P.T;x.fillRect(0,0,16,16);x.fillStyle="#6a7d8c";x.fillRect(0,0,16,2);x.fillStyle="#263340";x.fillRect(0,6,16,1);x.fillRect(0,11,16,1);x.fillRect(5,0,1,6);x.fillRect(12,7,1,4);x.fillRect(3,12,1,4);x.fillStyle=P.d;x.fillRect(0,14,16,2);}
+  return cv;}
+
+// ---------- escena con luz ----------
+const hero=document.getElementById("hero"),hx=hero.getContext("2d");
+const base=document.createElement("canvas");base.width=240;base.height=144;const bx=base.getContext("2d");
+(function(){const r=rng(7);for(let ty=0;ty<9;ty++)for(let tx=0;tx<15;tx++){let t="floor";if(ty<2)t="wall";else if(((tx>9&&ty>5)||(tx<3&&ty===4))&&r()<.85)t="wet";bx.drawImage(tile(t,tx*31+ty*17),tx*16,ty*16);}
+  bx.drawImage(spr(SPR.medusa),36,38);bx.drawImage(spr(SPR.ahogado),178,66);bx.drawImage(spr(SPR.cangrejo),54,104);bx.drawImage(spr(SPR.aceite),152,104);bx.drawImage(spr(SPR.farera),108,58);})();
+const baseData=bx.getImageData(0,0,240,144).data;
+const BAYER=[0,8,2,10,12,4,14,6,3,11,1,9,15,7,13,5];
+const reduce=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
+let luz=70,shown=70,flick=0;
+const out=document.getElementById("luzv"),fill=document.getElementById("meterFill"),msg=document.getElementById("msg"),stage=document.getElementById("stage");
+function draw(){
+  const R=(48+1.2*shown)/2+flick,lx=122,ly=70,jx=44,jy=44,jR=24;
+  const img=hx.createImageData(240,144),d=img.data;
+  for(let y=0;y<144;y++)for(let x=0;x<240;x++){const i=(y*240+x)*4;
+    const l1=shown<=0?0:1-Math.hypot(x-lx,y-ly)/R,l2=0.6*(1-Math.hypot(x-jx,y-jy)/jR);
+    const L=Math.max(l1,l2,0.04);const band=Math.max(0,Math.min(4,Math.floor(L*4+BAYER[(x&3)+((y&3)<<2)]/16)))/4;
+    let rr=baseData[i],gg=baseData[i+1],bb=baseData[i+2];const dr=rr*.10,dg=gg*.14,db=bb*.24+6;
+    rr=dr+(rr-dr)*band;gg=dg+(gg-dg)*band;bb=db+(bb-db)*band;
+    if(l1>=l2&&band>=.5){rr*=1.10;gg*=1.02;bb*=.88;}else if(l2>l1&&band>0){rr*=1.04;bb*=1.12;}
+    d[i]=rr;d[i+1]=gg;d[i+2]=bb;d[i+3]=255;}
+  hx.putImageData(img,0,0);
+}
+function setLuz(v){luz=Math.max(0,Math.min(100,v));out.textContent=luz;fill.style.width=luz+"%";
+  const step=()=>{if(shown===luz)return;shown+=Math.sign(luz-shown)*Math.min(3,Math.abs(luz-shown));draw();requestAnimationFrame(step);};
+  if(reduce){shown=luz;draw();}else step();}
+document.querySelectorAll(".acts button").forEach(b=>b.addEventListener("click",()=>{
+  const dlt=+b.dataset.d;
+  if(dlt<0&&luz<=0){setLuz(70);msg.innerHTML="La llama se apagó y vuelves al Santuario. <b>Otra bajada, otra suerte.</b>";return;}
+  let note=b.dataset.m;
+  if(dlt===-25&&luz-25<1){note="No te alcanza. <b>Comprar nunca te mata</b>: la tienda no te deja bajo 1 de luz.";msg.innerHTML=note;return;}
+  setLuz(luz+dlt);
+  if(luz===0)note="Tu llama se apagó. <b>Fin de la run.</b> Toca cualquier acción para volver a bajar.";
+  msg.innerHTML=note;
+  if(dlt<0&&!reduce){stage.classList.remove("hit");void stage.offsetWidth;stage.classList.add("hit");}
+}));
+setLuz(70);draw();
+if(!reduce)setInterval(()=>{flick=Math.round((Math.random()*2-1)*1.5);draw();},140);
+
+// ---------- biomas ----------
+const BIOMES=[
+ ["Muelle Ahogado","Pisos 1–3","Redes, barcas podridas y faroles de pesca.","Medusas que brillan: luz ajena que puedes aprovechar.",["#0d1c24","#1b4a60","#2f7590","#3f7f6e","#73b59a","#c79ae0"]],
+ ["Catedral Sumergida","Pisos 4–6","Vitrales rotos, velas que flotan y coral en los bancos.","Hay enemigos que apagan tu luz por un rato.",["#140f1f","#2b2140","#4a3a6b","#7a5aa0","#c9a6d8","#f2a07b"]],
+ ["Archivo de los Náufragos","Pisos 7–9","Estanterías infinitas, tinta en el agua y mapas que cambian.","Enemigos que solo existen dentro de tu luz.",["#0f0f14","#3a3646","#8c7a62","#c4ad84","#33529a","#6c8fd6"]],
+ ["Raíz del Faro","Pisos 10–12","Raíces de piedra, vidrio fundido y una luz que late.","Demasiada luz atrae enemigos: brillar tiene un costo.",["#140a08","#5a2a1c","#8f4428","#c8682e","#f0a040","#ffe08a"]]
+];
+document.getElementById("biomes").innerHTML=BIOMES.map(([n,l,t,i,c])=>`<article class="biome" style="--c1:${c[1]};--c2:${c[4]}"><span class="band"></span><div class="txt">
+  <span class="lvl">${l}</span><h3>${n}</h3><p class="mute">${t}</p><div class="sw">${c.map(x=>`<i style="background:${x}"></i>`).join("")}</div>
+  <p class="idea"><b>La luz aquí:</b> ${i}</p></div></article>`).join("");
+
+// ---------- bestiario ----------
+const dex=document.getElementById("dex");
+[["farera","Isla, la farera","La última que queda. Su farol es todo lo que tiene.",1],
+ ["ahogado","Ahogado","Persigue y embiste. Se agacha y brilla antes de atacar."],
+ ["medusa","Medusa-farol","Flota y da luz. Al morir explota: úsala contra otros."],
+ ["cangrejo","Cangrejo-relicario","Inmune de frente. Hay que pegarle por detrás."],
+ ["aceite","Gota de Luz","Lo que sueltan los enemigos. Tu vida y tu dinero."]].forEach(([k,n,s,h])=>{
+  const c=spr(SPR[k]);c.setAttribute("role","img");c.setAttribute("aria-label",n);
+  const el=document.createElement("div");el.className="mon"+(h?" hero-spr":"");el.append(c);
+  const t=document.createElement("div");t.innerHTML=`<b>${n}</b><br><small>${s}</small>`;
+  if(h)el.append(t);else{el.insertAdjacentHTML("beforeend",`<b>${n}</b><small>${s}</small>`);}
+  dex.append(el);});
+const BOSSES=[["La Sirena de Brea","Muelle Ahogado","Canta proyectiles en espiral, inunda la sala con brea que apaga tu luz y emerge bajo tus pies."],
+ ["El Obispo Coral","Catedral Sumergida","Invoca fieles, cura con sus vitrales y hace crecer el coral hasta encerrarte."],
+ ["El Cartógrafo","Archivo de los Náufragos","Redibuja las paredes, te copia en papel y apaga todas las luces menos la tuya."],
+ ["La Lámpara Madre","Raíz del Faro","El examen final. Lo que vive dentro de la lámpara recuerda a todos los anteriores."]];
+document.getElementById("bosses").innerHTML=BOSSES.map(([n,b,t],i)=>`<div class="boss"><span class="n">${["I","II","III","IV"][i]}</span><h3>${n} <small class="mute" style="font-family:var(--f-body);font-size:.8rem">· ${b}</small></h3><p>${t}</p></div>`).join("");
+
+// ---------- generador de pisos ----------
+const mc=document.getElementById("mapc"),mx=mc.getContext("2d");
+const COL={start:"#ffe39a",combat:"#5b6c7a",elite:"#e57a5c",shop:"#5fb3a5",treasure:"#c792ea",refuge:"#ffb547",boss:"#b23a3a",secret:"#2a3a48"};
+const D4=[[1,0],[-1,0],[0,1],[0,-1]];
+function gen(seed,f){const W=9,H=7,target=Math.min(20,7+Math.round(1.5*f));
+  for(let att=0;att<200;att++){const r=rng(seed+att*7919);const g=Array.from({length:H},()=>Array(W).fill(null));
+    const filled=(x,y)=>x>=0&&y>=0&&x<W&&y<H&&g[y][x];const nb=(x,y)=>D4.reduce((a,[dx,dy])=>a+(filled(x+dx,y+dy)?1:0),0);
+    g[3][4]="combat";let q=[[4,3]],count=1;
+    while(q.length&&count<target){const [cx,cy]=q.shift();const dirs=D4.slice().sort(()=>r()-.5);
+      for(const [dx,dy] of dirs){const nx=cx+dx,ny=cy+dy;if(count>=target||nx<0||ny<0||nx>=W||ny>=H||g[ny][nx])continue;if(nb(nx,ny)>1||r()<.5)continue;g[ny][nx]="combat";q.push([nx,ny]);count++;}
+      if(!q.length&&count<target){for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(g[y][x]&&r()<.3)q.push([x,y]);if(!q.length)break;}}
+    if(count!==target)continue;
+    const dist=Array.from({length:H},()=>Array(W).fill(-1));dist[3][4]=0;const bq=[[4,3]];
+    while(bq.length){const [x,y]=bq.shift();for(const [dx,dy] of D4){const nx=x+dx,ny=y+dy;if(filled(nx,ny)&&dist[ny][nx]<0){dist[ny][nx]=dist[y][x]+1;bq.push([nx,ny]);}}}
+    const cells=[];for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(g[y][x])cells.push({x,y,d:dist[y][x],n:nb(x,y)});
+    const ends=cells.filter(c=>c.n===1&&c.d>0).sort((a,b)=>b.d-a.d);if(ends.length<3)continue;
+    g[3][4]="start";g[ends[0].y][ends[0].x]="boss";g[ends[1].y][ends[1].x]="treasure";g[ends[2].y][ends[2].x]="shop";
+    const maxD=ends[0].d;const mid=cells.filter(c=>g[c.y][c.x]==="combat").sort((a,b)=>Math.abs(a.d-maxD/2)-Math.abs(b.d-maxD/2))[0];if(mid)g[mid.y][mid.x]="refuge";
+    const eliteN=1+Math.floor(f/3);const cand=cells.filter(c=>g[c.y][c.x]==="combat"&&c.d>=2).sort(()=>r()-.5);cand.slice(0,eliteN).forEach(c=>g[c.y][c.x]="elite");
+    let sec=null;for(let y=0;y<H&&!sec;y++)for(let x=0;x<W;x++){if(!g[y][x]&&nb(x,y)>=3){const tb=D4.some(([dx,dy])=>filled(x+dx,y+dy)&&g[y+dy][x+dx]==="boss");if(!tb){sec=[x,y];break;}}}
+    if(sec)g[sec[1]][sec[0]]="secret";
+    return {g,count,maxD,elites:Math.min(eliteN,cand.length),secret:!!sec};}
+  return null;}
+function code(n){const A="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";let s="";for(let i=0;i<8;i++){s+=A[n%32];n=Math.floor(n/32)||(n*7+13)%99991;}return s;}
+let seed=(Math.random()*1e9)|0;
+function drawMap(){const f=1+(seed%12);const res=gen(seed,f);mx.fillStyle="#05090d";mx.fillRect(0,0,288,168);
+  if(!res){seed=(seed*31+7)%1e9;return drawMap();}
+  const {g}=res,cw=32,ch=24,rw=24,rh=16;const cx=x=>x*cw+(cw-rw)/2,cy=y=>y*ch+(ch-rh)/2;
+  mx.fillStyle="#4a5b6a";
+  for(let y=0;y<7;y++)for(let x=0;x<9;x++){if(!g[y][x]||g[y][x]==="secret")continue;
+    if(x<8&&g[y][x+1]&&g[y][x+1]!=="secret")mx.fillRect(cx(x)+rw,cy(y)+rh/2-2,cw-rw,4);
+    if(y<6&&g[y+1][x]&&g[y+1][x]!=="secret")mx.fillRect(cx(x)+rw/2-2,cy(y)+rh,4,ch-rh);}
+  for(let y=0;y<7;y++)for(let x=0;x<9;x++){const t=g[y][x];if(!t)continue;
+    mx.fillStyle="#0b1420";mx.fillRect(cx(x)-1,cy(y)-1,rw+2,rh+2);mx.fillStyle=COL[t];mx.fillRect(cx(x),cy(y),rw,rh);
+    if(t==="secret"){mx.fillStyle="#8fa4a8";for(let i=0;i<rw;i+=4){mx.fillRect(cx(x)+i,cy(y),2,1);mx.fillRect(cx(x)+i,cy(y)+rh-1,2,1);}}
+    else{mx.fillStyle="rgba(255,255,255,.18)";mx.fillRect(cx(x),cy(y),rw,2);}
+    const ic={start:"I",elite:"!",shop:"$",treasure:"+",refuge:"F",boss:"J",secret:"?"}[t];
+    if(ic){mx.fillStyle="#0b1420";mx.font="600 12px 'Pixelify Sans', monospace";mx.textAlign="center";mx.textBaseline="middle";mx.fillText(ic,cx(x)+rw/2,cy(y)+rh/2+1);}}
+  document.getElementById("seed").textContent=code(seed);
+  document.getElementById("mStats").textContent="Piso "+f+" · "+res.count+" salas · jefe a "+res.maxD+" salas del inicio · "+res.elites+" élite"+(res.elites>1?"s":"")+(res.secret?" · hay una sala secreta":"");}
+document.getElementById("mGo").addEventListener("click",()=>{seed=(Math.random()*1e9)|0;drawMap();});
+drawMap();if(document.fonts&&document.fonts.ready)document.fonts.ready.then(drawMap);
+
+// visita medida
+try{const src=new URLSearchParams(location.search).get("src")||sessionStorage.getItem("src")||"hub";
+  const u="/api/hit?src="+encodeURIComponent(("faro-"+src).slice(0,24));navigator.sendBeacon?navigator.sendBeacon(u):fetch(u,{keepalive:true});}catch(_){}
+})();
+</script>
+</body>
+</html>
