@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Xiombo · TopinGames</title>
+  <meta name="description" content="Desconecta de la pega, conecta con TopinGames. Ofertas de Switch, Trueque, mi videojuego y todo lo de TopinGames en un solo lugar.">
+  <meta name="theme-color" content="#0E0E14">
+  <meta property="og:title" content="Xiombo · TopinGames">
+  <meta property="og:description" content="Ofertas de Switch, Trueque, mi videojuego y todo lo de TopinGames en un solo lugar.">
+  <meta property="og:image" content="/assets/img/tg.png">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="/assets/favicon.png" type="image/png">
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Press+Start+2P&family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="preload" href="/data/links.json" as="fetch" crossorigin>
+  <link rel="stylesheet" href="/assets/hub.css">
+</head>
+<body>
+  <div class="grid-bg" aria-hidden="true"></div>
+
+  <main class="wrap">
+    <header class="topbar">
+      <span class="pixel">PLAYER 1</span>
+      <span class="status"><i></i><span class="pixel">ONLINE</span></span>
+    </header>
+
+    <section class="hero" aria-labelledby="name">
+      <div class="logo-wrap">
+        <img src="/assets/img/tg.webp" width="132" height="142" alt="Logo TopinGames" fetchpriority="high">
+      </div>
+      <h1 id="name" class="name">Xiombo</h1>
+      <p class="brand"><span>×</span> TopinGames</p>
+      <p class="gg" aria-label="GG izi"><span class="gg-badge"><span>GG</span><span>IZI</span><b>!!</b></span></p>
+      <p class="bio" data-bind="bio"></p>
+      <ul class="chips" data-bind="chips"></ul>
+    </section>
+
+    <h2 class="section-title"><span class="pixel">▶ ELIGE TU CAMINO</span></h2>
+
+    <a class="card featured reveal" data-slot="featured" href="https://t.me/TopinSaleSwitch">
+      <div class="card-head">
+        <span class="kicker"><i class="live-dot"></i><span data-f="kicker">Canal en vivo</span></span>
+        <span class="arrow" aria-hidden="true">↗</span>
+      </div>
+      <h3 data-f="title">TopinSale Switch</h3>
+      <p data-f="text"></p>
+      <div class="deal" data-deal hidden>
+        <span class="pixel deal-label">ÚLTIMA OFERTA</span>
+        <strong data-deal-title></strong>
+        <span data-deal-detail></span>
+        <time data-deal-time></time>
+      </div>
+      <span class="btn" data-f="cta">Unirme gratis al canal</span>
+    </a>
+
+    <div class="paths" data-bind="paths"></div>
+
+    <h2 class="section-title"><span class="pixel">▶ SÍGUEME</span></h2>
+    <nav class="socials" data-bind="socials" aria-label="Redes sociales"></nav>
+
+    <footer class="foot">
+      <span class="pixel">© TOPINGAMES</span>
+      <span>Hecho a mano por Xiombo en Santiago</span>
+    </footer>
+  </main>
+
+  <script src="/assets/hub.js" defer></script>
+  <script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>

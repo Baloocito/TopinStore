@@ -1,0 +1,16 @@
+import { urlFor, cleanSrc, logEvent } from './_lib.js';
+
+export default function handler(req, res) {
+  const id = String(req.query.id || '');
+  const target = urlFor(id);
+  if (!target) {
+    res.statusCode = 302;
+    res.setHeader('Location', '/');
+    return res.end();
+  }
+  logEvent(req, { type: 'click', id, src: cleanSrc(req.query.src) });
+  res.setHeader('Cache-Control', 'no-store');
+  res.statusCode = 302;
+  res.setHeader('Location', target);
+  res.end();
+}
