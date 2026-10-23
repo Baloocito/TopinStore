@@ -19,16 +19,6 @@
   },
   "paths": [
     {
-      "id": "trueque",
-      "kicker": "Tienda",
-      "title": "Trueque",
-      "text": "Usados con historia y gadgets que uso de verdad.",
-      "cta": "Ver productos",
-      "url": "https://trueque-app.vercel.app/",
-      "color": "pink",
-      "icon": "bag"
-    },
-    {
       "id": "faro",
       "kicker": "Videojuego",
       "title": "Faro Hundido",
@@ -40,8 +30,17 @@
       "progress": {
         "label": "Fase 1",
         "value": 25
-      },
-      "slot": "top"
+      }
+    },
+    {
+      "id": "trueque",
+      "kicker": "Tienda",
+      "title": "Trueque",
+      "text": "Usados con historia y gadgets que uso de verdad.",
+      "cta": "Ver productos",
+      "url": "https://trueque-app.vercel.app/",
+      "color": "pink",
+      "icon": "bag"
     },
     {
       "id": "colabora",
@@ -76,9 +75,9 @@
     }
   ],
   "support": {
-    "kicker": "Apoya el desarrollo",
-    "title": "Enciende el faro",
-    "text": "Faro Hundido lo hago solo. Tu aporte paga el arte del juego.",
+    "kicker": "Hagámoslo juntos",
+    "title": "Saltemos de 8 a 32 bits",
+    "text": "Faro Hundido lo construimos entre todos. Tu aporte va directo a mejorar la gráfica del juego.",
     "goal": {
       "label": "Arte del Muelle Ahogado",
       "raised": 0,
