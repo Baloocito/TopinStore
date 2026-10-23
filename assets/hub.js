@@ -46,7 +46,7 @@
     fc.href = go(f.id);
     for (const k of ['kicker', 'title', 'text', 'cta']) fc.querySelector(`[data-f="${k}"]`).textContent = f[k];
 
-    $('[data-bind="paths"]').innerHTML = data.paths.map((x) => `
+    const card = (x) => `
       <a class="card path ${esc(x.color)} reveal" href="${go(x.id)}">
         <div class="row">
           <span class="icon">${icon(x.icon)}</span>
@@ -62,7 +62,11 @@
             <div class="meta pixel"><span>${esc(x.progress.label.toUpperCase())}</span><span>${Number(x.progress.value) || 0}%</span></div>
           </div>` : ''}
         <span class="btn">${esc(x.cta)}</span>
-      </a>`).join('');
+      </a>`;
+    const bySlot = (slot) => data.paths.filter((x) => (x.slot || 'main') === slot).map(card).join('');
+    $('[data-bind="paths-top"]').innerHTML = bySlot('top');
+    $('[data-bind="paths"]').innerHTML = bySlot('main');
+    $('[data-bind="paths-end"]').innerHTML = bySlot('end');
 
     $('[data-bind="socials"]').innerHTML = data.socials.map((s) => `
       <a class="social" href="${go(s.id)}">
@@ -97,11 +101,12 @@
           <div class="goal-meta pixel"><span>${clp(g.raised)}</span><span>META ${clp(g.target)}</span></div>
         </div>` : ''}
       ${tiers.length ? `
-        <span class="pixel sup-label">DESDE CHILE · MERCADO PAGO</span>
+        <div class="pay-head"><span class="pay-name mp">${esc((s.local && s.local.name) || 'Mercado Pago')}</span><small>${esc((s.local && s.local.note) || '')}</small></div>
         <div class="tiers">${tiers.map((t) => `
           <a class="tier" href="${go(t.id)}"><b>${esc(t.amount)}</b><small>${esc(t.name)}</small></a>`).join('')}
         </div>` : ''}
       ${s.intl ? `
+        <div class="pay-head"><span class="pay-name kofi">${esc(s.intl.name || 'Ko-fi')}</span><small>Para quienes están fuera de Chile</small></div>
         <a class="btn sup-intl" href="${go(s.intl.id)}">
           <span>${esc(s.intl.label)}</span><small>${esc(s.intl.sub)}</small>
         </a>` : ''}`;

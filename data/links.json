@@ -40,7 +40,8 @@
       "progress": {
         "label": "Fase 1",
         "value": 25
-      }
+      },
+      "slot": "top"
     },
     {
       "id": "colabora",
@@ -50,7 +51,8 @@
       "cta": "Escríbeme",
       "url": "https://wa.me/56933611786?text=Hola%20Xiombo%2C%20vengo%20desde%20tu%20web%20y%20quiero%20colaborar%20con%20TopinGames",
       "color": "white",
-      "icon": "handshake"
+      "icon": "handshake",
+      "slot": "end"
     }
   ],
   "socials": [
@@ -105,9 +107,14 @@
     ],
     "intl": {
       "id": "kofi",
-      "label": "Apoyar en Ko-fi",
-      "sub": "Desde cualquier país · tarjeta o PayPal",
-      "url": "https://ko-fi.com/topingames"
+      "label": "Apoyar con Ko-fi",
+      "sub": "Tarjeta o PayPal · en dólares",
+      "url": "https://ko-fi.com/topingames",
+      "name": "Ko-fi"
+    },
+    "local": {
+      "name": "Mercado Pago",
+      "note": "En pesos chilenos · débito, crédito o saldo"
     }
   }
 }
