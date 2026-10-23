@@ -6,6 +6,10 @@ const index = new Map();
 index.set(data.featured.id, data.featured.url);
 for (const p of data.paths) index.set(p.id, p.url);
 for (const s of data.socials) index.set(s.id, s.url);
+if (data.support) {
+  for (const t of data.support.tiers || []) if (t.url) index.set(t.id, t.url);
+  if (data.support.intl?.url) index.set(data.support.intl.id, data.support.intl.url);
+}
 
 export const urlFor = (id) => index.get(id);
 

@@ -69,7 +69,43 @@
         ${icon(s.id)}<b>${esc(s.label)}</b><small>${esc(s.handle)}</small>
       </a>`).join('');
 
+    renderSupport(data.support);
     reveal();
+  }
+
+  const clp = (n) => '$' + Math.round(n).toLocaleString('es-CL');
+
+  function renderSupport(s) {
+    const box = $('[data-bind="support"]');
+    if (!s) return;
+    const tiers = (s.tiers || []).filter((t) => t.url);
+    const g = s.goal;
+    const pct = g && g.target > 0 ? Math.min(100, Math.round((g.raised / g.target) * 100)) : null;
+    box.innerHTML = `
+      <div class="sup-head">
+        <span class="flame" aria-hidden="true"><i></i><i></i><i></i></span>
+        <div>
+          <span class="kicker">${esc(s.kicker)}</span>
+          <h3 id="support-title">${esc(s.title)}</h3>
+        </div>
+      </div>
+      <p>${esc(s.text)}</p>
+      ${pct !== null ? `
+        <div class="goal" aria-label="${esc(g.label)}: ${pct}%">
+          <div class="goal-top"><span>${esc(g.label)}</span><b>${pct}%</b></div>
+          <div class="bar"><div class="fill" data-to="${pct}"></div></div>
+          <div class="goal-meta pixel"><span>${clp(g.raised)}</span><span>META ${clp(g.target)}</span></div>
+        </div>` : ''}
+      ${tiers.length ? `
+        <span class="pixel sup-label">DESDE CHILE · MERCADO PAGO</span>
+        <div class="tiers">${tiers.map((t) => `
+          <a class="tier" href="${go(t.id)}"><b>${esc(t.amount)}</b><small>${esc(t.name)}</small></a>`).join('')}
+        </div>` : ''}
+      ${s.intl ? `
+        <a class="btn sup-intl" href="${go(s.intl.id)}">
+          <span>${esc(s.intl.label)}</span><small>${esc(s.intl.sub)}</small>
+        </a>` : ''}`;
+    box.hidden = false;
   }
 
   function reveal() {
@@ -111,7 +147,7 @@
 
   if (window.HUB_DATA) {
     const d = window.HUB_DATA;
-    [d.featured, ...d.paths, ...d.socials].forEach((x) => PREVIEW.set(x.id, x.url));
+    [d.featured, ...d.paths, ...d.socials, ...((d.support && d.support.tiers) || []), ...(d.support && d.support.intl ? [d.support.intl] : [])].forEach((x) => PREVIEW.set(x.id, x.url));
     render(d);
     return;
   }

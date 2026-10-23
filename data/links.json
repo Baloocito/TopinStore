@@ -72,5 +72,42 @@
       "handle": "TopinSaleSwitch",
       "url": "https://t.me/TopinSaleSwitch"
     }
-  ]
+  ],
+  "support": {
+    "kicker": "Apoya el desarrollo",
+    "title": "Enciende el faro",
+    "text": "Faro Hundido lo hago solo. Tu aporte paga el arte del juego.",
+    "goal": {
+      "label": "Arte del Muelle Ahogado",
+      "raised": 0,
+      "target": 0,
+      "currency": "CLP"
+    },
+    "tiers": [
+      {
+        "id": "mp-1500",
+        "name": "Una gota de luz",
+        "amount": "$1.500",
+        "url": ""
+      },
+      {
+        "id": "mp-5000",
+        "name": "Una mecha",
+        "amount": "$5.000",
+        "url": ""
+      },
+      {
+        "id": "mp-10000",
+        "name": "Farero",
+        "amount": "$10.000",
+        "url": ""
+      }
+    ],
+    "intl": {
+      "id": "kofi",
+      "label": "Apoyar en Ko-fi",
+      "sub": "Desde cualquier país · tarjeta o PayPal",
+      "url": "https://ko-fi.com/topingames"
+    }
+  }
 }
