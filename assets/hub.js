@@ -148,14 +148,26 @@
     try {
       const r = await fetch('/api/deal');
       const d = r.ok ? await r.json() : null;
-      if (!d || !d.title) return;
+      if (!d || !d.name) return;
       const box = $('[data-deal]');
-      $('[data-deal-title]').textContent = d.title;
-      $('[data-deal-detail]').textContent = d.detail || '';
-      $('[data-deal-time]').textContent = d.at ? ago(d.at) : '';
+      const kind = d.kind && d.kind.length < 40 ? ` · ${esc(d.kind)}` : '';
+      box.innerHTML = `
+        <div class="deal-top"><span class="deal-label">Última oferta${kind}</span>${d.at ? `<time>${ago(d.at)}</time>` : ''}</div>
+        <div class="deal-main">
+          ${d.image ? `<img src="${esc(d.image)}" alt="" loading="lazy" onerror="this.remove()">` : ''}
+          <div class="deal-info">
+            <strong>${esc(d.name)}</strong>
+            ${d.price ? `
+              <div class="deal-price">
+                <b>${esc(d.price)}</b>${d.old ? `<s>${esc(d.old)}</s>` : ''}${d.pct ? `<span class="deal-pct">−${d.pct}%</span>` : ''}
+              </div>` : `<span class="deal-detail">${esc(d.detail || '')}</span>`}
+            ${d.where ? `<span class="deal-where">en ${esc(d.where)}</span>` : ''}
+          </div>
+        </div>`;
       box.hidden = false;
     } catch (_) {}
   }
+
 
   // Feedback táctil inmediato en móviles.
   document.addEventListener('touchstart', (e) => {
