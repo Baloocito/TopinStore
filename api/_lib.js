@@ -9,6 +9,7 @@ for (const s of data.socials) index.set(s.id, s.url);
 if (data.support) {
   for (const t of data.support.tiers || []) if (t.url) index.set(t.id, t.url);
   if (data.support.intl?.url) index.set(data.support.intl.id, data.support.intl.url);
+  if (data.support.proof?.url) index.set(data.support.proof.id, data.support.proof.url);
 }
 
 export const urlFor = (id) => index.get(id);

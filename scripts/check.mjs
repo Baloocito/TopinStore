@@ -1,7 +1,7 @@
 // Valida data/links.json antes de cada despliegue: si hay un error, el build falla y no se publica.
 import { readFileSync, writeFileSync } from 'node:fs';
 const d = JSON.parse(readFileSync(new URL('../data/links.json', import.meta.url), 'utf8'));
-const sup = d.support ? [...(d.support.tiers || []).filter((t) => t.url), d.support.intl].filter(Boolean) : [];
+const sup = d.support ? [...(d.support.tiers || []).filter((t) => t.url), d.support.intl, d.support.proof].filter(Boolean) : [];
 const items = [d.featured, ...d.paths, ...d.socials, ...sup];
 const ids = new Set();
 for (const it of items) {

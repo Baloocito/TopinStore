@@ -28,6 +28,9 @@
     ig: '<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1"/>',
     tiktok: '<path d="M14 3v11.5a3.5 3.5 0 1 1-3.5-3.5"/><path d="M14 3c.5 3 2.5 5 5.5 5"/>',
     tg: '<path d="M21 4 3 11l6 2 2 6 3-4 5 4 2-15Z"/><path d="m9 13 8-6"/>',
+    pc: '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>',
+    android: '<rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/>',
+    wa: '<path d="M4 20l1.3-4A8 8 0 1 1 8 19z"/><path d="M9 9c0 3 3 6 6 6l1-1.5-2-1-1 1c-1-.5-2-1.5-2.5-2.5l1-1-1-2z"/>',
     yt: '<rect x="2" y="5" width="20" height="14" rx="4"/><path d="m10 9 5 3-5 3V9Z"/>',
   };
   const icon = (name) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] || ''}</svg>`;
@@ -94,6 +97,12 @@
         </div>
       </div>
       <p>${esc(s.text)}</p>
+      ${s.demo ? `
+        <div class="demo">
+          <span class="demo-badge pixel">${esc(s.demo.badge)}</span>
+          <div class="demo-txt"><b>${esc(s.demo.title)}</b><small>${esc(s.demo.platforms)}</small></div>
+          <span class="demo-plat" aria-hidden="true">${icon('pc')}${icon('android')}</span>
+        </div>` : ''}
       ${pct !== null ? `
         <div class="goal" aria-label="${esc(g.label)}: ${pct}%">
           <div class="goal-top"><span>${esc(g.label)}</span><b>${pct}%</b></div>
@@ -104,9 +113,15 @@
         <div class="pay-head"><span class="pay-name mp">${esc((s.local && s.local.name) || 'Mercado Pago')}</span><small>${esc((s.local && s.local.note) || '')}</small></div>
         <div class="tiers">${tiers.map((t) => `
           <a class="tier" href="${go(t.id)}"><b>${esc(t.amount)}</b><small>${esc(t.name)}</small></a>`).join('')}
-        </div>` : ''}
+        </div>
+        ${s.demo && s.proof ? `
+          <div class="proof">
+            <p>${esc(s.demo.mpNote)}</p>
+            <a class="btn proof-btn" href="${go(s.proof.id)}">${icon('wa')}<span>${esc(s.proof.label)}</span></a>
+          </div>` : ''}` : ''}
       ${s.intl ? `
         <div class="pay-head"><span class="pay-name kofi">${esc(s.intl.name || 'Ko-fi')}</span><small>Para quienes están fuera de Chile</small></div>
+        ${s.demo ? `<p class="kofi-note">${esc(s.demo.kofiNote)}</p>` : ''}
         <a class="btn sup-intl" href="${go(s.intl.id)}">
           <span>${esc(s.intl.label)}</span><small>${esc(s.intl.sub)}</small>
         </a>` : ''}`;
@@ -152,7 +167,7 @@
 
   if (window.HUB_DATA) {
     const d = window.HUB_DATA;
-    [d.featured, ...d.paths, ...d.socials, ...((d.support && d.support.tiers) || []), ...(d.support && d.support.intl ? [d.support.intl] : [])].forEach((x) => PREVIEW.set(x.id, x.url));
+    [d.featured, ...d.paths, ...d.socials, ...((d.support && d.support.tiers) || []), ...(d.support && d.support.intl ? [d.support.intl] : []), ...(d.support && d.support.proof ? [d.support.proof] : [])].forEach((x) => PREVIEW.set(x.id, x.url));
     render(d);
     return;
   }
