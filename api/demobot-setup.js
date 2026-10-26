@@ -20,12 +20,11 @@ export default async function handler(req, res) {
 
   const cmds = await tg('setMyCommands', {
     commands: [
-      { command: 'start', description: 'Recibir mi demo de Faro Hundido' },
-      { command: 'ayuda', description: '¿Dónde encuentro el número de operación?' },
+      { command: 'start', description: 'Menú de Faro Hundido' },
     ],
   });
   await tg('setMyDescription', {
-    description: 'Bot oficial de Faro Hundido (TopinGames). Si donaste desde $1.500 con Mercado Pago, envía tu número de operación y recibe la demo para PC o Android.',
+    description: '🔦 Bot oficial de Faro Hundido, el roguelike de TopinGames.\n\n🎁 ¿Donaste desde $1.500 con Mercado Pago? Canjea aquí tu demo para PC o Android en segundos.\n\nToca Iniciar para comenzar.',
   });
   await tg('setMyShortDescription', { short_description: 'Recibe la demo de Faro Hundido por tu donación.' });
   out.commands = cmds.ok ? 'ok' : cmds.description;

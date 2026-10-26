@@ -1,95 +1,170 @@
 // Webhook de @TopinDemoBot: verifica donaciones de Mercado Pago y entrega la demo de Faro Hundido.
+// La conversación funciona como una app: un solo "panel" que se edita en su lugar,
+// y los mensajes que escribe la persona se borran después de leerlos para que el chat quede limpio.
 import {
   tg, say, notifyAdmin, esc, checkPayment, sql, ensureSchema,
-  ADMIN_ID, WEBHOOK_SECRET, PLATFORMS, MIN_AMOUNT, MAX_AGE_DAYS,
+  ADMIN_ID, WEBHOOK_SECRET, PLATFORMS, MIN_AMOUNT, MAX_AGE_DAYS, SITE,
 } from './_demo.js';
 
 const clp = (n) => '$' + Math.round(n).toLocaleString('es-CL');
-const CHANNEL = 'https://t.me/TopinSaleSwitch';
+const LINKS = {
+  game: `${SITE}/faro?src=demobot`,
+  support: `${SITE}/?src=demobot`,
+  channel: 'https://t.me/TopinSaleSwitch',
+  instagram: 'https://www.instagram.com/xiombo',
+};
 
-const WELCOME =
-  '🔦 <b>Bienvenido al Faro.</b>\n\n' +
-  'Gracias por apoyar <b>Faro Hundido</b>. Si donaste ' + clp(MIN_AMOUNT) + ' o más con Mercado Pago, ' +
-  'tu demo te espera.\n\n' +
-  '📩 Envíame el <b>número de operación</b> de tu comprobante (solo los números).';
-
-const HELP_NUMBER =
-  '🧾 <b>¿Dónde está el número de operación?</b>\n\n' +
-  '• En la app de Mercado Pago: <i>Actividad</i> → toca tu donación → <b>Número de operación</b>.\n' +
-  '• En el correo de comprobante que te llegó al pagar.\n\n' +
-  'Es un número largo, por ejemplo <code>123456789012</code>. Cópialo y envíamelo aquí.';
+/* ---------- Textos ---------- */
 
 const REASONS = {
-  not_found: '🤔 No encontré una donación con ese número. Revisa que sea el <b>número de operación</b> y que hayas donado desde drpipa.cl.',
-  pending: '⏳ Tu pago todavía está <b>en proceso</b>. Cuando Mercado Pago lo apruebe, vuelve a enviarme el número.',
-  not_approved: '❌ Ese pago no figura como aprobado, así que no puedo entregar la demo con él.',
-  too_low: `💡 La demo se regala desde <b>${clp(MIN_AMOUNT)}</b>. Ese pago es de un monto menor.`,
-  too_old: `📅 Ese pago tiene más de ${MAX_AGE_DAYS} días. Si crees que es un error, avísame en Instagram @xiombo.`,
-  mp_error: '⚠️ No pude conectarme con Mercado Pago. Intenta de nuevo en unos minutos.',
+  not_found: '🤔 <b>No encontré esa donación.</b>\nRevisa que sea el <b>número de operación</b> del comprobante y que hayas donado desde drpipa.cl.',
+  pending: '⏳ <b>Tu pago sigue en proceso.</b>\nCuando Mercado Pago lo apruebe, vuelve a enviarme el número.',
+  not_approved: '❌ <b>Ese pago no figura como aprobado</b>, así que no puedo entregar la demo con él.',
+  too_low: `💡 <b>La demo se regala desde ${clp(MIN_AMOUNT)}.</b>\nEse pago es de un monto menor.`,
+  too_old: `📅 <b>Ese pago tiene más de ${MAX_AGE_DAYS} días.</b>\nSi crees que es un error, escríbeme en Instagram @xiombo.`,
+  used: '🔒 <b>Esa donación ya se canjeó.</b>\nCada donación entrega una demo.',
+  mp_error: '⚠️ <b>No pude conectarme con Mercado Pago.</b>\nIntenta de nuevo en unos minutos.',
 };
 
-const INSTRUCTIONS = {
-  pc:
-    '🖥️ <b>Faro Hundido · Demo para PC</b>\n\n' +
-    '1. Descomprime el archivo.\n2. Abre el ejecutable del juego.\n' +
-    '3. Si Windows muestra una advertencia, toca <i>Más información</i> → <i>Ejecutar de todas formas</i>.',
-  android:
-    '📱 <b>Faro Hundido · Demo para Android</b>\n\n' +
-    '1. Toca el archivo para descargarlo.\n2. Ábrelo y toca <i>Instalar</i>.\n' +
-    '3. Si tu teléfono lo bloquea, activa <i>Permitir de esta fuente</i> para Telegram y vuelve a tocar <i>Instalar</i>.',
+const INSTALL = {
+  pc: '🖥️ <b>Faro Hundido · Demo para PC</b>\n\n1. Descarga y descomprime el archivo.\n2. Abre el ejecutable del juego.\n' +
+    '3. Si Windows avisa, toca <i>Más información</i> → <i>Ejecutar de todas formas</i>.',
+  android_apk: '📱 <b>Faro Hundido · Demo para Android</b>\n\n1. Toca el archivo para descargarlo.\n2. Ábrelo y toca <i>Instalar</i>.\n' +
+    '3. Si el teléfono lo bloquea, activa <i>Permitir de esta fuente</i> y vuelve a tocar <i>Instalar</i>.',
+  android_zip: '📱 <b>Faro Hundido · Demo para Android</b>\n\n1. Descarga el archivo y descomprímelo con tu app de Archivos.\n' +
+    '2. Abre el archivo <b>.apk</b> y toca <i>Instalar</i>.\n3. Si el teléfono lo bloquea, activa <i>Permitir de esta fuente</i>.',
 };
 
-const OUTRO =
-  '\n\n¿Te gustó? Cuéntame qué te pareció en Instagram <b>@xiombo</b>. ' +
-  'Y si buscas juegos baratos de Switch, únete al canal 👇';
+const btn = (text, data) => ({ text, callback_data: data });
+const url = (text, href) => ({ text, url: href });
+const BACK = [btn('⬅️ Volver al menú', 'v:menu')];
+
+const VIEWS = {
+  menu: () => ({
+    text:
+      '🔦 <b>FARO HUNDIDO · DEMOS</b>\n\n' +
+      'Un roguelike de acción en 32 bits donde tu luz es tu vida, tu vista y tu dinero.\n\n' +
+      `🎁 Si donaste <b>${clp(MIN_AMOUNT)} o más</b> con Mercado Pago, canjea aquí tu demo para <b>PC o Android</b>.`,
+    keyboard: [
+      [btn('🎁 Canjear mi demo', 'v:redeem')],
+      [url('🔦 Conocer el juego', LINKS.game), btn('❓ Ayuda', 'v:help')],
+      [url('💛 Apoyar el desarrollo', LINKS.support)],
+      [url('🎮 Ofertas de Switch', LINKS.channel)],
+    ],
+  }),
+  redeem: (note) => ({
+    text: (note ? note + '\n\n' : '') +
+      '📩 <b>Envíame el número de operación</b> de tu comprobante de Mercado Pago.\n\n' +
+      '<i>Escríbelo aquí abajo, solo los números.</i>',
+    keyboard: [[btn('🧾 ¿Dónde está el número?', 'v:where')], BACK],
+  }),
+  where: () => ({
+    text:
+      '🧾 <b>¿Dónde está el número de operación?</b>\n\n' +
+      '• <b>App de Mercado Pago:</b> Actividad → toca tu donación → <i>Número de operación</i>.\n' +
+      '• <b>Correo:</b> en el comprobante que te llegó al pagar.\n\n' +
+      'Es un número largo, como <code>123456789012</code>. Cópialo y envíamelo aquí.',
+    keyboard: [[btn('📩 Ya lo tengo', 'v:redeem')], BACK],
+  }),
+  help: () => ({
+    text:
+      '❓ <b>AYUDA</b>\n\n' +
+      `<b>¿Cómo consigo la demo?</b>\nDona ${clp(MIN_AMOUNT)} o más desde drpipa.cl con Mercado Pago y canjea aquí el número de operación.\n\n` +
+      '<b>¿Doné desde otro país?</b>\nEn Ko-fi eliges la demo al donar y te llega directo, sin pasar por este bot.\n\n' +
+      '<b>Android no deja instalar</b>\nActiva <i>Permitir de esta fuente</i> para la app desde donde abres el archivo.\n\n' +
+      '<b>Windows muestra una advertencia</b>\nToca <i>Más información</i> → <i>Ejecutar de todas formas</i>. Pasa con juegos indie sin firma.\n\n' +
+      '<b>¿Otro problema?</b> Escríbeme en Instagram @xiombo.',
+    keyboard: [[btn('🎁 Canjear mi demo', 'v:redeem')], [url('💬 Instagram @xiombo', LINKS.instagram)], BACK],
+  }),
+  confirmed: (amount, id) => ({
+    text: `✅ <b>¡Donación confirmada!</b> ${clp(amount)}\nGracias por encender el faro.\n\n<b>¿Dónde vas a jugar?</b>`,
+    keyboard: [[btn('🖥️ PC', `get:pc:${id}`), btn('📱 Android', `get:android:${id}`)], BACK],
+  }),
+  delivered: (platform) => ({
+    text:
+      `🎉 <b>¡Listo! Tu demo de ${PLATFORMS[platform]} está arriba.</b>\n\n` +
+      'Cuando la juegues, cuéntame qué te pareció en Instagram @xiombo. Tu opinión da forma al juego.',
+    keyboard: [[url('🔦 Ver el juego', LINKS.game), url('🎮 Ofertas de Switch', LINKS.channel)], BACK],
+  }),
+  waiting: (platform) => ({
+    text: `🛠️ <b>Tu canje quedó guardado.</b>\n\nEstoy terminando la versión de ${PLATFORMS[platform]}. Te la envío aquí apenas esté lista.`,
+    keyboard: [[url('🔦 Ver el juego', LINKS.game)], BACK],
+  }),
+};
+
+/* ---------- Panel: un solo mensaje que se va editando ---------- */
+
+async function getSession(user) {
+  const [s] = await sql()`SELECT panel_id, mode FROM demo_sessions WHERE tg_user_id = ${user}`;
+  return s || { panel_id: null, mode: 'menu' };
+}
+async function saveSession(user, panelId, mode) {
+  await sql()`
+    INSERT INTO demo_sessions (tg_user_id, panel_id, mode) VALUES (${user}, ${panelId}, ${mode})
+    ON CONFLICT (tg_user_id) DO UPDATE SET panel_id = EXCLUDED.panel_id, mode = EXCLUDED.mode, updated_at = now()`;
+}
+
+/** Muestra una vista. Edita el panel existente; si no se puede o se pide `fresh`, lo reemplaza por uno nuevo abajo. */
+async function show(chat, view, mode, { fresh = false, session } = {}) {
+  const s = session || (await getSession(chat));
+  const markup = { inline_keyboard: view.keyboard };
+  if (s.panel_id && !fresh) {
+    const r = await tg('editMessageText', {
+      chat_id: chat, message_id: Number(s.panel_id), text: view.text, parse_mode: 'HTML',
+      disable_web_page_preview: true, reply_markup: markup,
+    });
+    if (r.ok || /not modified/.test(r.description || '')) {
+      await saveSession(chat, s.panel_id, mode);
+      return;
+    }
+  }
+  if (s.panel_id) await tg('deleteMessage', { chat_id: chat, message_id: Number(s.panel_id) });
+  const sent = await say(chat, view.text, { reply_markup: markup });
+  await saveSession(chat, sent.ok ? sent.result.message_id : null, mode);
+}
+
+const forget = (chat, messageId) => tg('deleteMessage', { chat_id: chat, message_id: messageId });
+
+/* ---------- Entrega ---------- */
+
+async function sendDemo(chat, platform, paymentId) {
+  const [file] = await sql()`SELECT file_id, file_name FROM demo_files WHERE platform = ${platform}`;
+  if (!file) {
+    await notifyAdmin(`⚠️ Alguien canjeó la demo de <b>${PLATFORMS[platform]}</b> y no hay archivo cargado.`);
+    return false;
+  }
+  const key = platform === 'android' ? (/\.apk$/i.test(file.file_name || '') ? 'android_apk' : 'android_zip') : 'pc';
+  const sent = await tg('sendDocument', { chat_id: chat, document: file.file_id, caption: INSTALL[key], parse_mode: 'HTML' });
+  if (sent.ok && paymentId) await sql()`UPDATE demo_claims SET delivered = true WHERE payment_id = ${paymentId}`;
+  return sent.ok;
+}
+
+/** Envía el archivo y deja el panel debajo, para que el chat termine siempre en el menú. */
+async function deliver(chat, platform, paymentId) {
+  const ok = await sendDemo(chat, platform, paymentId);
+  await show(chat, ok ? VIEWS.delivered(platform) : VIEWS.waiting(platform), 'menu', { fresh: true });
+}
 
 /* ---------- Pasos del flujo ---------- */
 
-async function onPaymentNumber(msg, id) {
-  const chat = msg.chat.id;
+async function onPaymentNumber(chat, user, id) {
   await tg('sendChatAction', { chat_id: chat, action: 'typing' });
   const r = await checkPayment(id);
-  if (!r.ok) return say(chat, REASONS[r.reason] || REASONS.not_found);
+  if (!r.ok) return show(chat, VIEWS.redeem(REASONS[r.reason] || REASONS.not_found), 'redeem');
 
   const [claim] = await sql()`SELECT tg_user_id, platform FROM demo_claims WHERE payment_id = ${id}`;
-  if (claim && Number(claim.tg_user_id) !== msg.from.id) {
-    return say(chat, '🔒 Esa donación ya se usó para canjear una demo. Cada donación entrega una demo.');
-  }
-  if (claim) {
-    return say(chat, `Ya canjeaste esta donación por la demo de <b>${PLATFORMS[claim.platform]}</b>. Te la envío de nuevo 👇`)
-      .then(() => sendDemo(chat, claim.platform, id));
-  }
-  return say(chat,
-    `✅ <b>¡Donación confirmada!</b> ${clp(r.payment.amount)}. Gracias por encender el faro.\n\n¿Dónde vas a jugar?`,
-    { reply_markup: { inline_keyboard: [[
-      { text: '🖥️ PC', callback_data: `get:pc:${id}` },
-      { text: '📱 Android', callback_data: `get:android:${id}` },
-    ]] } });
-}
-
-async function sendDemo(chat, platform, paymentId) {
-  const [file] = await sql()`SELECT file_id FROM demo_files WHERE platform = ${platform}`;
-  if (!file) {
-    await notifyAdmin(`⚠️ Alguien pidió la demo de <b>${PLATFORMS[platform]}</b> y no hay archivo cargado.`);
-    return say(chat, '🛠️ Estoy terminando de preparar esta versión. Te aviso apenas esté lista; tu canje queda guardado.');
-  }
-  const sent = await tg('sendDocument', {
-    chat_id: chat, document: file.file_id, caption: INSTRUCTIONS[platform] + OUTRO, parse_mode: 'HTML',
-    reply_markup: { inline_keyboard: [[{ text: '🎮 Canal de ofertas de Switch', url: CHANNEL }]] },
-  });
-  if (sent.ok && paymentId) await sql()`UPDATE demo_claims SET delivered = true WHERE payment_id = ${paymentId}`;
-  return sent.ok;
+  if (claim && Number(claim.tg_user_id) !== user) return show(chat, VIEWS.redeem(REASONS.used), 'redeem');
+  if (claim) return deliver(chat, claim.platform, id);
+  return show(chat, VIEWS.confirmed(r.payment.amount, id), 'choose');
 }
 
 async function onChoosePlatform(cb, platform, id) {
   const chat = cb.message.chat.id;
   const u = cb.from;
-  // Se vuelve a verificar: el botón pudo quedar viejo.
-  const r = await checkPayment(id);
-  if (!r.ok) {
-    await tg('answerCallbackQuery', { callback_query_id: cb.id });
-    return say(chat, REASONS[r.reason] || REASONS.not_found);
-  }
+  await tg('answerCallbackQuery', { callback_query_id: cb.id, text: 'Revisando tu donación…' });
+  const r = await checkPayment(id); // se vuelve a verificar: el botón pudo quedar viejo
+  if (!r.ok) return show(chat, VIEWS.redeem(REASONS[r.reason] || REASONS.not_found), 'redeem');
+
   const name = [u.first_name, u.last_name].filter(Boolean).join(' ');
   const inserted = await sql()`
     INSERT INTO demo_claims (payment_id, tg_user_id, tg_username, tg_name, platform, amount)
@@ -98,22 +173,17 @@ async function onChoosePlatform(cb, platform, id) {
     RETURNING payment_id`;
   const [claim] = inserted.length ? [{ tg_user_id: u.id, platform }]
     : await sql()`SELECT tg_user_id, platform FROM demo_claims WHERE payment_id = ${id}`;
+  if (Number(claim.tg_user_id) !== u.id) return show(chat, VIEWS.redeem(REASONS.used), 'redeem');
 
-  await tg('answerCallbackQuery', { callback_query_id: cb.id });
-  await tg('editMessageReplyMarkup', { chat_id: chat, message_id: cb.message.message_id, reply_markup: { inline_keyboard: [] } });
-
-  if (Number(claim.tg_user_id) !== u.id) {
-    return say(chat, '🔒 Esa donación ya se usó para canjear una demo.');
-  }
   if (inserted.length) {
     await notifyAdmin(
       `🎁 <b>Nuevo canje</b>\n${esc(name || 'Sin nombre')}${u.username ? ' (@' + esc(u.username) + ')' : ''}\n` +
       `${PLATFORMS[platform]} · ${clp(r.payment.amount)} · operación <code>${esc(id)}</code>`);
   }
-  return sendDemo(chat, claim.platform, id);
+  return deliver(chat, claim.platform, id);
 }
 
-/* ---------- Comandos del admin ---------- */
+/* ---------- Comandos del admin (no se muestran a nadie más) ---------- */
 
 async function onAdmin(msg, text) {
   const chat = msg.chat.id;
@@ -127,20 +197,22 @@ async function onAdmin(msg, text) {
     const pending = await sql()`SELECT payment_id, tg_user_id FROM demo_claims WHERE platform = ${m[1]} AND delivered = false`;
     let ok = 0;
     for (const p of pending) {
-      await say(Number(p.tg_user_id), '🎉 ¡Tu demo ya está lista! Aquí la tienes 👇');
-      if (await sendDemo(Number(p.tg_user_id), m[1], p.payment_id)) ok++;
+      const chatId = Number(p.tg_user_id);
+      if (await sendDemo(chatId, m[1], p.payment_id)) {
+        ok++;
+        await show(chatId, VIEWS.delivered(m[1]), 'menu', { fresh: true });
+      }
     }
     return say(chat, `✅ Demo de <b>${PLATFORMS[m[1]]}</b> actualizada: ${esc(doc.file_name || 'archivo')}` +
       (pending.length ? `\nEnviada a ${ok} de ${pending.length} personas que la estaban esperando.` : ''));
   }
   if (text.startsWith('/estado')) {
-    const files = await sql()`SELECT platform, file_name, updated_at FROM demo_files ORDER BY platform`;
+    const files = await sql()`SELECT platform, file_name FROM demo_files ORDER BY platform`;
     const stats = await sql()`SELECT platform, count(*)::int AS n, coalesce(sum(amount),0)::int AS total FROM demo_claims GROUP BY platform`;
-    const last = await sql()`SELECT tg_name, tg_username, platform, amount, created_at FROM demo_claims ORDER BY created_at DESC LIMIT 5`;
+    const last = await sql()`SELECT tg_name, tg_username, platform, amount FROM demo_claims ORDER BY created_at DESC LIMIT 5`;
     const total = stats.reduce((a, s) => a + s.total, 0);
     const lines = [
-      '📊 <b>Estado del bot</b>', '',
-      '<b>Archivos</b>',
+      '📊 <b>Estado del bot</b>', '', '<b>Archivos</b>',
       ...Object.keys(PLATFORMS).map((p) => {
         const f = files.find((x) => x.platform === p);
         return `${PLATFORMS[p]}: ${f ? '✅ ' + esc(f.file_name || 'cargado') : '❌ falta (envíalo con /demo_' + p + ')'}`;
@@ -161,7 +233,7 @@ async function onAdmin(msg, text) {
 /* ---------- Entrada ---------- */
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST' || req.headers['x-telegram-bot-api-secret-token'] !== WEBHOOK_SECRET || !WEBHOOK_SECRET) {
+  if (!WEBHOOK_SECRET || req.method !== 'POST' || req.headers['x-telegram-bot-api-secret-token'] !== WEBHOOK_SECRET) {
     res.statusCode = 401;
     return res.end();
   }
@@ -171,37 +243,52 @@ export default async function handler(req, res) {
 
     if (update.callback_query) {
       const cb = update.callback_query;
-      const m = String(cb.data || '').match(/^get:(pc|android):(\d{6,20})$/);
-      if (m) await onChoosePlatform(cb, m[1], m[2]);
-      else await tg('answerCallbackQuery', { callback_query_id: cb.id });
-      if (cb.data === 'help') await say(cb.message.chat.id, HELP_NUMBER);
+      const chat = cb.message && cb.message.chat.id;
+      const data = String(cb.data || '');
+      const get = data.match(/^get:(pc|android):(\d{6,20})$/);
+      if (get) {
+        await onChoosePlatform(cb, get[1], get[2]);
+      } else {
+        await tg('answerCallbackQuery', { callback_query_id: cb.id });
+        const v = data === 'help' ? 'where' : data.replace(/^v:/, '');
+        if (chat && VIEWS[v] && ['menu', 'redeem', 'where', 'help'].includes(v)) {
+          // El botón pertenece a este mensaje: lo usamos como panel aunque sea antiguo.
+          await show(chat, VIEWS[v](), v === 'where' ? 'redeem' : v, { session: { panel_id: cb.message.message_id } });
+        }
+      }
     }
 
     const msg = update.message;
     if (msg && msg.chat && msg.chat.type === 'private') {
+      const chat = msg.chat.id;
       const text = String(msg.text || msg.caption || '').trim();
       const isAdmin = ADMIN_ID && msg.from.id === ADMIN_ID;
 
-      if (text === '/id' || text.startsWith('/id@')) {
-        await say(msg.chat.id, `Tu ID de Telegram es <code>${msg.from.id}</code>`);
-      } else if (isAdmin && text.startsWith('/') && (await onAdmin(msg, text)) !== null) {
-        // comando de admin atendido
-      } else if (text.startsWith('/start') || text === '/ayuda' || text === '/help') {
-        await say(msg.chat.id, WELCOME, {
-          reply_markup: { inline_keyboard: [[{ text: '🧾 ¿Dónde encuentro el número?', callback_data: 'help' }]] },
-        });
+      if (isAdmin && (text === '/id' || (text.startsWith('/') && !text.startsWith('/start') && !text.startsWith('/ayuda')))) {
+        if (text === '/id') await say(chat, `Tu ID de Telegram es <code>${msg.from.id}</code>`);
+        else await onAdmin(msg, text);
+      } else if (text === '/id') {
+        await say(chat, `Tu ID de Telegram es <code>${msg.from.id}</code>`);
       } else {
-        const digits = text.replace(/[\s.\-#]/g, '');
-        if (/^\d{8,20}$/.test(digits)) await onPaymentNumber(msg, digits);
-        else await say(msg.chat.id, '📩 Envíame solo el <b>número de operación</b> de tu comprobante de Mercado Pago.', {
-          reply_markup: { inline_keyboard: [[{ text: '🧾 ¿Dónde lo encuentro?', callback_data: 'help' }]] },
-        });
+        // Todo lo que escribe la persona se borra: el chat queda solo con el panel y sus demos.
+        await forget(chat, msg.message_id);
+        const session = await getSession(chat);
+        if (text.startsWith('/start')) {
+          const fromHub = /\b(hub|demo)\b/.test(text);
+          await show(chat, fromHub ? VIEWS.redeem() : VIEWS.menu(), fromHub ? 'redeem' : 'menu', { fresh: true, session });
+        } else if (text.startsWith('/ayuda') || text.startsWith('/help')) {
+          await show(chat, VIEWS.help(), 'help', { session });
+        } else {
+          const digits = text.replace(/[\s.\-#]/g, '');
+          if (/^\d{8,20}$/.test(digits)) await onPaymentNumber(chat, msg.from.id, digits);
+          else await show(chat, VIEWS.redeem(text ? '🙈 Eso no parece un número de operación.' : ''), 'redeem', { session });
+        }
       }
     }
   } catch (e) {
-    console.log(JSON.stringify({ demobot_error: String(e && e.message || e) }));
+    console.log(JSON.stringify({ demobot_error: String((e && e.message) || e) }));
     const chat = update.message?.chat?.id || update.callback_query?.message?.chat?.id;
-    if (chat) await say(chat, '⚠️ Algo falló de mi lado. Intenta de nuevo en un momento.');
+    if (chat) await say(chat, '⚠️ Algo falló de mi lado. Toca /start para volver al menú.');
   }
   res.statusCode = 200;
   res.end('ok');

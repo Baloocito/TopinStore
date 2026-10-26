@@ -95,6 +95,12 @@ export function ensureSchema() {
         file_name   text,
         updated_at  timestamptz NOT NULL DEFAULT now()
       )`;
+      await q`CREATE TABLE IF NOT EXISTS demo_sessions (
+        tg_user_id  bigint PRIMARY KEY,
+        panel_id    bigint,
+        mode        text NOT NULL DEFAULT 'menu',
+        updated_at  timestamptz NOT NULL DEFAULT now()
+      )`;
       await q`CREATE TABLE IF NOT EXISTS donations (
         payment_id  text PRIMARY KEY,
         source      text NOT NULL,
