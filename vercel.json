@@ -69,5 +69,13 @@
       "path": "/api/cron/daily",
       "schedule": "0 12 * * *"
     }
-  ]
+  ],
+  "functions": {
+    "api/social.js": {
+      "maxDuration": 60
+    },
+    "api/opsbot.js": {
+      "maxDuration": 60
+    }
+  }
 }

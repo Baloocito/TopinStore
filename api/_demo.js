@@ -131,6 +131,23 @@ export function ensureSchema() {
         value   numeric NOT NULL,
         PRIMARY KEY (day, metric)
       )`;
+      await q`CREATE TABLE IF NOT EXISTS social_posts (
+        id            text PRIMARY KEY,
+        project       text,
+        type          text NOT NULL,
+        media         jsonb NOT NULL,
+        caption       text NOT NULL,
+        scheduled_at  timestamptz NOT NULL,
+        status        text NOT NULL DEFAULT 'pending',
+        note          text,
+        tg_message_id bigint,
+        ig_media_id   text,
+        permalink     text,
+        error         text,
+        published_at  timestamptz,
+        updated_at    timestamptz NOT NULL DEFAULT now()
+      )`;
+      await q`ALTER TABLE social_posts ADD COLUMN IF NOT EXISTS source_hash text`;
       await q`CREATE TABLE IF NOT EXISTS settings (
         key         text PRIMARY KEY,
         value       text NOT NULL,

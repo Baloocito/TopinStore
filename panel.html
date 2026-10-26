@@ -124,6 +124,14 @@ td.r,th.r{text-align:right}
 .connect ol{padding-left:20px;display:grid;gap:4px;color:var(--muted)}
 .connect textarea{width:100%;min-height:70px;background:var(--bg);border:2px solid var(--line);border-radius:10px;padding:10px;font-family:ui-monospace,monospace;font-size:12px;color:var(--ink)}
 
+/* cola de publicaciones */
+.q{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.qi{background:var(--bg3);border-radius:10px;overflow:hidden;display:grid;min-width:0;color:var(--ink);text-decoration:none}
+.qi img{width:100%;aspect-ratio:4/5;object-fit:cover;display:block;max-width:100%;background:var(--bg)}
+.qi div{padding:8px 10px;display:grid;gap:2px;font-size:12px}
+.qi b{font-size:13px}
+.qi span{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
 /* links de campaña */
 .camp{display:grid;gap:10px}
 .camp .in{display:flex;gap:8px;flex-wrap:wrap}
@@ -177,6 +185,8 @@ td.r,th.r{text-align:right}
       <section class="card s8" id="igCard"><h2>Instagram <small id="igUser"></small></h2><div id="ig"></div></section>
       <section class="card s4"><h2>Meta de financiamiento</h2><div id="goal"></div>
         <h2 style="margin-top:18px">Países</h2><div class="rows" id="countries"></div></section>
+
+      <section class="card s12"><h2>Publicaciones <small>se aprueban en el bot de mando</small></h2><div class="q" id="queue"></div></section>
 
       <section class="card s6"><h2>Últimas donaciones</h2><div id="recent"></div></section>
       <section class="card s6"><h2>Links de campaña</h2>
@@ -291,6 +301,12 @@ td.r,th.r{text-align:right}
       : '<p class="empty">Las donaciones aparecerán aquí apenas lleguen.</p>';
 
     renderIG(d.instagram);
+    const ST = { pending: '⏳ Por aprobar', approved: '✅ Aprobado', changes: '✏️ Con cambios', failed: '⚠️ Falló', published: '🚀 Publicado', publishing: '📤 Publicando' };
+    $('#queue').innerHTML = (d.queue || []).length ? d.queue.map((q) => `<${q.permalink ? 'a href="' + esc(q.permalink) + '" target="_blank" rel="noopener"' : 'div'} class="qi">
+        ${q.thumb && !/\.mp4$/i.test(q.thumb) ? `<img src="${esc(q.thumb)}" alt="" loading="lazy">` : ''}
+        <div><b>${ST[q.status] || esc(q.status)}</b><span>${new Date(q.scheduled_at).toLocaleString('es-CL', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+        <span>${esc(q.project || '')} · ${esc(q.id)}</span>${q.note ? `<span title="${esc(q.note)}">📝 ${esc(q.note)}</span>` : ''}</div></${q.permalink ? 'a' : 'div'}>`).join('')
+      : '<p class="empty">Todavía no hay publicaciones. Las que prepare aparecerán aquí y en el bot de mando.</p>';
   }
 
   function bars(sel, items, empty) {

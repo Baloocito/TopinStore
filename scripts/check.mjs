@@ -17,3 +17,7 @@ const v = (process.env.VERCEL_GIT_COMMIT_SHA || Date.now().toString(36)).slice(0
 const page = new URL('../index.html', import.meta.url);
 writeFileSync(page, readFileSync(page, 'utf8').replace(/(hub\.(?:css|js))\?v=[\w-]+/g, `$1?v=${v}`));
 console.log(`assets versión ${v}`);
+
+// Cola de publicaciones para Instagram.
+const { buildQueue } = await import('./queue.mjs');
+console.log(`cola de publicaciones · ${buildQueue().length} posts`);

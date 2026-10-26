@@ -72,7 +72,9 @@ export default async function handler(req, res) {
         instagram = { connected: false, error: e.message };
       }
     }
-    return send(res, 200, { ...s, goal: g, channel: { members }, instagram, generated: new Date().toISOString() });
+    const queue = await sql()`SELECT id, project, type, status, scheduled_at, permalink, note, media->>0 AS thumb
+      FROM social_posts WHERE status <> 'rejected' ORDER BY scheduled_at DESC LIMIT 12`;
+    return send(res, 200, { ...s, goal: g, channel: { members }, instagram, queue, generated: new Date().toISOString() });
   } catch (e) {
     return send(res, 500, { error: e.message });
   }

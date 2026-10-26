@@ -1,0 +1,39 @@
+# Publicaciones de Instagram:
+# - al subir posts nuevos a content/, espera el despliegue y los manda a Telegram para aprobar;
+# - cada hora publica los aprobados cuya hora ya llegó.
+name: Publicaciones
+
+on:
+  push:
+    branches: [main]
+    paths: ['content/**']
+  schedule:
+    - cron: '7 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: social
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Esperar el despliegue de este commit
+        if: github.event_name == 'push'
+        run: |
+          for i in $(seq 1 40); do
+            v=$(curl -fsS "https://www.drpipa.cl/data/queue.json?t=$(date +%s)" | python3 -c 'import sys,json;print(json.load(sys.stdin).get("version",""))' || true)
+            if [ "$v" = "${GITHUB_SHA}" ]; then echo "Desplegado"; exit 0; fi
+            sleep 15
+          done
+          echo "El despliegue tardó más de 10 minutos; se sincroniza igual"
+
+      - name: Sincronizar y publicar
+        env:
+          SOCIAL_SECRET: ${{ secrets.SOCIAL_SECRET }}
+        run: |
+          action=tick
+          [ "${{ github.event_name }}" = "push" ] && action=sync
+          curl -fsS -m 280 -H "Authorization: Bearer ${SOCIAL_SECRET}" "https://www.drpipa.cl/api/social?action=${action}"
