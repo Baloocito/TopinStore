@@ -2,11 +2,7 @@
   "profile": {
     "name": "Xiombo",
     "brand": "TopinGames",
-    "chips": [
-      "Gamer",
-      "Programador",
-      "Diseñador"
-    ]
+    "chips": []
   },
   "featured": {
     "id": "switch",

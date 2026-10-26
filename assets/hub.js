@@ -42,7 +42,9 @@
     const bio = $('[data-bind="bio"]');
     bio.textContent = p.bio || '';
     bio.hidden = !p.bio;
-    $('[data-bind="chips"]').innerHTML = p.chips.map((c) => `<li>${esc(c)}</li>`).join('');
+    const chips = $('[data-bind="chips"]');
+    chips.innerHTML = (p.chips || []).map((c) => `<li>${esc(c)}</li>`).join('');
+    chips.hidden = !(p.chips || []).length;
 
     const f = data.featured;
     const fc = $('[data-slot="featured"]');
