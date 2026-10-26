@@ -119,7 +119,7 @@
         ${s.demo && s.proof ? `
           <div class="proof">
             <p>${esc(s.demo.mpNote)}</p>
-            <a class="btn proof-btn" href="${go(s.proof.id)}">${icon('wa')}<span>${esc(s.proof.label)}</span></a>
+            <a class="btn proof-btn" href="${go(s.proof.id)}">${icon('tg')}<span>${esc(s.proof.label)}</span></a>
           </div>` : ''}` : ''}
       ${s.intl ? `
         <div class="pay-head"><span class="pay-name kofi">${esc(s.intl.name || 'Ko-fi')}</span><small>Para quienes están fuera de Chile</small></div>

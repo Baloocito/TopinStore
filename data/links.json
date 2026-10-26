@@ -115,13 +115,13 @@
       "badge": "DEMO DE REGALO",
       "title": "Dona desde $1.500 y juega la demo",
       "platforms": "PC y Android",
-      "mpNote": "Después de donar, mándame el comprobante por WhatsApp y dime si la quieres para PC o Android.",
+      "mpNote": "Después de donar, abre el bot y envíale el número de operación de tu comprobante. Te entrega la demo al instante, para PC o Android.",
       "kofiNote": "En Ko-fi eliges la demo de PC o Android al donar y te llega al instante."
     },
     "proof": {
-      "id": "comprobante",
-      "label": "Enviar comprobante",
-      "url": "https://wa.me/56933611786?text=Hola%20Xiombo%21%20Don%C3%A9%20por%20Mercado%20Pago%20para%20Faro%20Hundido%20y%20quiero%20mi%20demo.%20Te%20adjunto%20el%20comprobante.%20La%20quiero%20para%3A%20PC%20/%20Android%20%28deja%20la%20que%20corresponda%29"
+      "id": "demobot",
+      "label": "Recibir mi demo en Telegram",
+      "url": "https://t.me/TopinDemoBot?start=hub"
     }
   }
 }
