@@ -1,0 +1,15 @@
+{
+  "project": "topin-de-zombies",
+  "type": "carousel",
+  "media": [
+    "1.jpg",
+    "2.jpg",
+    "3.jpg",
+    "4.jpg",
+    "5.jpg",
+    "6.jpg",
+    "7.jpg"
+  ],
+  "scheduled_at": "2026-10-30T19:00:00-03:00",
+  "caption": "🧟 Devlog #1 de TOPIN DE ZOMBIES 📼\n\nLo retomé hace una semana y esto es lo que cambió:\n➡️ De un robot gris a zombies con estética PS1\n➡️ Campaña de 20 noches + modo infinito\n➡️ 4 jefes con fases y ataques avisados\n➡️ Mejoras que se notan: Daño 12 → 17 (+5)\n➡️ Táctil, teclado y ratón, y mando\n\nSurvival coop de 1 a 4 para Android y PC. Lo estoy haciendo solo, con Godot, desde Chile.\n\n¿Llegarías a la noche 20? 👇\n\nMira las 20 noches y los jefes en drpipa.cl/zombies (link en la bio) y guárdalo para jugar la demo 🔖\n\n#gamedev #indiedev #godotengine #ps1graphics #lowpoly #zombies #survivalhorror #devlog #indiegame #juegosindie #hechoenchile #TopinGames"
+}

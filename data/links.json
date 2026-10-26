@@ -29,6 +29,20 @@
       }
     },
     {
+      "id": "zombies",
+      "kicker": "Videojuego 3D · coop",
+      "title": "Topin de Zombies",
+      "text": "Survival coop con estética PS1. 20 noches, 4 jefes y una última noche que parece imposible.",
+      "cta": "Ver el juego",
+      "url": "/zombies",
+      "color": "hud",
+      "icon": "skull",
+      "progress": {
+        "label": "Motor listo · arte en curso",
+        "value": 60
+      }
+    },
+    {
       "id": "trueque",
       "kicker": "Tienda",
       "title": "Trueque",

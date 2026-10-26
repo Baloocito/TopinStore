@@ -35,6 +35,7 @@ export async function stats(days) {
       count(*) FILTER (WHERE type='view' AND target='home')::int AS views,
       count(DISTINCT vid) FILTER (WHERE type='view' AND target='home')::int AS visitors,
       count(*) FILTER (WHERE type='view' AND target='faro')::int AS faro_views,
+      count(*) FILTER (WHERE type='view' AND target='zombies')::int AS zombies_views,
       count(*) FILTER (WHERE type='click')::int AS clicks,
       count(*) FILTER (WHERE type='click' AND target = ANY(${SUPPORT}))::int AS support_clicks,
       count(*) FILTER (WHERE type='view' AND mobile)::int AS mobile_views,

@@ -164,6 +164,12 @@ img { display: block; max-width: 100%; }
 .path.teal .btn { background: var(--teal); color: var(--black); }
 .path.pink { box-shadow: var(--shadow) var(--shadow) 0 var(--teal); }
 .path.pink:active, .path.pink.pressed { box-shadow: 0 0 0 var(--teal); }
+.path.hud { background: #14100B; color: var(--ink); border-color: #FF8A1F; box-shadow: var(--shadow) var(--shadow) 0 #FF8A1F; }
+.path.hud:active, .path.hud.pressed { box-shadow: 0 0 0 #FF8A1F; }
+.path.hud .btn { background: #FF8A1F; color: var(--black); }
+.path.hud .progress .bar { border-color: #FF8A1F; }
+.path.hud .progress .fill { background: repeating-linear-gradient(90deg, #FF8A1F 0 8px, transparent 8px 10px); }
+.path.hud .progress .meta { color: #FF8A1F; }
 .path.white { background: var(--ink); box-shadow: var(--shadow) var(--shadow) 0 var(--pink); }
 .path.white:active, .path.white.pressed { box-shadow: 0 0 0 var(--pink); }
 

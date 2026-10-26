@@ -213,9 +213,9 @@ td.r,th.r{text-align:right}
   const LABEL = {
     'mp-1500': 'Mercado Pago $1.500', 'mp-5000': 'Mercado Pago $5.000', 'mp-10000': 'Mercado Pago $10.000',
     kofi: 'Ko-fi', demobot: 'Bot de demo', switch: 'Canal Switch', faro: 'Faro Hundido', trueque: 'Trueque',
-    colabora: 'Colaboraciones', ig: 'Instagram', tiktok: 'TikTok', tg: 'Telegram',
+    colabora: 'Colaboraciones', zombies: 'Topin de Zombies', ig: 'Instagram', tiktok: 'TikTok', tg: 'Telegram',
   };
-  const SRC = { ig: 'Instagram', qr: 'Código QR', direct: 'Directo', web: 'Otras webs', tiktok: 'TikTok', yt: 'YouTube', tg: 'Telegram', demobot: 'Bot de demo', hub: 'Hub', faro: 'Página del juego' };
+  const SRC = { ig: 'Instagram', qr: 'Código QR', direct: 'Directo', web: 'Otras webs', tiktok: 'TikTok', yt: 'YouTube', tg: 'Telegram', demobot: 'Bot de demo', hub: 'Hub', faro: 'Página de Faro', zombies: 'Página de Zombies' };
   let days = 7;
 
   async function api(path, opt) {
@@ -263,7 +263,7 @@ td.r,th.r{text-align:right}
       { v: clp(m.mp_clp), l: `Mercado Pago · ${m.mp_count} pagos`, hl: true },
       { v: 'US$' + m.kofi_usd.toFixed(2), l: `Ko-fi · ${m.kofi_count} aportes`, hl: true },
       { v: n(demos), l: `Demos canjeadas · ${n(d.demos.total_all_time)} en total` },
-      { v: n(t.faro_views), l: 'Visitas a Faro Hundido' },
+      { v: n(t.faro_views) + ' · ' + n(t.zombies_views), l: 'Visitas a Faro · Zombies' },
       { v: n(d.channel.members), l: 'Miembros del canal Switch' },
       { v: n(ig), l: 'Seguidores en Instagram' },
     ];
