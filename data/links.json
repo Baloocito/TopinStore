@@ -76,9 +76,9 @@
     "text": "Faro Hundido lo construimos entre todos. Tu aporte va directo a mejorar la gráfica del juego.",
     "goal": {
       "label": "Arte del Muelle Ahogado",
-      "raised": 0,
-      "target": 0,
-      "currency": "CLP"
+      "target": 450000,
+      "currency": "CLP",
+      "usdRate": 950
     },
     "tiers": [
       {

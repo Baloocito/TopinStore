@@ -96,7 +96,7 @@
     }
     const tiers = (s.tiers || []).filter((t) => t.url);
     const g = s.goal;
-    const pct = g && g.target > 0 ? Math.min(100, Math.round((g.raised / g.target) * 100)) : null;
+    const pct = g && g.target > 0 ? Math.min(100, Math.round(((g.raised || 0) / g.target) * 100)) : null;
     box.innerHTML = `
       <div class="sup-head">
         <span class="flame" aria-hidden="true"><i></i><i></i><i></i></span>
@@ -116,7 +116,7 @@
         <div class="goal" aria-label="${esc(g.label)}: ${pct}%">
           <div class="goal-top"><span>${esc(g.label)}</span><b>${pct}%</b></div>
           <div class="bar"><div class="fill" data-to="${pct}"></div></div>
-          <div class="goal-meta pixel"><span>${clp(g.raised)}</span><span>META ${clp(g.target)}</span></div>
+          <div class="goal-meta pixel"><span>${clp(g.raised || 0)}</span><span>META ${clp(g.target)}</span></div>
         </div>` : ''}
       ${tiers.length ? `
         <div class="pay-head"><span class="pay-name mp">${esc((s.local && s.local.name) || 'Mercado Pago')}</span><small>${esc((s.local && s.local.note) || '')}</small></div>
