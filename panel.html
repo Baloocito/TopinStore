@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Centro de mando · TopinGames</title>
+<meta name="theme-color" content="#0E0E14">
+<link rel="icon" href="/assets/favicon.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Press+Start+2P&family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* Centro de mando: una columna en el teléfono, rejilla en escritorio. Misma identidad que el hub. */
+:root{
+  --bg:#0E0E14; --bg2:#17171F; --bg3:#1F1F2A; --ink:#FFFFFF; --muted:#A9A9B8; --dim:#6E6E80; --line:#2A2A38;
+  --teal:#1DB5A8; --pink:#EC1C7A; --yellow:#FFE14D; --black:#08080B;
+  --good:#3DDC84; --bad:#FF6B6B;
+  --display:'Archivo Black','Arial Black',system-ui,sans-serif;
+  --body:'Rubik',system-ui,-apple-system,sans-serif;
+  --pixel:'Press Start 2P',ui-monospace,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);line-height:1.45;-webkit-text-size-adjust:100%}
+a{color:var(--teal)}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;padding-block:max(16px,env(safe-area-inset-top,0px)) calc(40px + env(safe-area-inset-bottom,0px));
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.pixel{font-family:var(--pixel);font-size:9px;letter-spacing:.06em;line-height:1.6}
+.num{font-variant-numeric:tabular-nums}
+
+/* login */
+.login{min-height:80vh;display:grid;place-items:center}
+.login form{width:min(360px,100%);display:grid;gap:14px;background:var(--bg2);border:3px solid var(--black);border-radius:14px;padding:24px;box-shadow:6px 6px 0 var(--pink)}
+.login img{width:56px;justify-self:center}
+.login h1{font-family:var(--display);font-size:24px;text-align:center}
+.login input{background:var(--bg);border:2px solid var(--line);border-radius:10px;padding:12px 14px;min-height:48px}
+.btn{min-height:46px;padding:0 16px;border-radius:10px;border:2px solid var(--black);background:var(--yellow);color:var(--black);font-weight:700;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.err{color:var(--bad);font-size:14px;min-height:1.2em}
+
+/* cabecera */
+header.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+.brand{display:flex;align-items:center;gap:12px}
+.brand img{width:40px}
+.brand h1{font-family:var(--display);font-size:22px;line-height:1}
+.brand small{display:block;color:var(--muted);font-size:12px;margin-top:4px}
+.range{display:flex;gap:4px;background:var(--bg2);border:2px solid var(--line);border-radius:10px;padding:3px}
+.range button{border:0;background:transparent;color:var(--muted);padding:7px 12px;border-radius:7px;cursor:pointer;font-weight:700;font-size:14px}
+.range button[aria-pressed="true"]{background:var(--teal);color:var(--black)}
+.tools{display:flex;gap:8px;align-items:center}
+
+/* rejilla */
+.grid{display:grid;gap:14px;grid-template-columns:repeat(12,1fr)}
+.card{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:16px;min-width:0;grid-column:span 12}
+.card h2{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.card h2 small{font-weight:400;text-transform:none;letter-spacing:0;color:var(--dim)}
+@media (min-width:760px){.s6{grid-column:span 6}.s4{grid-column:span 4}.s8{grid-column:span 8}}
+
+/* KPI */
+.kpis{display:grid;gap:10px;grid-template-columns:repeat(2,1fr)}
+@media (min-width:760px){.kpis{grid-template-columns:repeat(4,1fr)}}
+.kpi{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:4px;min-width:0}
+.kpi b{font-family:var(--display);font-size:clamp(22px,6vw,30px);line-height:1.05}
+.kpi span{font-size:12px;color:var(--muted)}
+.kpi em{font-style:normal;font-size:12px;font-weight:700}
+.up{color:var(--good)} .down{color:var(--bad)}
+.kpi.hl{border:2px solid var(--yellow);box-shadow:4px 4px 0 var(--pink)}
+
+/* embudo */
+.funnel{display:grid;gap:10px}
+.step{display:grid;grid-template-columns:110px 1fr 64px;gap:10px;align-items:center;font-size:14px}
+.step .bar{height:26px;background:var(--bg3);border-radius:6px;overflow:hidden}
+.step .bar i{display:block;height:100%;background:var(--teal);border-radius:6px 4px 4px 6px;min-width:4px}
+.step b{text-align:right}
+.note{font-size:13px;color:var(--muted);margin-top:10px}
+
+/* gráfico de barras por día */
+.chart{position:relative}
+.chart svg{display:block;max-width:100%;height:auto;overflow:visible}
+.chart .tip{position:absolute;pointer-events:none;background:var(--black);border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:12px;white-space:nowrap;transform:translate(-50%,-110%)}
+
+/* listas con barras */
+.rows{display:grid;gap:8px}
+.row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;font-size:14px}
+.row .lbl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .val{color:var(--muted);text-align:right}
+.row .track{grid-column:1/-1;height:6px;background:var(--bg3);border-radius:4px;overflow:hidden}
+.row .track i{display:block;height:100%;background:var(--teal);border-radius:4px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line)}
+th{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+td.r,th.r{text-align:right}
+.tbl{overflow-x:auto}
+
+/* donaciones */
+.don{display:grid;grid-template-columns:auto 1fr auto;gap:2px 10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}
+.don:last-child{border:0}
+.don .src{font-size:11px;font-weight:700;padding:2px 6px;border-radius:4px;align-self:start;margin-top:2px}
+.don .src.mercadopago{background:#00B1EA;color:var(--black)} .don .src.kofi{background:#FF5E5B;color:var(--black)}
+.don small{grid-column:2/-1;color:var(--muted)}
+
+/* meta */
+.goal .bar{height:16px;border:2px solid var(--yellow);border-radius:5px;padding:2px}
+.goal .bar i{display:block;height:100%;background:repeating-linear-gradient(90deg,var(--yellow) 0 8px,transparent 8px 10px)}
+.goal p{display:flex;justify-content:space-between;gap:8px;font-size:14px;margin-top:8px}
+
+/* instagram */
+.ig-head{display:flex;gap:12px;align-items:center;margin-bottom:14px}
+.ig-head img{width:48px;height:48px;border-radius:50%;border:2px solid var(--pink)}
+.ig-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.ig-stats div{background:var(--bg3);border-radius:10px;padding:10px}
+.ig-stats b{display:block;font-family:var(--display);font-size:18px}
+.ig-stats span{font-size:11px;color:var(--muted)}
+.posts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.post{position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;background:var(--bg3);display:block;max-width:100%}
+.post img{width:100%;height:100%;object-fit:cover;display:block}
+.post .ov{position:absolute;inset:auto 0 0;padding:6px;background:linear-gradient(transparent,rgba(0,0,0,.85));font-size:11px;color:var(--ink);display:flex;flex-wrap:wrap;gap:2px 8px}
+.post .ty{position:absolute;top:6px;left:6px;font-size:10px;background:rgba(0,0,0,.7);padding:2px 5px;border-radius:4px;color:var(--ink)}
+.connect{display:grid;gap:10px;font-size:14px}
+.connect ol{padding-left:20px;display:grid;gap:4px;color:var(--muted)}
+.connect textarea{width:100%;min-height:70px;background:var(--bg);border:2px solid var(--line);border-radius:10px;padding:10px;font-family:ui-monospace,monospace;font-size:12px;color:var(--ink)}
+
+/* links de campaña */
+.camp{display:grid;gap:10px}
+.camp .in{display:flex;gap:8px;flex-wrap:wrap}
+.camp input{flex:1;min-width:0;background:var(--bg);border:2px solid var(--line);border-radius:10px;padding:10px 12px;min-height:46px}
+.camp output{display:block;font-family:ui-monospace,monospace;font-size:13px;background:var(--bg3);border-radius:8px;padding:10px;word-break:break-all}
+.loading{color:var(--muted);padding:40px 0;text-align:center}
+.empty{color:var(--dim);font-size:14px}
+</style>
+</head>
+<body>
+<main class="wrap">
+
+<section class="login" id="login" hidden>
+  <form id="loginForm">
+    <img src="/assets/img/tg.webp" alt="">
+    <h1>Centro de mando</h1>
+    <label class="pixel" for="pw">CONTRASEÑA</label>
+    <input id="pw" type="password" autocomplete="current-password" required>
+    <button class="btn" type="submit">Entrar</button>
+    <p class="err" id="loginErr" role="alert"></p>
+  </form>
+</section>
+
+<section id="app" hidden>
+  <header class="top">
+    <div class="brand">
+      <img src="/assets/img/tg.webp" alt="">
+      <div><h1>Centro de mando</h1><small id="updated">TopinGames</small></div>
+    </div>
+    <div class="tools">
+      <div class="range" role="group" aria-label="Periodo">
+        <button type="button" data-days="7" aria-pressed="true">7 días</button>
+        <button type="button" data-days="30" aria-pressed="false">30 días</button>
+        <button type="button" data-days="90" aria-pressed="false">90 días</button>
+      </div>
+      <button class="btn ghost" id="logout" type="button">Salir</button>
+    </div>
+  </header>
+
+  <p class="loading" id="loading">Cargando datos…</p>
+  <div id="content" hidden>
+    <div class="kpis" id="kpis"></div>
+
+    <div class="grid" style="margin-top:14px">
+      <section class="card s8"><h2>Visitas únicas por día <small id="dailyNote"></small></h2><div class="chart" id="daily"></div></section>
+      <section class="card s4"><h2>Embudo</h2><div class="funnel" id="funnel"></div><p class="note" id="funnelNote"></p></section>
+
+      <section class="card s6"><h2>De dónde llegan <small>visitas · clics en apoyar</small></h2><div class="tbl" id="sources"></div></section>
+      <section class="card s6"><h2>Qué tocan</h2><div class="rows" id="targets"></div></section>
+
+      <section class="card s8" id="igCard"><h2>Instagram <small id="igUser"></small></h2><div id="ig"></div></section>
+      <section class="card s4"><h2>Meta de financiamiento</h2><div id="goal"></div>
+        <h2 style="margin-top:18px">Países</h2><div class="rows" id="countries"></div></section>
+
+      <section class="card s6"><h2>Últimas donaciones</h2><div id="recent"></div></section>
+      <section class="card s6"><h2>Links de campaña</h2>
+        <div class="camp">
+          <p class="note" style="margin:0">Ponle un nombre a cada post, historia o QR y usa su link. Aquí verás cuánta gente trajo cada uno.</p>
+          <div class="in"><input id="campName" placeholder="ej: reel-demo, qr-poleras" maxlength="24" autocomplete="off">
+            <button class="btn" id="campCopy" type="button">Copiar</button></div>
+          <output id="campOut">https://www.drpipa.cl/?src=…</output>
+          <p class="note" id="campMsg" style="margin:0" role="status"></p>
+        </div>
+      </section>
+    </div>
+  </div>
+</section>
+</main>
+
+<script>
+(() => {
+  const $ = (s) => document.querySelector(s);
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const n = (v) => (v == null ? '—' : Math.round(v).toLocaleString('es-CL'));
+  const clp = (v) => '$' + n(v);
+  const pct = (a, b) => (b ? Math.round((a / b) * 100) + '%' : '—');
+  const LABEL = {
+    'mp-1500': 'Mercado Pago $1.500', 'mp-5000': 'Mercado Pago $5.000', 'mp-10000': 'Mercado Pago $10.000',
+    kofi: 'Ko-fi', demobot: 'Bot de demo', switch: 'Canal Switch', faro: 'Faro Hundido', trueque: 'Trueque',
+    colabora: 'Colaboraciones', ig: 'Instagram', tiktok: 'TikTok', tg: 'Telegram',
+  };
+  const SRC = { ig: 'Instagram', qr: 'Código QR', direct: 'Directo', web: 'Otras webs', tiktok: 'TikTok', yt: 'YouTube', tg: 'Telegram', demobot: 'Bot de demo', hub: 'Hub', faro: 'Página del juego' };
+  let days = 7;
+
+  async function api(path, opt) {
+    const r = await fetch('/api/panel' + path, { credentials: 'same-origin', ...opt });
+    const d = await r.json().catch(() => ({}));
+    if (r.status === 401 && d.error === 'login') { showLogin(); throw new Error('login'); }
+    if (!r.ok) throw new Error(d.error || 'Error ' + r.status);
+    return d;
+  }
+  const showLogin = () => { $('#app').hidden = true; $('#login').hidden = false; $('#pw').focus(); };
+
+  $('#loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    $('#loginErr').textContent = '';
+    try {
+      await api('?action=login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: $('#pw').value }) });
+      $('#login').hidden = true; $('#pw').value = ''; load();
+    } catch (err) { if (err.message !== 'login') $('#loginErr').textContent = err.message; }
+  });
+  $('#logout').addEventListener('click', async () => { await api('?action=logout', { method: 'POST' }).catch(() => {}); showLogin(); });
+  document.querySelectorAll('.range button').forEach((b) => b.addEventListener('click', () => {
+    days = Number(b.dataset.days);
+    document.querySelectorAll('.range button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    load();
+  }));
+
+  async function load() {
+    $('#app').hidden = false; $('#loading').hidden = false; $('#content').hidden = true;
+    try {
+      const d = await api('?days=' + days);
+      render(d);
+      $('#loading').hidden = true; $('#content').hidden = false;
+    } catch (err) { if (err.message !== 'login') $('#loading').textContent = 'No se pudieron cargar los datos: ' + err.message; }
+  }
+
+  function render(d) {
+    const t = d.traffic, m = d.money;
+    $('#updated').textContent = 'Actualizado ' + new Date(d.generated).toLocaleString('es-CL', { dateStyle: 'short', timeStyle: 'short' });
+    const trend = t.prev_visitors ? Math.round(((t.visitors - t.prev_visitors) / t.prev_visitors) * 100) : null;
+    const demos = d.demos.by_platform.reduce((a, x) => a + x.n, 0);
+    const ig = d.instagram.connected ? d.instagram.profile.followers_count : null;
+    const kpis = [
+      { v: n(t.visitors), l: 'Visitas únicas', e: trend == null ? '' : `<em class="${trend >= 0 ? 'up' : 'down'}">${trend >= 0 ? '▲' : '▼'} ${Math.abs(trend)}% vs periodo anterior</em>` },
+      { v: n(t.support_clicks), l: 'Clics en apoyar', e: `<em>${pct(t.support_clicks, t.visitors)} de las visitas</em>` },
+      { v: clp(m.mp_clp), l: `Mercado Pago · ${m.mp_count} pagos`, hl: true },
+      { v: 'US$' + m.kofi_usd.toFixed(2), l: `Ko-fi · ${m.kofi_count} aportes`, hl: true },
+      { v: n(demos), l: `Demos canjeadas · ${n(d.demos.total_all_time)} en total` },
+      { v: n(t.faro_views), l: 'Visitas a Faro Hundido' },
+      { v: n(d.channel.members), l: 'Miembros del canal Switch' },
+      { v: n(ig), l: 'Seguidores en Instagram' },
+    ];
+    $('#kpis').innerHTML = kpis.map((k) => `<div class="kpi${k.hl ? ' hl' : ''}"><b class="num">${k.v}</b><span>${esc(k.l)}</span>${k.e || ''}</div>`).join('');
+
+    renderDaily(d.daily);
+
+    const donations = m.mp_count + m.kofi_count;
+    const steps = [['Visitas', t.visitors], ['Clics apoyar', t.support_clicks], ['Donaciones', donations]];
+    const max = Math.max(1, t.visitors);
+    $('#funnel').innerHTML = steps.map(([l, v]) => `<div class="step"><span>${l}</span><span class="bar"><i style="width:${Math.max(1, (v / max) * 100)}%"></i></span><b class="num">${n(v)}</b></div>`).join('');
+    $('#funnelNote').textContent = t.visitors
+      ? `${pct(t.support_clicks, t.visitors)} de las visitas toca un botón de apoyo y ${pct(donations, t.support_clicks)} de esos clics termina en donación. ${Math.round((t.mobile_share || 0) * 100)}% entra desde el teléfono y ${Math.round((t.inapp_share || 0) * 100)}% desde el navegador de Instagram o TikTok.`
+      : 'Todavía no hay visitas registradas en este periodo.';
+
+    $('#sources').innerHTML = d.sources.length ? `<table><thead><tr><th>Origen</th><th class="r">Visitas</th><th class="r">Apoyar</th><th class="r">%</th></tr></thead><tbody>${
+      d.sources.map((s) => `<tr><td>${esc(SRC[s.src] || s.src)}</td><td class="r num">${n(s.visitors)}</td><td class="r num">${n(s.support_clicks)}</td><td class="r num">${pct(s.support_clicks, s.visitors)}</td></tr>`).join('')}</tbody></table>`
+      : '<p class="empty">Sin visitas todavía.</p>';
+
+    bars('#targets', d.targets.map((x) => [LABEL[x.target] || x.target, x.clicks]), 'Sin clics todavía.');
+    bars('#countries', d.countries.map((x) => [flag(x.country) + ' ' + x.country, x.visitors]), 'Sin datos.');
+
+    const g = d.goal;
+    $('#goal').innerHTML = g.target > 0
+      ? `<div class="goal"><p style="margin:0 0 8px"><b>${esc(g.label || 'Meta')}</b><b class="num">${pct(g.raised, g.target)}</b></p>
+         <div class="bar"><i style="width:${Math.min(100, (g.raised / g.target) * 100)}%"></i></div>
+         <p class="num"><span>${clp(g.raised)}</span><span>de ${clp(g.target)}</span></p>
+         <p class="note">Suma Mercado Pago y Ko-fi (US$1 = ${clp(m.usd_rate)}). Se ve igual en el hub.</p></div>`
+      : `<p class="empty">Sin meta definida. Llevas ${clp(g.raised)} recaudados en total.</p>`;
+
+    $('#recent').innerHTML = d.recent.length ? d.recent.map((r) => `<div class="don"><span class="src ${r.source}">${r.source === 'kofi' ? 'KO-FI' : 'MP'}</span>
+        <b class="num">${r.currency === 'USD' ? 'US$' + r.amount.toFixed(2) : clp(r.amount)}</b>
+        <span class="num" style="color:var(--muted);font-size:12px">${new Date(r.created_at).toLocaleDateString('es-CL', { day: 'numeric', month: 'short' })}</span>
+        <small>${esc([r.donor, r.kind, r.note].filter(Boolean).join(' · ') || 'Donación')}</small></div>`).join('')
+      : '<p class="empty">Las donaciones aparecerán aquí apenas lleguen.</p>';
+
+    renderIG(d.instagram);
+  }
+
+  function bars(sel, items, empty) {
+    const max = Math.max(1, ...items.map((x) => x[1]));
+    $(sel).innerHTML = items.length ? items.map(([l, v]) => `<div class="row"><span class="lbl">${esc(l)}</span><span class="val num">${n(v)}</span><span class="track"><i style="width:${(v / max) * 100}%"></i></span></div>`).join('')
+      : `<p class="empty">${empty}</p>`;
+  }
+  const flag = (cc) => /^[A-Z]{2}$/.test(cc) ? String.fromCodePoint(...[...cc].map((c) => 127397 + c.charCodeAt(0))) : '🌐';
+
+  function renderDaily(rows) {
+    // Rellena los días sin visitas para que el eje sea continuo.
+    const map = Object.fromEntries(rows.map((r) => [r.day, r]));
+    const out = [];
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date(Date.now() - i * 864e5).toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
+      out.push({ day: d, visitors: map[d] ? map[d].visitors : 0, clicks: map[d] ? map[d].clicks : 0 });
+    }
+    const box = $('#daily');
+    const W = Math.max(280, box.clientWidth || 600), H = 160, pad = 22, max = Math.max(4, ...out.map((r) => r.visitors));
+    const step = (W - pad) / out.length, bw = Math.max(2, step - (days > 30 ? 1 : 3));
+    const y = (v) => H - (v / max) * (H - 10);
+    const ticks = [0, Math.round(max / 2), max];
+    let svg = `<svg viewBox="0 0 ${W} ${H + 18}" width="${W}" height="${H + 18}" role="img" aria-label="Visitas únicas por día">`;
+    for (const tk of ticks) svg += `<line x1="${pad}" x2="${W}" y1="${y(tk)}" y2="${y(tk)}" stroke="#2A2A38" stroke-width="1"/><text x="0" y="${y(tk) + 3}" fill="#6E6E80" font-size="11">${tk}</text>`;
+    out.forEach((r, i) => {
+      const x = pad + i * step, h = H - y(r.visitors);
+      svg += `<rect data-i="${i}" x="${x}" y="${y(r.visitors) - (h ? 0 : 0)}" width="${bw}" height="${Math.max(h, 0)}" rx="2" fill="#1DB5A8"/>`;
+      svg += `<rect data-i="${i}" x="${x}" y="0" width="${step}" height="${H}" fill="transparent"/>`;
+    });
+    const lbl = (i) => new Date(out[i].day + 'T12:00').toLocaleDateString('es-CL', { day: 'numeric', month: 'short' });
+    svg += `<text x="${pad}" y="${H + 14}" fill="#6E6E80" font-size="11">${lbl(0)}</text><text x="${W}" y="${H + 14}" fill="#6E6E80" font-size="11" text-anchor="end">${lbl(out.length - 1)}</text></svg>`;
+    box.innerHTML = svg + '<div class="tip" hidden></div>';
+    const tip = box.querySelector('.tip');
+    box.querySelector('svg').addEventListener('pointermove', (e) => {
+      const i = e.target.dataset && e.target.dataset.i;
+      if (i == null) { tip.hidden = true; return; }
+      const r = out[i], rect = box.getBoundingClientRect();
+      tip.innerHTML = `<b>${lbl(i)}</b> · ${r.visitors} visitas · ${r.clicks} clics`;
+      tip.style.left = Math.min(rect.width - 60, Math.max(60, e.clientX - rect.left)) + 'px';
+      tip.style.top = (e.clientY - rect.top) + 'px';
+      tip.hidden = false;
+    });
+    box.querySelector('svg').addEventListener('pointerleave', () => { tip.hidden = true; });
+    const total = out.reduce((a, r) => a + r.visitors, 0);
+    $('#dailyNote').textContent = total ? `promedio ${n(total / out.length)} por día` : '';
+  }
+
+  function renderIG(ig) {
+    const box = $('#ig');
+    if (!ig.connected) {
+      $('#igUser').textContent = 'sin conectar';
+      box.innerHTML = `<div class="connect">
+        ${ig.error ? `<p class="err">${esc(ig.error)}</p>` : ''}
+        <p>Conecta <b>@topingames_</b> para ver seguidores, alcance y el rendimiento de cada post.</p>
+        <ol><li>En Meta for Developers abre tu app → Instagram → <i>Configuración de la API con inicio de sesión de Instagram</i>.</li>
+        <li>Agrega la cuenta @topingames_ y toca <i>Generar token</i>.</li><li>Pega el token aquí. Se guarda en tu base de datos y se renueva solo.</li></ol>
+        <textarea id="igToken" placeholder="IGAA…" aria-label="Token de Instagram"></textarea>
+        <button class="btn" id="igSave" type="button">Conectar Instagram</button><p class="note" id="igMsg" role="status"></p></div>`;
+      $('#igSave').addEventListener('click', async () => {
+        $('#igMsg').textContent = 'Comprobando…';
+        try {
+          const r = await api('?action=ig-token', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: $('#igToken').value }) });
+          $('#igMsg').textContent = 'Conectado como @' + r.username; load();
+        } catch (e) { $('#igMsg').textContent = e.message; }
+      });
+      return;
+    }
+    const p = ig.profile, s = ig.insights || {};
+    $('#igUser').textContent = '@' + p.username;
+    box.innerHTML = `<div class="ig-head">${p.profile_picture_url ? `<img src="${esc(p.profile_picture_url)}" alt="">` : ''}
+        <div><b>@${esc(p.username)}</b><br><span class="note">${n(p.followers_count)} seguidores · ${n(p.media_count)} publicaciones</span></div></div>
+      <div class="ig-stats">
+        <div><b class="num">${n(s.reach)}</b><span>Cuentas alcanzadas</span></div>
+        <div><b class="num">${n(s.views)}</b><span>Visualizaciones</span></div>
+        <div><b class="num">${n(s.website_clicks)}</b><span>Clics al link de la bio</span></div>
+      </div>
+      <div class="posts">${ig.media.map((m) => `<a class="post" href="${esc(m.url)}" target="_blank" rel="noopener">
+        ${m.image ? `<img src="${esc(m.image)}" alt="${esc(m.caption)}" loading="lazy">` : ''}<span class="ty">${m.type}</span>
+        <span class="ov num">❤ ${n(m.likes)} 💬 ${n(m.comments)}${m.reach != null ? ' 👁 ' + n(m.reach) : ''}</span></a>`).join('')}</div>
+      <p class="note">Alcance de los últimos ${Math.min(days, 30)} días. 👁 = cuentas que vieron cada post.</p>`;
+  }
+
+  // Links de campaña
+  const slug = (v) => v.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 24);
+  const campUrl = () => 'https://www.drpipa.cl/?src=' + (slug($('#campName').value) || '…');
+  $('#campName').addEventListener('input', () => { $('#campOut').textContent = campUrl(); $('#campMsg').textContent = ''; });
+  $('#campCopy').addEventListener('click', async () => {
+    if (!slug($('#campName').value)) { $('#campMsg').textContent = 'Escribe un nombre primero.'; return; }
+    try { await navigator.clipboard.writeText(campUrl()); $('#campMsg').textContent = 'Link copiado.'; }
+    catch (_) { const r = document.createRange(); r.selectNodeContents($('#campOut')); getSelection().removeAllRanges(); getSelection().addRange(r); $('#campMsg').textContent = 'Selecciónalo y cópialo.'; }
+  });
+
+  load();
+})();
+</script>
+</body>
+</html>

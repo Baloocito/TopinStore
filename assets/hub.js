@@ -84,9 +84,16 @@
 
   const clp = (n) => '$' + Math.round(n).toLocaleString('es-CL');
 
-  function renderSupport(s) {
+  function renderSupport(s, live) {
     const box = $('[data-bind="support"]');
     if (!s) return;
+    if (!live && s.goal && s.goal.target > 0) {
+      // El monto real viene del servidor (Mercado Pago + Ko-fi); se pinta primero con lo del archivo.
+      fetch('/api/goal').then((r) => r.json()).then((g) => {
+        if (g && g.target > 0) renderSupport({ ...s, goal: { ...s.goal, ...g, label: s.goal.label || g.label } }, true);
+        reveal();
+      }).catch(() => {});
+    }
     const tiers = (s.tiers || []).filter((t) => t.url);
     const g = s.goal;
     const pct = g && g.target > 0 ? Math.min(100, Math.round((g.raised / g.target) * 100)) : null;

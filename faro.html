@@ -424,7 +424,7 @@ drawMap();if(document.fonts&&document.fonts.ready)document.fonts.ready.then(draw
 
 // visita medida
 try{const src=new URLSearchParams(location.search).get("src")||sessionStorage.getItem("src")||"hub";
-  const u="/api/hit?src="+encodeURIComponent(("faro-"+src).slice(0,24));navigator.sendBeacon?navigator.sendBeacon(u):fetch(u,{keepalive:true});}catch(_){}
+  const u="/api/hit?page=faro&src="+encodeURIComponent(String(src).toLowerCase().replace(/[^a-z0-9_-]/g,"").slice(0,24)||"hub");navigator.sendBeacon?navigator.sendBeacon(u):fetch(u,{keepalive:true});}catch(_){}
 })();
 </script>
 </body>

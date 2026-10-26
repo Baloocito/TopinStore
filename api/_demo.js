@@ -109,6 +109,33 @@ export function ensureSchema() {
         status      text NOT NULL,
         created_at  timestamptz NOT NULL DEFAULT now()
       )`;
+      await q`ALTER TABLE donations ADD COLUMN IF NOT EXISTS donor text`;
+      await q`ALTER TABLE donations ADD COLUMN IF NOT EXISTS note text`;
+      await q`ALTER TABLE donations ADD COLUMN IF NOT EXISTS kind text`;
+      await q`CREATE TABLE IF NOT EXISTS events (
+        id       bigserial PRIMARY KEY,
+        at       timestamptz NOT NULL DEFAULT now(),
+        type     text NOT NULL,
+        target   text NOT NULL,
+        src      text NOT NULL,
+        country  text,
+        city     text,
+        mobile   boolean,
+        inapp    boolean,
+        vid      text
+      )`;
+      await q`CREATE INDEX IF NOT EXISTS events_at_idx ON events (at)`;
+      await q`CREATE TABLE IF NOT EXISTS metrics_daily (
+        day     date NOT NULL,
+        metric  text NOT NULL,
+        value   numeric NOT NULL,
+        PRIMARY KEY (day, metric)
+      )`;
+      await q`CREATE TABLE IF NOT EXISTS settings (
+        key         text PRIMARY KEY,
+        value       text NOT NULL,
+        updated_at  timestamptz NOT NULL DEFAULT now()
+      )`;
     })().catch((e) => { _ready = null; throw e; });
   }
   return _ready;

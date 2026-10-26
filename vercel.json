@@ -49,6 +49,25 @@
           "value": "public, max-age=0, must-revalidate"
         }
       ]
+    },
+    {
+      "source": "/panel",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        },
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex"
+        }
+      ]
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/daily",
+      "schedule": "0 12 * * *"
     }
   ]
 }

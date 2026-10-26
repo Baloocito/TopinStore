@@ -3,7 +3,7 @@
   "version": "2.0.0",
   "private": true,
   "type": "module",
-  "description": "Hub link-in-bio de Xiombo \u00d7 TopinGames",
+  "description": "Hub link-in-bio de Xiombo × TopinGames",
   "scripts": {
     "build": "node scripts/check.mjs"
   },
@@ -11,6 +11,7 @@
     "node": ">=20"
   },
   "dependencies": {
-    "@neondatabase/serverless": "^1.0.2"
+    "@neondatabase/serverless": "^1.0.2",
+    "@vercel/functions": "^2.2.13"
   }
 }
