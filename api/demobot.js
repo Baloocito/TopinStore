@@ -11,7 +11,7 @@ const LINKS = {
   game: `${SITE}/faro?src=demobot`,
   support: `${SITE}/?src=demobot`,
   channel: 'https://t.me/TopinSaleSwitch',
-  instagram: 'https://www.instagram.com/xiombo',
+  instagram: 'https://www.instagram.com/topingames_',
 };
 
 /* ---------- Textos ---------- */
@@ -21,7 +21,7 @@ const REASONS = {
   pending: '⏳ <b>Tu pago sigue en proceso.</b>\nCuando Mercado Pago lo apruebe, vuelve a enviarme el número.',
   not_approved: '❌ <b>Ese pago no figura como aprobado</b>, así que no puedo entregar la demo con él.',
   too_low: `💡 <b>La demo se regala desde ${clp(MIN_AMOUNT)}.</b>\nEse pago es de un monto menor.`,
-  too_old: `📅 <b>Ese pago tiene más de ${MAX_AGE_DAYS} días.</b>\nSi crees que es un error, escríbeme en Instagram @xiombo.`,
+  too_old: `📅 <b>Ese pago tiene más de ${MAX_AGE_DAYS} días.</b>\nSi crees que es un error, escríbeme en Instagram @topingames_.`,
   used: '🔒 <b>Esa donación ya se canjeó.</b>\nCada donación entrega una demo.',
   mp_error: '⚠️ <b>No pude conectarme con Mercado Pago.</b>\nIntenta de nuevo en unos minutos.',
 };
@@ -73,8 +73,8 @@ const VIEWS = {
       '<b>¿Doné desde otro país?</b>\nEn Ko-fi eliges la demo al donar y te llega directo, sin pasar por este bot.\n\n' +
       '<b>Android no deja instalar</b>\nActiva <i>Permitir de esta fuente</i> para la app desde donde abres el archivo.\n\n' +
       '<b>Windows muestra una advertencia</b>\nToca <i>Más información</i> → <i>Ejecutar de todas formas</i>. Pasa con juegos indie sin firma.\n\n' +
-      '<b>¿Otro problema?</b> Escríbeme en Instagram @xiombo.',
-    keyboard: [[btn('🎁 Canjear mi demo', 'v:redeem')], [url('💬 Instagram @xiombo', LINKS.instagram)], BACK],
+      '<b>¿Otro problema?</b> Escríbeme en Instagram @topingames_.',
+    keyboard: [[btn('🎁 Canjear mi demo', 'v:redeem')], [url('💬 Instagram @topingames_', LINKS.instagram)], BACK],
   }),
   confirmed: (amount, id) => ({
     text: `✅ <b>¡Donación confirmada!</b> ${clp(amount)}\nGracias por encender el faro.\n\n<b>¿Dónde vas a jugar?</b>`,
@@ -83,7 +83,7 @@ const VIEWS = {
   delivered: (platform) => ({
     text:
       `🎉 <b>¡Listo! Tu demo de ${PLATFORMS[platform]} está arriba.</b>\n\n` +
-      'Cuando la juegues, cuéntame qué te pareció en Instagram @xiombo. Tu opinión da forma al juego.',
+      'Cuando la juegues, cuéntame qué te pareció en Instagram @topingames_. Tu opinión da forma al juego.',
     keyboard: [[url('🔦 Ver el juego', LINKS.game), url('🎮 Ofertas de Switch', LINKS.channel)], BACK],
   }),
   waiting: (platform) => ({
