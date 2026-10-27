@@ -87,10 +87,10 @@
   "support": {
     "kicker": "Hagámoslo juntos",
     "title": "Saltemos de 8 a 32 bits",
-    "text": "Faro Hundido lo construimos entre todos. Tu aporte va directo a mejorar la gráfica del juego.",
+    "text": "Faro Hundido y Topin de Zombies los construimos entre todos. Tu aporte va directo al arte final de ambos juegos, antes del lanzamiento.",
     "goal": {
-      "label": "Arte del Muelle Ahogado",
-      "target": 450000,
+      "label": "Arte final de los dos juegos",
+      "target": 1500000,
       "currency": "CLP",
       "usdRate": 950
     },
