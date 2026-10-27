@@ -57,9 +57,10 @@ export async function checkPayment(paymentId) {
     currency: p.currency_id,
     approvedAt: p.date_approved,
     payer: p.payer && p.payer.email,
+    // true solo si el pago lo RECIBISTE tú. Mercado Pago también avisa de los pagos que tú haces.
+    mine: String(p.collector_id) === String(await sellerId()),
   };
-  // Solo cuentan los pagos que RECIBISTE tú (no los que tú hiciste a otros).
-  if (String(p.collector_id) !== String(await sellerId())) return { ok: false, reason: 'not_found', payment };
+  if (!payment.mine) return { ok: false, reason: 'not_found', payment };
   if (p.status !== 'approved') return { ok: false, reason: p.status === 'pending' || p.status === 'in_process' ? 'pending' : 'not_approved', payment };
   if (payment.currency !== 'CLP' || payment.amount < MIN_AMOUNT) return { ok: false, reason: 'too_low', payment };
   const age = (Date.now() - new Date(p.date_approved || p.date_created).getTime()) / 864e5;

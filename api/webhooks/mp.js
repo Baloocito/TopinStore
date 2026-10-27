@@ -14,7 +14,8 @@ export default async function handler(req, res) {
     if (id && (!topic || topic === 'payment')) {
       const r = await checkPayment(id);
       const p = r.payment;
-      if (p && p.status === 'approved') {
+      // Solo pagos aprobados que tú recibiste: los que tú pagas a otros no son donaciones.
+      if (p && p.mine && p.status === 'approved') {
         await ensureSchema();
         const ins = await sql()`
           INSERT INTO donations (payment_id, source, amount, currency, status)

@@ -1,6 +1,6 @@
 // Tarea diaria (Vercel Cron): guarda la foto del día, renueva el token de Instagram
 // y los lunes envía el informe semanal por Telegram.
-import { sql, ensureSchema, notifyAdmin, esc } from '../_demo.js';
+import { sql, ensureSchema, notifyAdmin, esc, checkPayment } from '../_demo.js';
 import { stats, goal, channelMembers } from '../_stats.js';
 import { igToken, igProfile, igAccountInsights, igRefreshIfNeeded } from '../_ig.js';
 
@@ -31,6 +31,26 @@ async function snapshot(day) {
     } catch (e) { out.ig_error = e.message; }
   }
   return out;
+}
+
+/** Revisa las donaciones de Mercado Pago recientes y borra las que no fueron pagos recibidos por ti. */
+async function cleanDonations() {
+  const rows = await sql()`SELECT payment_id, amount FROM donations
+    WHERE source = 'mercadopago' AND created_at > now() - interval '60 days'`;
+  const removed = [];
+  for (const d of rows) {
+    const r = await checkPayment(d.payment_id);
+    if (r.reason === 'mp_error') continue;
+    if (!r.payment || !r.payment.mine || r.payment.status !== 'approved') {
+      await sql()`DELETE FROM donations WHERE payment_id = ${d.payment_id}`;
+      removed.push(d);
+    }
+  }
+  if (removed.length) {
+    await notifyAdmin('🧹 Saqué de la meta ' + removed.length + ' pago(s) que no eran donaciones recibidas: ' +
+      removed.map((d) => `$${Math.round(d.amount).toLocaleString('es-CL')} (<code>${esc(d.payment_id)}</code>)`).join(', '));
+  }
+  return removed.length;
 }
 
 async function weeklyReport() {
@@ -70,6 +90,7 @@ export default async function handler(req, res) {
     await ensureSchema();
     const day = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
     out.snapshot = await snapshot(day);
+    out.donations_removed = await cleanDonations().catch((e) => 'error: ' + e.message);
     out.instagram_token = await igRefreshIfNeeded().catch((e) => 'error: ' + e.message);
     const weekday = new Date().toLocaleDateString('en-US', { timeZone: 'America/Santiago', weekday: 'short' });
     if (weekday === 'Mon' || req.query.report === '1') {
