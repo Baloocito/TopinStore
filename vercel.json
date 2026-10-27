@@ -5,6 +5,14 @@
   "cleanUrls": true,
   "rewrites": [
     {
+      "source": "/api/tq",
+      "destination": "/api/go?id=tq"
+    },
+    {
+      "source": "/api/demobot-setup",
+      "destination": "/api/demobot?setup=1"
+    },
+    {
       "source": "/go/:id",
       "destination": "/api/go?id=:id"
     },

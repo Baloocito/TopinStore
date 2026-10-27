@@ -1,7 +1,10 @@
 import { urlFor, cleanSrc, logEvent } from './_lib.js';
+import truequeGo from './_tqgo.js';
 
 export default function handler(req, res) {
   const id = String(req.query.id || '');
+  // /api/tq?p=<producto> llega aquí como id=tq: "Lo quiero" de Trueque.
+  if (id === 'tq') return truequeGo(req, res);
   const target = urlFor(id);
   if (!target) {
     res.statusCode = 302;

@@ -1,7 +1,7 @@
 // Conecta @TopinDemoBot con este sitio. Es seguro abrirlo varias veces: siempre apunta al mismo lugar.
 import { tg, WEBHOOK_SECRET, SITE, ADMIN_ID, sql, ensureSchema } from './_demo.js';
 
-export default async function handler(req, res) {
+export default async function demoSetup(req, res) {
   const out = { bot: null, webhook: null, commands: null, database: null, mercadopago: null, admin: Boolean(ADMIN_ID) };
   if (!WEBHOOK_SECRET) {
     res.status(500).json({ error: 'Falta TELEGRAM_DEMO_BOT_TOKEN en Vercel' });

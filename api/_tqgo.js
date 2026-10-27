@@ -15,7 +15,7 @@ async function botUsername() {
   return cached;
 }
 
-export default async function handler(req, res) {
+export default async function truequeGo(req, res) {
   const id = String(req.query.p || '');
   const ok = UUID.test(id);
   if (ok) logEvent(req, { type: 'click', id: 'tql:' + id.toLowerCase(), src: cleanSrc(req.query.src) });

@@ -1,6 +1,7 @@
 // Webhook de @TopinDemoBot: verifica donaciones de Mercado Pago y entrega la demo de Faro Hundido.
 // La conversación funciona como una app: un solo "panel" que se edita en su lugar,
 // y los mensajes que escribe la persona se borran después de leerlos para que el chat quede limpio.
+import demoSetup from './_demosetup.js';
 import {
   tg, say, notifyAdmin, esc, checkPayment, sql, ensureSchema,
   ADMIN_ID, WEBHOOK_SECRET, PLATFORMS, MIN_AMOUNT, MAX_AGE_DAYS, SITE,
@@ -233,6 +234,8 @@ async function onAdmin(msg, text) {
 /* ---------- Entrada ---------- */
 
 export default async function handler(req, res) {
+  // GET /api/demobot?setup=1 (o /api/demobot-setup) conecta el bot. Vive aquí para no sumar funciones.
+  if (req.method === 'GET' && req.query.setup) return demoSetup(req, res);
   if (!WEBHOOK_SECRET || req.method !== 'POST' || req.headers['x-telegram-bot-api-secret-token'] !== WEBHOOK_SECRET) {
     res.statusCode = 401;
     return res.end();
