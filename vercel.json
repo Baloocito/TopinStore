@@ -27,6 +27,14 @@
     {
       "source": "/trueque/:path*",
       "destination": "https://trueque-app.vercel.app/trueque/:path*"
+    },
+    {
+      "source": "/tienda",
+      "destination": "https://trueque-app.vercel.app/tienda"
+    },
+    {
+      "source": "/tienda/:path*",
+      "destination": "https://trueque-app.vercel.app/tienda/:path*"
     }
   ],
   "headers": [
