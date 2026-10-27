@@ -131,6 +131,12 @@ section{padding-block:44px 0;display:grid;gap:16px;scroll-margin-top:64px}
 .maplegend{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:.8rem;color:var(--mute)}
 .maplegend i{display:inline-block;width:11px;height:11px;margin-right:5px;vertical-align:-1px}
 
+.shots{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(82%,1fr);gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:8px;scrollbar-width:thin}
+@media (min-width:640px){.shots{grid-auto-columns:minmax(46%,1fr)}}
+.shots figure{scroll-snap-align:start;background:var(--hull);border:1px solid var(--rule);display:grid;min-width:0}
+.shots img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block}
+.shots figcaption{padding:10px 12px;font-size:.9rem;color:var(--mute);line-height:1.4}
+.shots figcaption b{display:block;color:var(--lamp);font-family:var(--f-display);font-weight:600}
 /* progreso */
 .road{display:grid;gap:0}
 .step{display:grid;grid-template-columns:28px 1fr;gap:4px 12px;padding:10px 0}
@@ -184,7 +190,7 @@ footer a{color:var(--mute)}
 
   <div class="facts">
     <div><b>Partidas</b><span>30–40 min</span></div>
-    <div><b>Mundos</b><span>4 biomas</span></div>
+    <div><b>Mundos</b><span>4 biomas · 3 finales</span></div>
     <div><b>Vista</b><span>Cenital por salas</span></div>
     <div><b>Plataformas</b><span>PC y Android</span></div>
   </div>
@@ -212,6 +218,21 @@ footer a{color:var(--mute)}
   <div class="depth">−200 m · EL DESCENSO</div>
   <h2>Cuatro mundos bajo el agua</h2>
   <div class="biomes" id="biomes"></div>
+</section>
+
+<section id="hoy">
+  <div class="depth">−400 m · ASÍ SE VE HOY</div>
+  <h2>Ya se juega completo</h2>
+  <p class="mute">Estas capturas son del juego real, con su arte provisional. Es el "antes": cuando llegue el arte en 32 bits, aquí verás el "después".</p>
+  <div class="shots" tabindex="0" aria-label="Capturas del juego">
+    <figure><img src="/assets/faro/02-muelle.webp" alt="El Muelle Ahogado" loading="lazy"><figcaption><b>Muelle Ahogado</b> Las barcas siguen amarradas. Nadie volvió a soltarlas.</figcaption></figure>
+    <figure><img src="/assets/faro/03-sirena.webp" alt="La Sirena de Brea" loading="lazy"><figcaption><b>La Sirena de Brea</b> El primer jefe.</figcaption></figure>
+    <figure><img src="/assets/faro/04-catedral.webp" alt="La Catedral Sumergida" loading="lazy"><figcaption><b>Catedral Sumergida</b> Las campanas todavía tocan.</figcaption></figure>
+    <figure><img src="/assets/faro/06-archivo.webp" alt="El Archivo de los Náufragos" loading="lazy"><figcaption><b>Archivo de los Náufragos</b> Un archivo que se escribe solo.</figcaption></figure>
+    <figure><img src="/assets/faro/08-raiz.webp" alt="La Raíz del Faro" loading="lazy"><figcaption><b>Raíz del Faro</b> Algo respira al otro lado del vidrio.</figcaption></figure>
+    <figure><img src="/assets/faro/09-lampara-madre.webp" alt="La Lámpara Madre" loading="lazy"><figcaption><b>La Lámpara Madre</b> El final… o uno de tres.</figcaption></figure>
+    <figure><img src="/assets/faro/12-estado.webp" alt="La pantalla de Estado" loading="lazy"><figcaption><b>Pantalla de Estado</b> Cada mejora comparada con su valor base.</figcaption></figure>
+  </div>
 </section>
 
 <section id="bestiario">
@@ -266,11 +287,12 @@ footer a{color:var(--mute)}
   <div class="depth">−∞ · DIARIO DE DESARROLLO</div>
   <h2>Dónde va el juego</h2>
   <div class="road">
-    <div class="step done"><span class="dot"></span><h3>Prototipo · listo</h3><p>Movimiento, dash, farol y la luz con tramado. Ya corre en el teléfono.</p></div>
-    <div class="step now"><span class="dot"></span><h3>Núcleo roguelike · ahora</h3><p>Pisos al azar, tienda, reliquias, la luz como moneda y el primer jefe: la Sirena de Brea.</p></div>
-    <div class="step"><span class="dot"></span><h3>Muelle y Catedral</h3><p>Arte final de los dos primeros mundos, más enemigos y el Santuario.</p></div>
-    <div class="step"><span class="dot"></span><h3>Archivo y Raíz</h3><p>El descenso completo, los tres finales y las 40 botellas con mensaje.</p></div>
-    <div class="step"><span class="dot"></span><h3>Pulido y beta</h3><p>Dificultades, controles táctiles, sonido y pruebas con jugadores.</p></div>
+    <div class="step done"><span class="dot"></span><h3>El juego completo · listo</h3><p>4 biomas, 5 jefes, 3 finales, 10 Mareas, el Santuario con sus náufragos, música y efectos. Se puede terminar de principio a fin.</p></div>
+    <div class="step done"><span class="dot"></span><h3>Demo para quienes apoyan · lista</h3><p>Windows y Android, hasta la cámara de la Sirena.</p></div>
+    <div class="step now"><span class="dot"></span><h3>Arte final en 32 bits · ahora</h3><p>Personajes, enemigos, jefes, entornos y efectos. Es lo único que falta, y lo que más se ve.</p></div>
+    <div class="step"><span class="dot"></span><h3>Animaciones de jefes y ataques</h3><p>Que cada jefe se mueva como lo que es.</p></div>
+    <div class="step"><span class="dot"></span><h3>Pulido con jugadores reales</h3><p>Balance de las Mareas y pruebas en celulares.</p></div>
+    <div class="step"><span class="dot"></span><h3>Lanzamiento</h3><p>Steam y Android.</p></div>
   </div>
 </section>
 
@@ -376,8 +398,9 @@ const dex=document.getElementById("dex");
 const BOSSES=[["La Sirena de Brea","Muelle Ahogado","Canta proyectiles en espiral, inunda la sala con brea que apaga tu luz y emerge bajo tus pies."],
  ["El Obispo Coral","Catedral Sumergida","Invoca fieles, cura con sus vitrales y hace crecer el coral hasta encerrarte."],
  ["El Cartógrafo","Archivo de los Náufragos","Redibuja las paredes, te copia en papel y apaga todas las luces menos la tuya."],
- ["La Lámpara Madre","Raíz del Faro","El examen final. Lo que vive dentro de la lámpara recuerda a todos los anteriores."]];
-document.getElementById("bosses").innerHTML=BOSSES.map(([n,b,t],i)=>`<div class="boss"><span class="n">${["I","II","III","IV"][i]}</span><h3>${n} <small class="mute" style="font-family:var(--f-body);font-size:.8rem">· ${b}</small></h3><p>${t}</p></div>`).join("");
+ ["La Lámpara Madre","Raíz del Faro","El examen final. Lo que vive dentro de la lámpara recuerda a todos los anteriores."],
+ ["El Farero Antiguo","Final secreto","Solo aparece si eliges no pelear. Se le enfrenta a oscuras."]];
+document.getElementById("bosses").innerHTML=BOSSES.map(([n,b,t],i)=>`<div class="boss"><span class="n">${["I","II","III","IV","V"][i]}</span><h3>${n} <small class="mute" style="font-family:var(--f-body);font-size:.8rem">· ${b}</small></h3><p>${t}</p></div>`).join("");
 
 // ---------- generador de pisos ----------
 const mc=document.getElementById("mapc"),mx=mc.getContext("2d");
