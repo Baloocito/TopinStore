@@ -1,7 +1,7 @@
-// Bot de Trueque: el comprador toca "Lo quiero", el bot le muestra el producto y le avisa a Xiombo.
+// Bot de TopinStore (@TopinStoreBot): el comprador toca "Lo quiero", el bot le muestra el producto y le avisa a Xiombo.
 // Los mensajes van y vienen a través del bot, así que nadie ve el número ni el usuario del otro.
 // GET /api/truequebot?setup=1 lo conecta (seguro de abrir varias veces).
-import { sql, ensureSchema, ADMIN_ID, esc } from './_demo.js';
+import { sql, ensureSchema, ADMIN_ID, esc, SITE } from './_demo.js';
 import { tq, tqSay, TQ_SECRET, STORE, product, price, CONDITION, productUrl } from './_tq.js';
 
 const storeBtn = { text: '🛍️ Ver toda la tienda', url: STORE };
@@ -97,7 +97,7 @@ async function onBuyerMessage(m) {
     const arg = text.split(/\s+/)[1] || '';
     if (arg.startsWith('p_')) return showProduct(m.chat.id, user, arg.slice(2));
     return tqSay(m.chat.id,
-      '👋 ¡Hola! Soy el bot de <b>Trueque</b>, la tienda de usados y gadgets de Xiombo × TopinGames.\n\n' +
+      '👋 ¡Hola! Soy el bot de <b>TopinStore</b>, la tienda de usados y gadgets de Xiombo × TopinGames.\n\n' +
       'Elige algo en la tienda y toca <b>Lo quiero</b>: te traigo aquí con el producto listo y le aviso a Xiombo.',
       { reply_markup: { inline_keyboard: [[storeBtn]] } });
   }
@@ -117,7 +117,7 @@ async function onBuyerMessage(m) {
 
 /* ---------- Xiombo ---------- */
 const ADMIN_HELP =
-  '🛍️ <b>Bot de Trueque · modo dueño</b>\n\n' +
+  '🛍️ <b>Bot de TopinStore · modo dueño</b>\n\n' +
   'Cuando alguien toca <b>Lo quiero</b> o escribe una pregunta, te llega aquí.\n' +
   '↩️ <b>Responde</b> (desliza) a su mensaje y le llega a esa persona: texto, fotos, audios o ubicación.\n\n' +
   '/interesados: los últimos interesados\n\n' +
@@ -156,12 +156,12 @@ export default async function handler(req, res) {
     if (!TQ_SECRET) return res.status(500).json({ error: 'Falta TELEGRAM_TRUEQUE_BOT_TOKEN en Vercel' });
     const me = await tq('getMe', {});
     const hook = await tq('setWebhook', {
-      url: `${STORE.replace(/\/trueque$/, '')}/api/truequebot`, secret_token: TQ_SECRET,
+      url: `${SITE}/api/truequebot`, secret_token: TQ_SECRET,
       allowed_updates: ['message', 'callback_query'],
     });
     await tq('setMyCommands', { commands: [{ command: 'start', description: 'Inicio' }] });
-    await tq('setMyDescription', { description: 'Trueque: usados con historia y gadgets de Xiombo × TopinGames. Toca "Lo quiero" en la tienda y te atiendo por aquí, sin compartir números.' });
-    await tq('setMyShortDescription', { short_description: 'Tienda de usados y gadgets · drpipa.cl/trueque' });
+    await tq('setMyDescription', { description: 'TopinStore: usados con historia y gadgets de Xiombo × TopinGames. Toca "Lo quiero" en la tienda y te atiendo por aquí, sin compartir números.' });
+    await tq('setMyShortDescription', { short_description: 'Tienda de usados y gadgets · drpipa.cl/tienda' });
     await ensureSchema();
     if (me.ok) await sql()`INSERT INTO settings (key, value) VALUES ('tq_bot_username', ${me.result.username})
       ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()`;

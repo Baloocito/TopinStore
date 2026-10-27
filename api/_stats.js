@@ -103,7 +103,7 @@ export async function stats(days) {
   };
 }
 
-/** Tienda Trueque: visitas, productos más vistos y gente que pidió algo por el bot. */
+/** Tienda TopinStore: visitas, productos más vistos y gente que pidió algo por el bot. */
 async function truequeStats(q, since) {
   const [t] = await q`SELECT
       count(DISTINCT vid) FILTER (WHERE type='view' AND (target='trueque' OR target LIKE 'tqp:%'))::int AS visitors,

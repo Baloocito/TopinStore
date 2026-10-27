@@ -58,7 +58,7 @@ header.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-
 .card{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:16px;min-width:0;grid-column:span 12}
 .card h2{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
 .card h2 small{font-weight:400;text-transform:none;letter-spacing:0;color:var(--dim)}
-/* columnas internas de Trueque */
+/* columnas internas de la tienda */
 .tqcol{grid-column:span 12;min-width:0}
 @media (min-width:760px){.tqcol{grid-column:span 6}}
 @media (min-width:760px){.s6{grid-column:span 6}.s4{grid-column:span 4}.s8{grid-column:span 8}}
@@ -191,7 +191,7 @@ td.r,th.r{text-align:right}
 
       <section class="card s12"><h2>Publicaciones <small>se aprueban en el bot de mando</small></h2><div class="q" id="queue"></div></section>
 
-      <section class="card s12"><h2>Trueque <small>tienda en drpipa.cl/trueque · contacto por el bot</small></h2><div id="trueque"></div></section>
+      <section class="card s12"><h2>TopinStore <small>tienda en drpipa.cl/tienda · contacto por @TopinStoreBot</small></h2><div id="trueque"></div></section>
 
       <section class="card s6"><h2>Últimas donaciones</h2><div id="recent"></div></section>
       <section class="card s6"><h2>Links de campaña</h2>
@@ -217,10 +217,10 @@ td.r,th.r{text-align:right}
   const pct = (a, b) => (b ? Math.round((a / b) * 100) + '%' : '—');
   const LABEL = {
     'mp-1500': 'Mercado Pago $1.500', 'mp-5000': 'Mercado Pago $5.000', 'mp-10000': 'Mercado Pago $10.000',
-    kofi: 'Ko-fi', demobot: 'Bot de demo', switch: 'Canal Switch', faro: 'Faro Hundido', trueque: 'Trueque',
-    colabora: 'Colaboraciones', zombies: 'Topin de Zombies', 'tq-contacto': 'Trueque · Lo quiero', ig: 'Instagram', tiktok: 'TikTok', tg: 'Telegram',
+    kofi: 'Ko-fi', demobot: 'Bot de demo', switch: 'Canal Switch', faro: 'Faro Hundido', trueque: 'TopinStore',
+    colabora: 'Colaboraciones', zombies: 'Topin de Zombies', 'tq-contacto': 'TopinStore · Lo quiero', ig: 'Instagram', tiktok: 'TikTok', tg: 'Telegram',
   };
-  const SRC = { ig: 'Instagram', qr: 'Código QR', direct: 'Directo', web: 'Otras webs', tiktok: 'TikTok', yt: 'YouTube', tg: 'Telegram', demobot: 'Bot de demo', hub: 'Hub', faro: 'Página de Faro', zombies: 'Página de Zombies', trueque: 'Tienda Trueque' };
+  const SRC = { ig: 'Instagram', qr: 'Código QR', direct: 'Directo', web: 'Otras webs', tiktok: 'TikTok', yt: 'YouTube', tg: 'Telegram', demobot: 'Bot de demo', hub: 'Hub', faro: 'Página de Faro', zombies: 'Página de Zombies', trueque: 'TopinStore' };
   let days = 7;
 
   async function api(path, opt) {
@@ -327,7 +327,7 @@ td.r,th.r{text-align:right}
     bars('#tqTop', tq.top.map((p) => [p.name + (p.contacts ? ` · ${p.contacts} 🙋` : ''), p.views]), 'Cuando alguien abra un producto, aparecerá aquí.');
     $('#tqLeads').innerHTML = tq.recent.length ? tq.recent.map((r) => `<div class="don"><span class="src" style="background:#2AABEE;color:var(--black)">${r.kind === 'want' ? 'LO QUIERO' : 'PREGUNTA'}</span>
         <b>${esc(r.product_name || '')}</b><span class="num" style="color:var(--muted);font-size:12px">${new Date(r.created_at).toLocaleDateString('es-CL', { day: 'numeric', month: 'short' })}</span>
-        <small>${esc(r.tg_name || '')} · respóndele en el bot de Trueque</small></div>`).join('')
+        <small>${esc(r.tg_name || '')} · respóndele en @TopinStoreBot</small></div>`).join('')
       : '<p class="empty">Los interesados del bot aparecerán aquí.</p>';
   }
 

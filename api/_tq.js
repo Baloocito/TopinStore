@@ -1,11 +1,11 @@
-// Piezas del bot de Trueque: Telegram, lectura de productos desde la tienda y textos.
+// Piezas del bot de TopinStore (proyecto trueque-app): Telegram, lectura de productos desde la tienda y textos.
 import { createHash } from 'node:crypto';
 import { SITE } from './_demo.js';
 
 const TOKEN = process.env.TELEGRAM_TRUEQUE_BOT_TOKEN || '';
 export const TQ_SECRET = TOKEN
   ? createHash('sha256').update('topin-trueque:' + TOKEN).digest('hex').slice(0, 48) : '';
-export const STORE = `${SITE}/trueque`;
+export const STORE = `${SITE}/tienda`;
 // API pública de la tienda (proyecto trueque-app). Solo devuelve datos públicos.
 const API = process.env.TRUEQUE_API || 'https://trueque-app.vercel.app/api';
 // Si el bot aún no está creado, "Lo quiero" lleva a los mensajes de Instagram.

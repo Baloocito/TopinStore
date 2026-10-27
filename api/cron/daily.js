@@ -8,7 +8,7 @@ const clp = (n) => '$' + Math.round(n || 0).toLocaleString('es-CL');
 const pct = (a, b) => (b ? Math.round((a / b) * 100) + '%' : '—');
 const LABEL = {
   'mp-1500': 'MP $1.500', 'mp-5000': 'MP $5.000', 'mp-10000': 'MP $10.000', kofi: 'Ko-fi', demobot: 'Bot de demo',
-  switch: 'Canal Switch', 'tq-contacto': 'Trueque · Lo quiero', faro: 'Faro Hundido', zombies: 'Topin de Zombies', trueque: 'Trueque', colabora: 'Colaboraciones',
+  switch: 'Canal Switch', 'tq-contacto': 'TopinStore · Lo quiero', faro: 'Faro Hundido', zombies: 'Topin de Zombies', trueque: 'TopinStore', colabora: 'Colaboraciones',
   ig: 'Instagram', tiktok: 'TikTok', tg: 'Telegram',
 };
 
@@ -49,7 +49,7 @@ async function weeklyReport() {
     `🎮 Visitas a los juegos: Faro <b>${t.faro_views}</b> · Zombies <b>${t.zombies_views}</b>`,
     `💰 Mercado Pago: <b>${clp(s.money.mp_clp)}</b> (${s.money.mp_count}) · Ko-fi: <b>US$${s.money.kofi_usd.toFixed(2)}</b> (${s.money.kofi_count})`,
     `🎁 Demos canjeadas: <b>${s.demos.by_platform.reduce((a, x) => a + x.n, 0)}</b>`,
-    `🛍️ Trueque: <b>${s.trueque.visitors}</b> visitas · <b>${s.trueque.wants}</b> "lo quiero" · <b>${s.trueque.asks}</b> preguntas` +
+    `🛍️ TopinStore: <b>${s.trueque.visitors}</b> visitas · <b>${s.trueque.wants}</b> "lo quiero" · <b>${s.trueque.asks}</b> preguntas` +
       (s.trueque.top[0] ? ` · lo más visto: ${esc(s.trueque.top[0].name)}` : ''),
     '', `📍 Origen top: ${topSrc}`, `🎯 Lo más clicado: ${topClick}`,
   ];

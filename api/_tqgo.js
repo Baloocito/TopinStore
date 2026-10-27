@@ -1,4 +1,4 @@
-// "Lo quiero" en Trueque: cuenta el clic y abre el bot de Telegram con el producto ya elegido.
+// "Lo quiero" en TopinStore: cuenta el clic y abre el bot de Telegram con el producto ya elegido.
 import { cleanSrc, logEvent } from './_lib.js';
 import { sql, ensureSchema } from './_demo.js';
 import { UUID, FALLBACK } from './_tq.js';

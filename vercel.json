@@ -21,14 +21,6 @@
       "destination": "/?src=qr"
     },
     {
-      "source": "/trueque",
-      "destination": "https://trueque-app.vercel.app/trueque"
-    },
-    {
-      "source": "/trueque/:path*",
-      "destination": "https://trueque-app.vercel.app/trueque/:path*"
-    },
-    {
       "source": "/tienda",
       "destination": "https://trueque-app.vercel.app/tienda"
     },
@@ -101,5 +93,17 @@
     "api/opsbot.js": {
       "maxDuration": 60
     }
-  }
+  },
+  "redirects": [
+    {
+      "source": "/trueque",
+      "destination": "/tienda",
+      "permanent": false
+    },
+    {
+      "source": "/trueque/:path*",
+      "destination": "/tienda/:path*",
+      "permanent": false
+    }
+  ]
 }
