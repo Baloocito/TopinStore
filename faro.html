@@ -200,7 +200,7 @@ footer a{color:var(--mute)}
   <div class="depth">−0 m · LA SUPERFICIE</div>
   <h2>La noche que el mar se tragó la ciudad</h2>
   <p>Puerto Velatorio vivía de su faro. Una noche la lámpara se apagó y el mar se tragó la ciudad entera. El faro no cayó: se hundió de cabeza, y su torre ahora baja hacia el abismo como un pozo.</p>
-  <p>Eres <b>Isla</b>, la última farera. Bajas por la torre invertida para volver a encender la Lámpara Madre. Pero cuanto más bajas, más sospechas que la luz no espanta a lo que vive allá abajo.</p>
+  <p>Eres <b>Isla</b>, la última farera. Bajas por la torre invertida para volver a encender la Lámpara Madre.</p>
 </section>
 
 <section id="como">
@@ -230,7 +230,7 @@ footer a{color:var(--mute)}
     <figure><img src="/assets/faro/04-catedral.webp" alt="La Catedral Sumergida" loading="lazy"><figcaption><b>Catedral Sumergida</b> Las campanas todavía tocan.</figcaption></figure>
     <figure><img src="/assets/faro/06-archivo.webp" alt="El Archivo de los Náufragos" loading="lazy"><figcaption><b>Archivo de los Náufragos</b> Un archivo que se escribe solo.</figcaption></figure>
     <figure><img src="/assets/faro/08-raiz.webp" alt="La Raíz del Faro" loading="lazy"><figcaption><b>Raíz del Faro</b> Algo respira al otro lado del vidrio.</figcaption></figure>
-    <figure><img src="/assets/faro/09-lampara-madre.webp" alt="La Lámpara Madre" loading="lazy"><figcaption><b>La Lámpara Madre</b> El final… o uno de tres.</figcaption></figure>
+    <figure><img src="/assets/faro/09-lampara-madre.webp" alt="La Lámpara Madre" loading="lazy"><figcaption><b>La Lámpara Madre</b> Lo que espera al fondo del faro.</figcaption></figure>
     <figure><img src="/assets/faro/12-estado.webp" alt="La pantalla de Estado" loading="lazy"><figcaption><b>Pantalla de Estado</b> Cada mejora comparada con su valor base.</figcaption></figure>
   </div>
 </section>
@@ -287,7 +287,7 @@ footer a{color:var(--mute)}
   <div class="depth">−∞ · DIARIO DE DESARROLLO</div>
   <h2>Dónde va el juego</h2>
   <div class="road">
-    <div class="step done"><span class="dot"></span><h3>El juego completo · listo</h3><p>4 biomas, 5 jefes, 3 finales, 10 Mareas, el Santuario con sus náufragos, música y efectos. Se puede terminar de principio a fin.</p></div>
+    <div class="step done"><span class="dot"></span><h3>El juego completo · listo</h3><p>4 biomas, 4 jefes, 3 finales, 10 Mareas, el Santuario con sus náufragos, música y efectos. Se puede terminar de principio a fin.</p></div>
     <div class="step done"><span class="dot"></span><h3>Demo para quienes apoyan · lista</h3><p>Windows y Android, hasta la cámara de la Sirena.</p></div>
     <div class="step now"><span class="dot"></span><h3>Arte final en 32 bits · ahora</h3><p>Personajes, enemigos, jefes, entornos y efectos. Es lo único que falta, y lo que más se ve.</p></div>
     <div class="step"><span class="dot"></span><h3>Animaciones de jefes y ataques</h3><p>Que cada jefe se mueva como lo que es.</p></div>
@@ -398,9 +398,8 @@ const dex=document.getElementById("dex");
 const BOSSES=[["La Sirena de Brea","Muelle Ahogado","Canta proyectiles en espiral, inunda la sala con brea que apaga tu luz y emerge bajo tus pies."],
  ["El Obispo Coral","Catedral Sumergida","Invoca fieles, cura con sus vitrales y hace crecer el coral hasta encerrarte."],
  ["El Cartógrafo","Archivo de los Náufragos","Redibuja las paredes, te copia en papel y apaga todas las luces menos la tuya."],
- ["La Lámpara Madre","Raíz del Faro","El examen final. Lo que vive dentro de la lámpara recuerda a todos los anteriores."],
- ["El Farero Antiguo","Final secreto","Solo aparece si eliges no pelear. Se le enfrenta a oscuras."]];
-document.getElementById("bosses").innerHTML=BOSSES.map(([n,b,t],i)=>`<div class="boss"><span class="n">${["I","II","III","IV","V"][i]}</span><h3>${n} <small class="mute" style="font-family:var(--f-body);font-size:.8rem">· ${b}</small></h3><p>${t}</p></div>`).join("");
+ ["La Lámpara Madre","Raíz del Faro","El examen final. Lo que vive dentro de la lámpara recuerda a todos los anteriores."]];
+document.getElementById("bosses").innerHTML=BOSSES.map(([n,b,t],i)=>`<div class="boss"><span class="n">${["I","II","III","IV"][i]}</span><h3>${n} <small class="mute" style="font-family:var(--f-body);font-size:.8rem">· ${b}</small></h3><p>${t}</p></div>`).join("");
 
 // ---------- generador de pisos ----------
 const mc=document.getElementById("mapc"),mx=mc.getContext("2d");

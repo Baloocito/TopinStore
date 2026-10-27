@@ -2,15 +2,15 @@
   "project": "faro-hundido",
   "type": "carousel",
   "media": [
-    "1.jpg",
-    "2.jpg",
-    "3.jpg",
-    "4.jpg",
-    "5.jpg",
-    "6.jpg",
-    "7.jpg",
-    "8.jpg"
+    "v2-1.jpg",
+    "v2-2.jpg",
+    "v2-3.jpg",
+    "v2-4.jpg",
+    "v2-5.jpg",
+    "v2-6.jpg",
+    "v2-7.jpg",
+    "v2-8.jpg"
   ],
   "scheduled_at": "2026-11-01T19:00:00-03:00",
-  "caption": "🔦 Hice un roguelike completo yo solo… y todavía no tiene arte.\n\nFARO HUNDIDO ya se puede jugar de principio a fin:\n🌊 4 biomas, de un muelle ahogado a la raíz del faro\n👹 5 jefes, uno de ellos secreto\n🏁 3 finales, y uno se gana sin pelear\n🌑 10 Mareas de dificultad\n\nLo que ves es el arte provisional: el \"antes\". Lo único que falta es lo más bonito, el arte final en 32 bits.\n\n🎯 Meta: US$450 para personajes, enemigos, jefes y entornos.\n🎁 Dona desde $1.500 y juega la demo hoy, en PC o Android (llega hasta la Sirena).\n\n👉 drpipa.cl · link en la bio\n\n#FaroHundido #indiedev #gamedev #roguelike #pixelart #devlog #juegosindie #desarrolloindependiente #hechoenchile #TopinGames"
+  "caption": "🔦 Hice un roguelike completo yo solo… y todavía no tiene arte.\n\nFARO HUNDIDO ya se puede jugar de principio a fin:\n🌊 4 biomas, de un muelle ahogado a la raíz del faro\n👹 4 jefes, de la Sirena de Brea a la Lámpara Madre\n🏁 3 finales distintos\n🌑 10 Mareas de dificultad\n\nLo que ves es el arte provisional: el \"antes\". Lo único que falta es lo más bonito, el arte final en 32 bits.\n\n🎯 Meta: US$450 para personajes, enemigos, jefes y entornos.\n🎁 Dona desde $1.500 y juega la demo hoy, en PC o Android (llega hasta la Sirena).\n\n👉 drpipa.cl · link en la bio\n\n#FaroHundido #indiedev #gamedev #roguelike #pixelart #devlog #juegosindie #desarrolloindependiente #hechoenchile #TopinGames"
 }
