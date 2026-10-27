@@ -88,7 +88,7 @@ async function onCallback(cb) {
     return opsSay(
       `✏️ Editando <code>${esc(id)}</code>. Envíame:\n\n` +
       '• <b>El texto nuevo completo</b> para reemplazar el actual.\n' +
-      '• <b>Una hora</b>: <i>mañana 19:00</i>, <i>vie 20:30</i>, <i>28/10 19:00</i>.\n' +
+      '• <b>Una hora</b>: <i>mañana 11:00</i>, <i>vie 10:30</i>, <i>28/10 14:00</i>.\n' +
       '• <b>nota: …</b> si quieres que yo lo rehaga (por ejemplo <i>nota: imagen más oscura</i>).\n\n/cancelar para salir.');
   }
   return updateCard(p);

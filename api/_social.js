@@ -1,6 +1,6 @@
 // Publicaciones: cola, aprobación por Telegram (@bot de mando) y publicación en Instagram.
 import { createHash } from 'node:crypto';
-const hashOf = (p) => createHash('sha1').update(JSON.stringify([p.type, p.media, p.caption, p.scheduled_at])).digest('hex');
+const hashOf = (p) => createHash('sha1').update(JSON.stringify([p.type, p.media, p.caption, p.scheduled_at, p.story || null])).digest('hex');
 import { sql, ensureSchema, ADMIN_ID, SITE, esc } from './_demo.js';
 import { igToken } from './_ig.js';
 
@@ -37,6 +37,7 @@ export function card(p) {
     `🗓️ ${esc(when(p.scheduled_at))}`,
     `${STATUS[p.status] || p.status}${p.permalink ? ` · <a href="${esc(p.permalink)}">ver post</a>` : ''}`,
   ];
+  if (p.story_media) lines.push(p.story_id ? '📲 Historia publicada' : '📲 + historia al publicar');
   if (p.note) lines.push(`📝 <i>${esc(p.note)}</i>`);
   if (p.error) lines.push(`⚠️ ${esc(p.error)}`);
   lines.push('', esc(p.caption).slice(0, 3200));
@@ -63,6 +64,7 @@ export async function sendPreview(p) {
   if (p.type === 'reel') await ops('sendVideo', { chat_id: ADMIN_ID, video: p.media[0], supports_streaming: true });
   else if (p.media.length === 1) await ops('sendPhoto', { chat_id: ADMIN_ID, photo: p.media[0] });
   else await ops('sendMediaGroup', { chat_id: ADMIN_ID, media: p.media.map((u) => ({ type: 'photo', media: u })) });
+  if (p.story_media) await ops('sendPhoto', { chat_id: ADMIN_ID, photo: p.story_media, caption: '📲 Historia que sale junto al post' });
   const sent = await opsSay(card(p).text, { reply_markup: card(p).reply_markup });
   if (sent.ok) await sql()`UPDATE social_posts SET tg_message_id = ${sent.result.message_id} WHERE id = ${p.id}`;
 }
@@ -88,15 +90,15 @@ export async function sync() {
     const cur = await getPost(p.id);
     const h = hashOf(p);
     if (!cur) {
-      await sql()`INSERT INTO social_posts (id, project, type, media, caption, scheduled_at, note, source_hash)
-        VALUES (${p.id}, ${p.project}, ${p.type}, ${JSON.stringify(p.media)}, ${p.caption}, ${p.scheduled_at}, ${p.note}, ${h})`;
+      await sql()`INSERT INTO social_posts (id, project, type, media, caption, scheduled_at, note, source_hash, story_media)
+        VALUES (${p.id}, ${p.project}, ${p.type}, ${JSON.stringify(p.media)}, ${p.caption}, ${p.scheduled_at}, ${p.note}, ${h}, ${p.story || null})`;
       await sendPreview(await getPost(p.id));
       added++;
     } else if (cur.source_hash !== h && cur.status !== 'published' && cur.status !== 'publishing') {
       // Lo rehice en el repo: vuelve a revisión con la versión nueva (los cambios hechos desde Telegram
       // no cuentan aquí, porque solo se compara con la versión anterior del repo).
       await sql()`UPDATE social_posts SET type = ${p.type}, media = ${JSON.stringify(p.media)}, caption = ${p.caption},
-        scheduled_at = ${p.scheduled_at}, status = 'pending', error = NULL, note = NULL, source_hash = ${h},
+        scheduled_at = ${p.scheduled_at}, story_media = ${p.story || null}, status = 'pending', error = NULL, note = NULL, source_hash = ${h},
         updated_at = now() WHERE id = ${p.id}`;
       await sendPreview(await getPost(p.id));
       updated++;
@@ -146,6 +148,14 @@ export async function publish(p) {
   return { id: done.id, permalink: info.permalink || null };
 }
 
+/** Historia con la imagen vertical del post. Si falla, el post ya quedó publicado igual. */
+export async function publishStory(p) {
+  const token = await igToken();
+  const creation = (await ig('/me/media', { media_type: 'STORIES', image_url: p.story_media }, token)).id;
+  await waitReady(creation, token, 8);
+  return (await ig('/me/media_publish', { creation_id: creation }, token)).id;
+}
+
 export async function publishOne(id) {
   const p = await setStatus(id, 'publishing');
   await updateCard(p);
@@ -153,9 +163,20 @@ export async function publishOne(id) {
     const r = await publish(p);
     await sql()`UPDATE social_posts SET status = 'published', ig_media_id = ${r.id}, permalink = ${r.permalink},
       published_at = now(), error = NULL, updated_at = now() WHERE id = ${id}`;
+    let storyLine = '';
+    if (p.story_media) {
+      try {
+        const sid = await publishStory(p);
+        await sql()`UPDATE social_posts SET story_id = ${sid} WHERE id = ${id}`;
+        storyLine = '\n📲 Historia publicada';
+      } catch (e) {
+        await sql()`UPDATE social_posts SET story_error = ${e.message} WHERE id = ${id}`;
+        storyLine = `\n⚠️ La historia no salió: ${esc(e.message)}`;
+      }
+    }
     const fin = await getPost(id);
     await updateCard(fin);
-    await opsSay(`🚀 <b>Publicado en Instagram</b>\n<code>${esc(id)}</code>${r.permalink ? `\n${esc(r.permalink)}` : ''}`);
+    await opsSay(`🚀 <b>Publicado en Instagram</b>\n<code>${esc(id)}</code>${r.permalink ? `\n${esc(r.permalink)}` : ''}${storyLine}`);
     return fin;
   } catch (e) {
     if (/tardó demasiado/.test(e.message)) {

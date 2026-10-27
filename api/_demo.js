@@ -148,6 +148,9 @@ export function ensureSchema() {
         updated_at    timestamptz NOT NULL DEFAULT now()
       )`;
       await q`ALTER TABLE social_posts ADD COLUMN IF NOT EXISTS source_hash text`;
+      await q`ALTER TABLE social_posts ADD COLUMN IF NOT EXISTS story_media text`;
+      await q`ALTER TABLE social_posts ADD COLUMN IF NOT EXISTS story_id text`;
+      await q`ALTER TABLE social_posts ADD COLUMN IF NOT EXISTS story_error text`;
       await q`CREATE TABLE IF NOT EXISTS trueque_leads (
         id            bigserial PRIMARY KEY,
         product_id    text NOT NULL,

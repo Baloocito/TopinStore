@@ -1,6 +1,10 @@
 // Arma data/queue.json con los posts de content/posts/<id>/post.json.
 // Cada post vive en su carpeta junto a sus imágenes; al desplegar quedan públicos en drpipa.cl/content/...
 // Si un post tiene errores, el build falla y no se publica nada roto.
+//
+// Horarios (hora de Chile): posts e imágenes entre 10:00 y 12:00; reels a las 14:00.
+// La publicación corre cada hora a los :07, así que un post de las 11:00 sale cerca de las 11:07.
+// "story": "story.jpg" (1080×1920, opcional) se sube como historia apenas sale el post.
 import { readdirSync, readFileSync, writeFileSync, existsSync, statSync } from 'node:fs';
 
 const ROOT = new URL('../', import.meta.url);
@@ -28,6 +32,9 @@ export function buildQueue() {
         const ok = p.type === 'reel' ? /\.mp4$/i.test(m) : /\.jpe?g$/i.test(m);
         if (!ok) throw new Error(`${where}: ${m} debe ser ${p.type === 'reel' ? '.mp4' : '.jpg'} (lo exige Instagram)`);
       }
+      if (p.story && (!/\.jpe?g$/i.test(p.story) || !existsSync(new URL(p.story, folder)))) {
+        throw new Error(`${where}: story debe ser un .jpg que exista en la carpeta`);
+      }
       const caption = String(p.caption || '');
       if (caption.length > 2200) throw new Error(`${where}: el texto supera 2.200 caracteres`);
       if ((caption.match(/#[\p{L}\p{N}_]+/gu) || []).length > 30) throw new Error(`${where}: más de 30 hashtags`);
@@ -38,6 +45,7 @@ export function buildQueue() {
         project: p.project || 'topingames',
         type: p.type,
         media: media.map((m) => `${SITE}/${where}/${m}`),
+        story: p.story ? `${SITE}/${where}/${p.story}` : null,
         caption,
         scheduled_at: at.toISOString(),
         note: p.note || null,
