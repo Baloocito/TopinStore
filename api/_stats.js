@@ -1,6 +1,7 @@
 // Cálculo de métricas para el panel, la barra de meta y el informe semanal.
 import { readFileSync } from 'node:fs';
 import { sql, ensureSchema, tg } from './_demo.js';
+import { products as tqProducts } from './_tq.js';
 
 const TZ = 'America/Santiago';
 const SUPPORT = ['mp-1500', 'mp-5000', 'mp-10000', 'kofi', 'demobot'];
@@ -55,8 +56,9 @@ export async function stats(days) {
       count(*) FILTER (WHERE type='click' AND target = ANY(${SUPPORT}))::int AS support_clicks
     FROM events WHERE at >= ${since} GROUP BY src ORDER BY visitors DESC, clicks DESC LIMIT 12`;
 
-  const targets = await q`SELECT target, count(*)::int AS clicks FROM events
-    WHERE at >= ${since} AND type='click' GROUP BY target ORDER BY clicks DESC`;
+  const targets = await q`SELECT CASE WHEN target LIKE 'tql:%' THEN 'tq-contacto' ELSE target END AS target,
+      count(*)::int AS clicks FROM events
+    WHERE at >= ${since} AND type='click' GROUP BY 1 ORDER BY clicks DESC`;
 
   const countries = await q`SELECT coalesce(country,'??') AS country, count(DISTINCT vid)::int AS visitors FROM events
     WHERE at >= ${since} AND type='view' GROUP BY 1 ORDER BY 2 DESC LIMIT 6`;
@@ -71,6 +73,8 @@ export async function stats(days) {
 
   const series = await q`SELECT to_char(day,'YYYY-MM-DD') AS day, metric, value::float FROM metrics_daily
     WHERE day >= (now() AT TIME ZONE ${TZ})::date - ${days}::int ORDER BY day`;
+
+  const trueque = await truequeStats(q, since);
 
   const sum = (src, cur) => money.filter((m) => (!src || m.source === src) && m.currency === cur);
   const mpRows = sum('mercadopago', 'CLP');
@@ -95,5 +99,30 @@ export async function stats(days) {
     recent,
     demos: { by_platform: claims, total_all_time: claimsAll.n },
     series,
+    trueque,
+  };
+}
+
+/** Tienda Trueque: visitas, productos más vistos y gente que pidió algo por el bot. */
+async function truequeStats(q, since) {
+  const [t] = await q`SELECT
+      count(DISTINCT vid) FILTER (WHERE type='view' AND (target='trueque' OR target LIKE 'tqp:%'))::int AS visitors,
+      count(*) FILTER (WHERE type='view' AND target LIKE 'tqp:%')::int AS product_views,
+      count(*) FILTER (WHERE type='click' AND target LIKE 'tql:%')::int AS contact_clicks
+    FROM events WHERE at >= ${since}`;
+  const [l] = await q`SELECT count(*) FILTER (WHERE kind='want')::int AS wants,
+      count(*) FILTER (WHERE kind='ask')::int AS asks, count(DISTINCT tg_user_id)::int AS people
+    FROM trueque_leads WHERE created_at >= ${since}`;
+  const top = await q`SELECT substr(target, 5) AS id,
+      count(*) FILTER (WHERE type='view')::int AS views, count(*) FILTER (WHERE type='click')::int AS contacts
+    FROM events WHERE at >= ${since} AND (target LIKE 'tqp:%' OR target LIKE 'tql:%')
+    GROUP BY 1 ORDER BY views DESC, contacts DESC LIMIT 6`;
+  const recent = await q`SELECT product_name, kind, tg_name, created_at FROM trueque_leads ORDER BY created_at DESC LIMIT 6`;
+  const list = top.length ? await tqProducts() : [];
+  const names = new Map(list.map((p) => [String(p.id).toLowerCase(), p.name]));
+  return {
+    ...t, ...l,
+    top: top.map((r) => ({ ...r, name: names.get(r.id) || 'Producto ' + r.id.slice(0, 6) })),
+    recent,
   };
 }

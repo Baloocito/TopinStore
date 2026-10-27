@@ -148,6 +148,28 @@ export function ensureSchema() {
         updated_at    timestamptz NOT NULL DEFAULT now()
       )`;
       await q`ALTER TABLE social_posts ADD COLUMN IF NOT EXISTS source_hash text`;
+      await q`CREATE TABLE IF NOT EXISTS trueque_leads (
+        id            bigserial PRIMARY KEY,
+        product_id    text NOT NULL,
+        product_name  text,
+        price         numeric,
+        kind          text NOT NULL,
+        tg_user_id    bigint NOT NULL,
+        tg_username   text,
+        tg_name       text,
+        created_at    timestamptz NOT NULL DEFAULT now()
+      )`;
+      await q`CREATE TABLE IF NOT EXISTS trueque_chats (
+        tg_user_id    bigint PRIMARY KEY,
+        product_id    text,
+        product_name  text,
+        updated_at    timestamptz NOT NULL DEFAULT now()
+      )`;
+      await q`CREATE TABLE IF NOT EXISTS trueque_relay (
+        admin_msg_id  bigint PRIMARY KEY,
+        tg_user_id    bigint NOT NULL,
+        created_at    timestamptz NOT NULL DEFAULT now()
+      )`;
       await q`CREATE TABLE IF NOT EXISTS settings (
         key         text PRIMARY KEY,
         value       text NOT NULL,

@@ -11,6 +11,14 @@
     {
       "source": "/qr",
       "destination": "/?src=qr"
+    },
+    {
+      "source": "/trueque",
+      "destination": "https://trueque-app.vercel.app/trueque"
+    },
+    {
+      "source": "/trueque/:path*",
+      "destination": "https://trueque-app.vercel.app/trueque/:path*"
     }
   ],
   "headers": [
