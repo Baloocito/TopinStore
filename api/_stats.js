@@ -65,7 +65,7 @@ export async function stats(days) {
 
   const money = await q`SELECT source, currency, count(*)::int AS n, coalesce(sum(amount),0)::float AS total
     FROM donations WHERE status='approved' AND created_at >= ${since} GROUP BY source, currency`;
-  const recent = await q`SELECT source, amount::float, currency, donor, note, kind, created_at FROM donations
+  const recent = await q`SELECT payment_id, source, amount::float, currency, donor, note, kind, created_at FROM donations
     WHERE status='approved' ORDER BY created_at DESC LIMIT 8`;
 
   const claims = await q`SELECT platform, count(*)::int AS n FROM demo_claims WHERE created_at >= ${since} GROUP BY platform`;

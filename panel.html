@@ -105,6 +105,7 @@ td.r,th.r{text-align:right}
 .don .src{font-size:11px;font-weight:700;padding:2px 6px;border-radius:4px;align-self:start;margin-top:2px}
 .don .src.mercadopago{background:#00B1EA;color:var(--black)} .don .src.kofi{background:#FF5E5B;color:var(--black)}
 .don small{grid-column:2/-1;color:var(--muted)}
+.don small a{color:var(--ink);text-decoration:underline}
 
 /* meta */
 .goal .bar{height:16px;border:2px solid var(--yellow);border-radius:5px;padding:2px}
@@ -302,7 +303,8 @@ td.r,th.r{text-align:right}
     $('#recent').innerHTML = d.recent.length ? d.recent.map((r) => `<div class="don"><span class="src ${r.source}">${r.source === 'kofi' ? 'KO-FI' : 'MP'}</span>
         <b class="num">${r.currency === 'USD' ? 'US$' + r.amount.toFixed(2) : clp(r.amount)}</b>
         <span class="num" style="color:var(--muted);font-size:12px">${new Date(r.created_at).toLocaleDateString('es-CL', { day: 'numeric', month: 'short' })}</span>
-        <small>${esc([r.donor, r.kind, r.note].filter(Boolean).join(' · ') || 'Donación')}</small></div>`).join('')
+        <small>${esc([r.donor, r.kind, r.note].filter(Boolean).join(' · ') || 'Donación')}${r.source === 'mercadopago'
+          ? ` · <a href="/api/panel?action=mp&id=${esc(r.payment_id)}" target="_blank" rel="noopener">revisar</a> · <a href="#" data-rm="${esc(r.payment_id)}">quitar</a>` : ''}</small></div>`).join('')
       : '<p class="empty">Las donaciones aparecerán aquí apenas lleguen.</p>';
 
     renderTrueque(d.trueque);
@@ -330,6 +332,16 @@ td.r,th.r{text-align:right}
         <small>${esc(r.tg_name || '')} · respóndele en @TopinStoreBot</small></div>`).join('')
       : '<p class="empty">Los interesados del bot aparecerán aquí.</p>';
   }
+
+  // Quitar de la meta un pago de Mercado Pago que no reconoces.
+  document.addEventListener('click', async (e) => {
+    const a = e.target.closest('[data-rm]');
+    if (!a) return;
+    e.preventDefault();
+    if (!confirm('¿Quitar la operación ' + a.dataset.rm + ' de las donaciones y de la meta?')) return;
+    const r = await fetch('/api/panel?action=mp-remove&id=' + encodeURIComponent(a.dataset.rm), { method: 'POST' });
+    if (r.ok) location.reload(); else alert('No se pudo quitar.');
+  });
 
   function bars(sel, items, empty) {
     const max = Math.max(1, ...items.map((x) => x[1]));

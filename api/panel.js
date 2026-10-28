@@ -2,7 +2,7 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { stats, goal, channelMembers } from './_stats.js';
 import { igToken, igProfile, igAccountInsights, igMedia } from './_ig.js';
-import { sql } from './_demo.js';
+import { sql, inspectPayment } from './_demo.js';
 
 const COOKIE = 'tg_panel';
 const PASS = () => process.env.PANEL_PASSWORD || '';
@@ -55,6 +55,19 @@ export default async function handler(req, res) {
     } catch (e) {
       return send(res, 400, { error: 'Instagram rechazó el token: ' + e.message });
     }
+  }
+
+  // Diagnóstico: /api/panel?action=mp&id=<operación> (con la sesión del panel abierta).
+  if (action === 'mp') {
+    const id = String(req.query.id || '').replace(/\D/g, '');
+    if (!id) return send(res, 400, { error: 'Falta ?id=<número de operación>' });
+    return send(res, 200, await inspectPayment(id));
+  }
+  // Quitar de la meta un pago que no corresponde: /api/panel?action=mp-remove&id=<operación> (POST).
+  if (action === 'mp-remove' && req.method === 'POST') {
+    const id = String(req.query.id || '').replace(/\D/g, '');
+    const del = await sql()`DELETE FROM donations WHERE payment_id = ${id} AND source = 'mercadopago' RETURNING payment_id`;
+    return send(res, 200, { removed: del.length });
   }
 
   const days = [7, 30, 90].includes(Number(req.query.days)) ? Number(req.query.days) : 7;

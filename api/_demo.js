@@ -44,6 +44,30 @@ async function sellerId() {
   return myId;
 }
 
+/** Detalle de un pago y de la cuenta dueña del token, para diagnosticar pagos que no reconoces. */
+export async function inspectPayment(paymentId) {
+  const [me, pr] = await Promise.all([
+    fetch(`${MP}/users/me`, { headers: mpHeaders() }).then((r) => r.json()).catch(() => ({})),
+    fetch(`${MP}/v1/payments/${encodeURIComponent(paymentId)}`, { headers: mpHeaders() }),
+  ]);
+  const p = pr.ok ? await pr.json() : null;
+  const mask = (e) => (e ? String(e).replace(/^(.{2}).*(@.*)$/, '$1•••$2') : null);
+  return {
+    token: {
+      tipo: String(process.env.MP_ACCESS_TOKEN || '').startsWith('TEST-') ? 'PRUEBA (TEST-)' : 'producción (APP_USR-)',
+      cuenta_id: me.id, apodo: me.nickname, email: mask(me.email), usuario_de_prueba: Array.isArray(me.tags) ? me.tags.includes('test_user') : null,
+    },
+    pago: p && {
+      id: p.id, estado: p.status, monto: p.transaction_amount, moneda: p.currency_id,
+      real: p.live_mode, creado: p.date_created, aprobado: p.date_approved,
+      receptor_id: p.collector_id, es_tuyo: String(p.collector_id) === String(me.id),
+      pagador: mask(p.payer && p.payer.email), descripcion: p.description,
+      medio: p.payment_method_id, tipo_operacion: p.operation_type, origen: p.point_of_interaction && p.point_of_interaction.type,
+    },
+    error: pr.ok ? null : `Mercado Pago respondió ${pr.status}`,
+  };
+}
+
 /** Revisa un pago y devuelve { ok, reason, payment }. reason explica al usuario por qué no sirve. */
 export async function checkPayment(paymentId) {
   const r = await fetch(`${MP}/v1/payments/${encodeURIComponent(paymentId)}`, { headers: mpHeaders() });
@@ -59,8 +83,10 @@ export async function checkPayment(paymentId) {
     payer: p.payer && p.payer.email,
     // true solo si el pago lo RECIBISTE tú. Mercado Pago también avisa de los pagos que tú haces.
     mine: String(p.collector_id) === String(await sellerId()),
+    // false en pagos de prueba (sandbox): existen en Mercado Pago pero no son dinero real.
+    live: p.live_mode !== false,
   };
-  if (!payment.mine) return { ok: false, reason: 'not_found', payment };
+  if (!payment.mine || !payment.live) return { ok: false, reason: 'not_found', payment };
   if (p.status !== 'approved') return { ok: false, reason: p.status === 'pending' || p.status === 'in_process' ? 'pending' : 'not_approved', payment };
   if (payment.currency !== 'CLP' || payment.amount < MIN_AMOUNT) return { ok: false, reason: 'too_low', payment };
   const age = (Date.now() - new Date(p.date_approved || p.date_created).getTime()) / 864e5;
