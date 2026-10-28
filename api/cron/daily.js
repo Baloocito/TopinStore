@@ -41,7 +41,7 @@ async function cleanDonations() {
   for (const d of rows) {
     const r = await checkPayment(d.payment_id);
     if (r.reason === 'mp_error') continue;
-    if (!r.payment || !r.payment.mine || !r.payment.live || r.payment.status !== 'approved') {
+    if (!r.payment || !r.payment.mine || !r.payment.live || !r.payment.donation || r.payment.status !== 'approved') {
       await sql()`DELETE FROM donations WHERE payment_id = ${d.payment_id}`;
       removed.push(d);
     }

@@ -61,6 +61,7 @@ export async function inspectPayment(paymentId) {
       id: p.id, estado: p.status, monto: p.transaction_amount, moneda: p.currency_id,
       real: p.live_mode, creado: p.date_created, aprobado: p.date_approved,
       receptor_id: p.collector_id, es_tuyo: String(p.collector_id) === String(me.id),
+      cuenta_como_donacion: p.operation_type === 'regular_payment' && String(p.payer && p.payer.id) !== String(p.collector_id),
       pagador: mask(p.payer && p.payer.email), descripcion: p.description,
       medio: p.payment_method_id, tipo_operacion: p.operation_type, origen: p.point_of_interaction && p.point_of_interaction.type,
     },
@@ -85,8 +86,12 @@ export async function checkPayment(paymentId) {
     mine: String(p.collector_id) === String(await sellerId()),
     // false en pagos de prueba (sandbox): existen en Mercado Pago pero no son dinero real.
     live: p.live_mode !== false,
+    // Solo es donación un cobro (link de pago / checkout) hecho por otra persona. Las cargas de saldo
+    // (account_fund), las transferencias y los pagos que te haces a ti mismo no cuentan.
+    donation: p.operation_type === 'regular_payment' && String(p.payer && p.payer.id) !== String(p.collector_id),
+    type: p.operation_type,
   };
-  if (!payment.mine || !payment.live) return { ok: false, reason: 'not_found', payment };
+  if (!payment.mine || !payment.live || !payment.donation) return { ok: false, reason: 'not_found', payment };
   if (p.status !== 'approved') return { ok: false, reason: p.status === 'pending' || p.status === 'in_process' ? 'pending' : 'not_approved', payment };
   if (payment.currency !== 'CLP' || payment.amount < MIN_AMOUNT) return { ok: false, reason: 'too_low', payment };
   const age = (Date.now() - new Date(p.date_approved || p.date_created).getTime()) / 864e5;

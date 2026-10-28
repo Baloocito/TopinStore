@@ -14,8 +14,9 @@ export default async function handler(req, res) {
     if (id && (!topic || topic === 'payment')) {
       const r = await checkPayment(id);
       const p = r.payment;
-      // Solo pagos reales y aprobados que tú recibiste: ni los que tú pagas ni los de prueba son donaciones.
-      if (p && p.mine && p.live && p.status === 'approved') {
+      // Solo cobros reales y aprobados que te hizo otra persona: ni cargas de saldo, ni transferencias,
+      // ni pagos tuyos o de prueba son donaciones. Mercado Pago avisa también cuando un pago viejo cambia.
+      if (p && p.mine && p.live && p.donation && p.status === 'approved') {
         await ensureSchema();
         const ins = await sql()`
           INSERT INTO donations (payment_id, source, amount, currency, status)
