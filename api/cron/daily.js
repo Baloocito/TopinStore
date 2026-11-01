@@ -3,6 +3,7 @@
 import { sql, ensureSchema, notifyAdmin, esc, checkPayment } from '../_demo.js';
 import { stats, goal, channelMembers } from '../_stats.js';
 import { igToken, igProfile, igAccountInsights, igRefreshIfNeeded } from '../_ig.js';
+import { runRadar } from '../_news.js';
 
 const clp = (n) => '$' + Math.round(n || 0).toLocaleString('es-CL');
 const pct = (a, b) => (b ? Math.round((a / b) * 100) + '%' : '—');
@@ -91,6 +92,7 @@ export default async function handler(req, res) {
     const day = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
     out.snapshot = await snapshot(day);
     out.donations_removed = await cleanDonations().catch((e) => 'error: ' + e.message);
+    out.radar = await runRadar().catch((e) => 'error: ' + e.message);
     out.instagram_token = await igRefreshIfNeeded().catch((e) => 'error: ' + e.message);
     const weekday = new Date().toLocaleDateString('en-US', { timeZone: 'America/Santiago', weekday: 'short' });
     if (weekday === 'Mon' || req.query.report === '1') {

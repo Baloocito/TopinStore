@@ -1,0 +1,34 @@
+{
+  "_info": "Fuentes del radar de noticias. Cada mañana se revisan y las 5 mejores llegan al bot de mando. Para cambiar una fuente que falla, edita su url. topic: gaming | tech | ia | dev",
+  "calendar": {
+    "1": { "emoji": "📰", "label": "Lo más importante de la semana", "topics": ["gaming", "tech", "ia"] },
+    "2": { "emoji": "🎮", "label": "Tutorial de Godot", "topics": ["dev"] },
+    "3": { "emoji": "💸", "label": "Ofertas de Switch", "topics": ["gaming"] },
+    "4": { "emoji": "🤖", "label": "Consejo de IA o Claude", "topics": ["ia"] },
+    "5": { "emoji": "🛠️", "label": "Devlog de Faro o Zombies", "topics": ["dev", "gaming"] },
+    "6": { "emoji": "🐍", "label": "Truco de Python", "topics": ["dev"] },
+    "0": { "emoji": "😴", "label": "Descanso (solo historias)", "topics": [] }
+  },
+  "sources": [
+    { "name": "Nintendo Life", "topic": "gaming", "url": "https://www.nintendolife.com/feeds/latest" },
+    { "name": "Vandal", "topic": "gaming", "url": "https://vandal.elespanol.com/xml.cgi" },
+    { "name": "Eurogamer", "topic": "gaming", "url": "https://www.eurogamer.net/feed" },
+    { "name": "The Verge", "topic": "tech", "url": "https://www.theverge.com/rss/index.xml" },
+    { "name": "Xataka", "topic": "tech", "url": "https://www.xataka.com/feedburner.xml" },
+    { "name": "Ars Technica", "topic": "tech", "url": "https://feeds.arstechnica.com/arstechnica/index" },
+    { "name": "The Verge IA", "topic": "ia", "url": "https://www.theverge.com/rss/ai-artificial-intelligence/index.xml" },
+    { "name": "Simon Willison", "topic": "ia", "url": "https://simonwillison.net/atom/everything/" },
+    { "name": "Hacker News · Claude", "topic": "ia", "url": "https://hnrss.org/newest?q=Claude+OR+Anthropic&points=40" },
+    { "name": "Godot", "topic": "dev", "url": "https://godotengine.org/rss.xml" },
+    { "name": "Hacker News · Godot", "topic": "dev", "url": "https://hnrss.org/newest?q=Godot&points=15" },
+    { "name": "Real Python", "topic": "dev", "url": "https://realpython.com/atom.xml" },
+    { "name": "Python Insider", "topic": "dev", "url": "https://blog.python.org/feeds/posts/default" }
+  ],
+  "boost": {
+    "nintendo": 3, "switch 2": 4, "switch": 2, "zelda": 3, "pokémon": 2, "pokemon": 2, "eshop": 2,
+    "godot": 5, "indie": 2, "roguelike": 3, "pixel art": 3, "steam": 1,
+    "claude": 5, "anthropic": 4, "openai": 1, "gemini": 1, "agente": 2, "agent": 2, "llm": 1,
+    "python": 3, "tutorial": 2, "gpu": 1, "nvidia": 1, "amd": 1, "chile": 3, "latam": 2, "gratis": 2, "free": 1
+  },
+  "skip": ["rumor:", "podcast", "sponsored", "patrocinado", "deal of the day", "review roundup", "crossword", "horoscope"]
+}

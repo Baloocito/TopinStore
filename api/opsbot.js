@@ -2,6 +2,7 @@
 // GET /api/opsbot?setup=1 lo conecta (seguro de abrir varias veces).
 import { sql, ensureSchema, ADMIN_ID, SITE, esc } from './_demo.js';
 import { ops, opsSay, OPS_SECRET, card, updateCard, getPost, setStatus, publishOne, when, sync } from './_social.js';
+import { runRadar, onNewsCallback, listIdeas } from './_news.js';
 
 const TZ = 'America/Santiago';
 const DAYS = { dom: 0, lun: 1, mar: 2, mie: 3, mié: 3, jue: 4, vie: 5, sab: 6, sáb: 6 };
@@ -46,7 +47,8 @@ const HELP =
   'Aquí te llegan los posts que preparo. En cada uno puedes:\n' +
   '✅ <b>Aprobar</b>: sale solo a su hora.\n✏️ <b>Cambiar</b>: me envías el texto nuevo, una hora nueva o una nota.\n' +
   '🚀 <b>Publicar ya</b>, o ❌ <b>Descartar</b>.\n\n' +
-  '<b>Comandos</b>\n/cola: lo que viene\n/sync: revisar si hay posts nuevos\n/cancelar: salir de una edición\n\n' +
+  '<b>Comandos</b>\n/cola: lo que viene\n/sync: revisar si hay posts nuevos\n/radar: buscar noticias ahora\n/ideas: noticias que guardaste para hacer post\n/cancelar: salir de una edición\n\n' +
+  '📡 Cada mañana a las 9:00 te llega el radar con las 5 noticias del día.\n\n' +
   `Panel completo: ${SITE}/panel`;
 
 async function editing(id) {
@@ -61,6 +63,7 @@ async function editing(id) {
 }
 
 async function onCallback(cb) {
+  if (await onNewsCallback(cb)) return;
   const [act, id] = String(cb.data || '').split(/:(.+)/);
   let p = await getPost(id);
   if (!p) return ops('answerCallbackQuery', { callback_query_id: cb.id, text: 'No encontré ese post' });
@@ -133,6 +136,7 @@ export default async function handler(req, res) {
     const hook = await ops('setWebhook', { url: `${SITE}/api/opsbot`, secret_token: OPS_SECRET, allowed_updates: ['message', 'callback_query'] });
     await ops('setMyCommands', { commands: [
       { command: 'cola', description: 'Lo que viene' }, { command: 'sync', description: 'Revisar posts nuevos' },
+      { command: 'radar', description: 'Buscar noticias ahora' }, { command: 'ideas', description: 'Ideas guardadas del radar' },
       { command: 'cancelar', description: 'Salir de una edición' }, { command: 'ayuda', description: 'Cómo funciona' },
     ] });
     await ensureSchema();
@@ -156,6 +160,10 @@ export default async function handler(req, res) {
       const editId = await editing();
       if (text === '/cancelar') { await editing(null); await opsSay('Listo, sin cambios.'); }
       else if (text.startsWith('/cola')) await queueList();
+      else if (text.startsWith('/radar')) {
+        await opsSay('📡 Buscando noticias…');
+        await runRadar();
+      } else if (text.startsWith('/ideas')) await listIdeas();
       else if (text.startsWith('/sync')) {
         const r = await sync();
         await opsSay(`🔄 Cola revisada: ${r.added} nuevos, ${r.updated} actualizados (${r.total} en total).`);
