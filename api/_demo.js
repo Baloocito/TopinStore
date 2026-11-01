@@ -183,6 +183,7 @@ export function ensureSchema() {
       await q`ALTER TABLE social_posts ADD COLUMN IF NOT EXISTS story_media text`;
       await q`ALTER TABLE social_posts ADD COLUMN IF NOT EXISTS story_id text`;
       await q`ALTER TABLE social_posts ADD COLUMN IF NOT EXISTS story_error text`;
+      await q`ALTER TABLE social_posts ADD COLUMN IF NOT EXISTS reminded_for timestamptz`;
       await q`CREATE TABLE IF NOT EXISTS trueque_leads (
         id            bigserial PRIMARY KEY,
         product_id    text NOT NULL,

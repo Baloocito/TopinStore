@@ -1,7 +1,7 @@
 // Webhook del bot de mando: aprobar, descartar, cambiar texto u hora y publicar posts.
 // GET /api/opsbot?setup=1 lo conecta (seguro de abrir varias veces).
 import { sql, ensureSchema, ADMIN_ID, SITE, esc } from './_demo.js';
-import { ops, opsSay, OPS_SECRET, card, updateCard, getPost, setStatus, publishOne, when, sync } from './_social.js';
+import { ops, opsSay, OPS_SECRET, card, updateCard, getPost, setStatus, publishOne, when, sync, tick, kick, lastTick } from './_social.js';
 import { runRadar, onNewsCallback, listIdeas } from './_news.js';
 
 const TZ = 'America/Santiago';
@@ -47,7 +47,7 @@ const HELP =
   'Aquí te llegan los posts que preparo. En cada uno puedes:\n' +
   '✅ <b>Aprobar</b>: sale solo a su hora.\n✏️ <b>Cambiar</b>: me envías el texto nuevo, una hora nueva o una nota.\n' +
   '🚀 <b>Publicar ya</b>, o ❌ <b>Descartar</b>.\n\n' +
-  '<b>Comandos</b>\n/cola: lo que viene\n/sync: revisar si hay posts nuevos\n/radar: buscar noticias ahora\n/ideas: noticias que guardaste para hacer post\n/cancelar: salir de una edición\n\n' +
+  '<b>Comandos</b>\n/cola: lo que viene\n/estado: si el reloj de publicación está vivo\n/sync: revisar si hay posts nuevos\n/radar: buscar noticias ahora\n/ideas: noticias que guardaste para hacer post\n/cancelar: salir de una edición\n\n' +
   '📡 Cada mañana a las 9:00 te llega el radar con las 5 noticias del día.\n\n' +
   `Panel completo: ${SITE}/panel`;
 
@@ -129,13 +129,27 @@ async function queueList() {
     '\n\n⏳ por aprobar · ✅ aprobado · ✏️ con cambios');
 }
 
+async function statusReport() {
+  const last = await lastTick();
+  const mins = last ? Math.round((Date.now() - last.getTime()) / 60000) : null;
+  const next = await sql()`SELECT id, status, scheduled_at FROM social_posts WHERE status IN ('approved','publishing','failed')
+    ORDER BY scheduled_at LIMIT 5`;
+  const late = next.filter((r) => r.status === 'approved' && new Date(r.scheduled_at) < new Date());
+  let t = `🩺 <b>Estado de publicaciones</b>\n\n⏱️ Último chequeo del reloj: ${last ? (mins < 1 ? 'hace menos de 1 min' : `hace ${mins} min`) : 'nunca'}\n`;
+  t += mins !== null && mins <= 15 ? '🟢 Reloj activo.\n' : '🔴 El reloj externo (cron-job.org) no está corriendo. Respaldo activo: salen igual con visitas al sitio o cuando me escribes aquí, pero pueden atrasarse.\n';
+  t += next.length ? '\n' + next.map((r) => `${{ approved: '✅', publishing: '📤', failed: '⚠️' }[r.status]} ${esc(when(r.scheduled_at))} · <code>${esc(r.id)}</code>${new Date(r.scheduled_at) < new Date() && r.status === 'approved' ? ' · ¡atrasado!' : ''}`).join('\n') : '\nNo hay posts aprobados esperando.';
+  await opsSay(t);
+  // Escribirme aquí también mueve el reloj: si había algo atrasado, sale ahora.
+  if (late.length) await tick('kick');
+}
+
 export default async function handler(req, res) {
   if (req.method === 'GET' && req.query.setup) {
     if (!OPS_SECRET) return res.status(500).json({ error: 'Falta TELEGRAM_OPS_BOT_TOKEN en Vercel' });
     const me = await ops('getMe', {});
     const hook = await ops('setWebhook', { url: `${SITE}/api/opsbot`, secret_token: OPS_SECRET, allowed_updates: ['message', 'callback_query'] });
     await ops('setMyCommands', { commands: [
-      { command: 'cola', description: 'Lo que viene' }, { command: 'sync', description: 'Revisar posts nuevos' },
+      { command: 'cola', description: 'Lo que viene' }, { command: 'estado', description: 'Estado del reloj de publicación' }, { command: 'sync', description: 'Revisar posts nuevos' },
       { command: 'radar', description: 'Buscar noticias ahora' }, { command: 'ideas', description: 'Ideas guardadas del radar' },
       { command: 'cancelar', description: 'Salir de una edición' }, { command: 'ayuda', description: 'Cómo funciona' },
     ] });
@@ -155,11 +169,14 @@ export default async function handler(req, res) {
       if (u.message) await ops('sendMessage', { chat_id: u.message.chat.id, text: '🔒 Este es un bot privado de TopinGames.' });
     } else if (u.callback_query) {
       await onCallback(u.callback_query);
+      await kick();
     } else if (u.message) {
+      await kick();
       const text = String(u.message.text || '').trim();
       const editId = await editing();
       if (text === '/cancelar') { await editing(null); await opsSay('Listo, sin cambios.'); }
       else if (text.startsWith('/cola')) await queueList();
+      else if (text.startsWith('/estado')) await statusReport();
       else if (text.startsWith('/radar')) {
         await opsSay('📡 Buscando noticias…');
         await runRadar();

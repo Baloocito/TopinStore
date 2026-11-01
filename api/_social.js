@@ -192,11 +192,53 @@ export async function publishOne(id) {
   }
 }
 
+const setting = async (key, value) => sql()`INSERT INTO settings (key, value) VALUES (${key}, ${value})
+  ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()`;
+export async function lastTick() {
+  const [r] = await sql()`SELECT value FROM settings WHERE key = 'social_last_tick'`;
+  return r ? new Date(r.value) : null;
+}
+
+/** Aviso 5 minutos antes, con botón para publicar a mano por si la subida automática falla. */
+async function remind() {
+  const rows = await sql()`SELECT id FROM social_posts WHERE status = 'approved'
+    AND scheduled_at > now() AND scheduled_at <= now() + interval '6 minutes'
+    AND reminded_for IS DISTINCT FROM scheduled_at`;
+  for (const { id } of rows) {
+    const claimed = await sql()`UPDATE social_posts SET reminded_for = scheduled_at WHERE id = ${id}
+      AND reminded_for IS DISTINCT FROM scheduled_at RETURNING id`;
+    if (!claimed.length) continue;
+    const p = await getPost(id);
+    const m = Math.max(1, Math.round((new Date(p.scheduled_at) - Date.now()) / 60000));
+    await opsSay(`⏰ <b>En ${m} min sale un post</b>\n${TYPE[p.type] || p.type} · <code>${esc(id)}</code>\n🗓️ ${esc(when(p.scheduled_at))}\n\nSale solo a su hora. Si prefieres, publícalo tú ahora:`, {
+      reply_markup: { inline_keyboard: [[{ text: '🚀 Publicar ahora', callback_data: `now:${id}` }, { text: '⏸️ Frenar', callback_data: `back:${id}` }]] },
+    });
+  }
+}
+
 /** Publica lo aprobado cuya hora ya llegó. */
-export async function tick() {
+export async function tick(src = 'ext') {
   await ensureSchema();
+  if (src === 'ext') await setting('social_last_tick', new Date().toISOString());
+  await remind().catch((e) => console.log(JSON.stringify({ remind_error: e.message })));
   const due = await sql()`SELECT id FROM social_posts WHERE status = 'approved' AND scheduled_at <= now() ORDER BY scheduled_at LIMIT 3`;
   const out = [];
-  for (const { id } of due) out.push((await publishOne(id)).status);
+  for (const { id } of due) {
+    // Reserva atómica: si dos relojes coinciden, solo uno publica.
+    const got = await sql()`UPDATE social_posts SET status = 'publishing', updated_at = now() WHERE id = ${id} AND status = 'approved' RETURNING id`;
+    if (got.length) out.push((await publishOne(id)).status);
+  }
   return out;
+}
+
+let lastKick = 0;
+/** Reloj de respaldo: lo llaman las visitas al hub y los mensajes al bot, como mucho 1 vez por minuto. */
+export async function kick() {
+  if (Date.now() - lastKick < 45000) return;
+  lastKick = Date.now();
+  try {
+    await ensureSchema();
+    const [r] = await sql()`SELECT count(*)::int AS n FROM social_posts WHERE status = 'approved' AND scheduled_at <= now() + interval '6 minutes'`;
+    if (r.n) await tick('kick');
+  } catch (e) { console.log(JSON.stringify({ kick_error: e.message })); }
 }
