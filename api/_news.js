@@ -62,7 +62,13 @@ async function fetchSource(s) {
     signal: AbortSignal.timeout(8000),
   });
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
-  const items = parseFeed(await r.text());
+  const buf = new Uint8Array(await r.arrayBuffer());
+  // Algunos feeds (Vandal) vienen en ISO-8859-1: se decodifica según el XML o la cabecera.
+  const head = new TextDecoder('latin1').decode(buf.slice(0, 200));
+  const cs = (head.match(/encoding=["']([\w-]+)/i) || (r.headers.get('content-type') || '').match(/charset=([\w-]+)/i) || [])[1] || 'utf-8';
+  let xml;
+  try { xml = new TextDecoder(cs.toLowerCase()).decode(buf); } catch { xml = new TextDecoder().decode(buf); }
+  const items = parseFeed(xml);
   if (!items.length) throw new Error('sin noticias legibles');
   return items.map((i) => ({ ...i, source: s.name, topic: s.topic }));
 }

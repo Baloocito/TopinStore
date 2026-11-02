@@ -29,7 +29,7 @@ Hub link-in-bio (index.html), páginas de juegos (/faro, /zombies), panel (/pane
 
 ## Posts de Instagram
 Carpeta `content/posts/AAAA-MM-DD-slug/` con `post.json` (project, type image|carousel|reel, media[], story, scheduled_at con -03:00, caption) + imágenes 1080×1350 (story 1080×1920).
-- Horario: posts 10:00–12:00 Chile, reels 14:00. Cada post lleva historia.
+- Horario: posts 10:00–12:00 Chile, reels 14:00 (salvo que Xiombo pida otra hora). Cada post lleva historia.
 - Cierre del caption: CTA a drpipa.cl o al canal t.me/TopinSaleSwitch + hashtags.
 - Al hacer push a main, GitHub Actions sincroniza y llegan al bot para aprobar.
 
