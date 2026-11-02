@@ -1,0 +1,56 @@
+[
+  {
+    "slug": "reel-01-imagen-al-juego",
+    "project": "topin-de-zombies",
+    "type": "reel",
+    "media": ["reel-01-imagen-al-juego.mp4"],
+    "story": "story-01.jpg",
+    "scheduled_at": "2026-11-04T14:00:00-03:00",
+    "caption": "De un dibujo a un personaje que corre, dispara y muere en el juego. 🎮\n\nAsí construimos a Leo — el líder de TOPIN DE ZOMBIES.\n\n3 pasos: imagen → modelo 3D → esqueleto + animaciones.\n\nEsto es lo que hace que el juego se sienta vivo.\n\n¿Lo sabías? Guárdalo 🔖\n\n#gamedev #indiedev #godotengine #3dcharacter #devlog #TopinDeZombies #madewithgodot #hechoenchile #indiegame"
+  },
+  {
+    "slug": "reel-02-9-armas",
+    "project": "topin-de-zombies",
+    "type": "reel",
+    "media": ["reel-02-9-armas.mp4"],
+    "story": "story-02.jpg",
+    "scheduled_at": "2026-11-05T14:00:00-03:00",
+    "caption": "9 armas. Cada una diseñada en Tripo y probada en la mano. 🔫\n\nPistola 9mm · Rifle de Clavos · SMG Viper\nEscopeta Vieja · Rifle de Caza · Ballesta Expl.\nLanzallamas · Minigun · Cañón de Riel\n\n¿Cuál agarrarías primero? 👇\n\nTOPIN DE ZOMBIES — Android y PC · Coop 1–4\n\n#gamedev #indiedev #godot #weapons #devlog #TopinDeZombies #indiegame #hechoenchile #TopinGames"
+  },
+  {
+    "slug": "reel-03-enjambre",
+    "project": "topin-de-zombies",
+    "type": "reel",
+    "media": ["reel-03-enjambre.mp4"],
+    "story": "story-03.jpg",
+    "scheduled_at": "2026-11-06T14:00:00-03:00",
+    "caption": "El Enjambre. 500 HP. Y no para. 🧟\n\nJefe de la noche 10 en TOPIN DE ZOMBIES.\n\nCuando lo ves llegar con esa barra de vida... sabes que vas a necesitar a los 4. 😅\n\nAndroid y PC · Coop de 1 a 4\n\n#gamedev #bossfight #indiedev #godotengine #zombiegame #devlog #TopinDeZombies #hechoenchile #indiegame"
+  },
+  {
+    "slug": "reel-04-defensas",
+    "project": "topin-de-zombies",
+    "type": "reel",
+    "media": ["reel-04-defensas.mp4"],
+    "story": "story-04.jpg",
+    "scheduled_at": "2026-11-07T14:00:00-03:00",
+    "caption": "De día construyes. De noche resistes. 🧱\n\nValla · Púas · Barril · Acero · Eléctrico · Torreta\n\nLa torreta gira sola hacia el zombie. Y la arena ahora tiene baranda: nadie se cae al vacío.\n\nTOPIN DE ZOMBIES — Android y PC\n\n#gamedev #indiedev #towerdefense #godot #devlog #TopinDeZombies #indiegame #hechoenchile #TopinGames"
+  },
+  {
+    "slug": "reel-05-hospedero",
+    "project": "topin-de-zombies",
+    "type": "reel",
+    "media": ["reel-05-hospedero.mp4"],
+    "story": "story-05.jpg",
+    "scheduled_at": "2026-11-08T14:00:00-03:00",
+    "caption": "El Hospedero. Noche 20. El jefe final. 🕷️\n\nNo lo ves venir hasta que ya es demasiado tarde.\n\n¿Llegarías hasta aquí? 👇\n\nTOPIN DE ZOMBIES — Android y PC · Coop de 1 a 4\n\n#gamedev #bossfight #indiedev #godotengine #horror #devlog #TopinDeZombies #hechoenchile #indiegame #TopinGames"
+  },
+  {
+    "slug": "reel-06-horda",
+    "project": "topin-de-zombies",
+    "type": "reel",
+    "media": ["reel-06-horda.mp4"],
+    "story": "story-06.jpg",
+    "scheduled_at": "2026-11-09T14:00:00-03:00",
+    "caption": "La horda. 5 tipos. Cada uno con su rol. 🧟‍♂️\n\nCorredor · Básico · Tanque · Explosivo · Tanque II\n\nLos reconoces de lejos. El problema es que vienen todos juntos. 💀\n\nTOPIN DE ZOMBIES — Android y PC · Coop 1–4\n\n#gamedev #zombies #indiedev #godot #lowpoly #devlog #TopinDeZombies #indiegame #hechoenchile #TopinGames"
+  }
+]

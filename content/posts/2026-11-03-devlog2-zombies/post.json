@@ -1,0 +1,30 @@
+{
+  "project": "topin-de-zombies",
+  "type": "carousel",
+  "media": [
+    "01-portada.jpg",
+    "02-antes-ahora.jpg",
+    "03-proceso-3d.jpg",
+    "04-protagonistas.jpg",
+    "05-horda.jpg",
+    "06-jefes.jpg",
+    "07-armas.jpg",
+    "08-defensas.jpg",
+    "09-cual-elegirias.jpg"
+  ],
+  "story": "story.jpg",
+  "scheduled_at": "2026-11-03T11:00:00-03:00",
+  "caption": "🧟 TOPIN DE ZOMBIES · Devlog #2 🎮\n\nEl juego ya tiene arte propio.\n\n✅ 4 protagonistas con habilidades distintas: Leo (líder), Miyuki (ágil), Frank (resistente), Momo (apoyo)\n✅ De un boceto a un modelo 3D animado en el juego — 3 pasos\n✅ 5 tipos de zombie que reconoces de lejos\n✅ 4 jefes: Acechador, Guardián, Hospedero y Mosca Titán\n✅ 9 armas diseñadas a mano real\n✅ Defensas: Valla, Púas, Barril, Acero, Eléctrico, Torreta\n\nAndroid y PC · Coop de 1 a 4 · Hecho en Chile con Godot\n\n¿Cuál protagonista elegirías? 👇 Comenta y guarda para ver el devlog #3.\n\n🎯 Meta: US$1.500 para el arte final de los dos juegos. Apóyanos en drpipa.cl 💛\n\n#TopinDeZombies #gamedev #indiedev #godotengine #lowpoly #devlog #indiegame #juegosindie #hechoenchile #TopinGames #zombiegame #survivalhorror #pixelart #gamedesign #madewithgodot",
+
+  "alt_texts": [
+    "Devlog #2 — TOPIN DE ZOMBIES. El juego ya tiene arte propio. Leo, Miyuki, Frank y Momo.",
+    "Antes y ahora: de placeholder gris a arte propio con personajes animados.",
+    "De la imagen al juego en 3 pasos: dibujo, modelo 3D, esqueleto y animaciones.",
+    "4 protagonistas: Leo (líder), Miyuki (ágil), Frank (resistente), Momo (apoyo). 5 tipos de zombie.",
+    "La horda: Corredor, Básico, Tanque, Explosivo, Tanque II. Cada tipo se reconoce de lejos.",
+    "Los jefes en noches 5, 10, 15 y 20: Acechador, Guardián, Hospedero, Mosca Titán.",
+    "9 armas: Pistola 9mm, Rifle de Clavos, SMG Viper, Escopeta Vieja, Rifle de Caza, Ballesta Expl., Lanzallamas, Minigun, Cañón de Riel.",
+    "Defensas: de día construyes, de noche resistes. Valla, Púas, Barril, Acero, Eléctrico, Torreta.",
+    "¿Cuál protagonista elegirías? Comenta, guarda y síguenos para el devlog #3."
+  ]
+}
