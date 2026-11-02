@@ -234,11 +234,11 @@ export async function tick(src = 'ext') {
 let lastKick = 0;
 /** Reloj de respaldo: lo llaman las visitas al hub y los mensajes al bot, como mucho 1 vez por minuto. */
 export async function kick({ external = false } = {}) {
+  if (external) await setting('social_last_tick', new Date().toISOString()).catch(() => {});
   if (Date.now() - lastKick < 45000) return;
   lastKick = Date.now();
   try {
     await ensureSchema();
-    if (external) await setting('social_last_tick', new Date().toISOString());
     const [r] = await sql()`SELECT count(*)::int AS n FROM social_posts WHERE status = 'approved' AND scheduled_at <= now() + interval '6 minutes'`;
     if (r.n) await tick('kick');
   } catch (e) { console.log(JSON.stringify({ kick_error: e.message })); }
