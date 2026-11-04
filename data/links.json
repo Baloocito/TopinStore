@@ -13,6 +13,16 @@
     "url": "https://t.me/TopinSaleSwitch",
     "live": true
   },
+  "app": {
+    "id": "clip2post",
+    "badge": "NUEVA APP",
+    "kicker": "App Android · TopinGames",
+    "title": "Clip2Post",
+    "text": "Graba clips de tus mejores momentos y súbelos a Reels o TikTok en 5 toques. Sin cuenta, sin ads, 100% offline.",
+    "cta": "Descargar gratis",
+    "url": "https://play.google.com/store/apps/details?id=cl.topingames.clip2post",
+    "soon": true
+  },
   "paths": [
     {
       "id": "faro",

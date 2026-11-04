@@ -134,6 +134,13 @@ img { display: block; max-width: 100%; }
 .featured:active, .featured.pressed { box-shadow: 0 0 0 var(--pink); }
 @media (hover: hover) { .featured:hover { box-shadow: calc(var(--shadow) + 2px) calc(var(--shadow) + 2px) 0 var(--pink); } }
 .featured h3 { font-size: 30px; }
+.app-card { background: var(--yellow); color: var(--black); box-shadow: var(--shadow) var(--shadow) 0 var(--pink); }
+.app-card:active, .app-card.pressed { box-shadow: 0 0 0 var(--pink); }
+@media (hover: hover) { .app-card:hover { box-shadow: calc(var(--shadow) + 2px) calc(var(--shadow) + 2px) 0 var(--pink); } }
+.app-card .kicker { color: var(--black); opacity: .8; }
+.app-badge { background: var(--pink); color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; letter-spacing: .1em; }
+.btn-app { background: var(--black); color: var(--yellow); }
+.app-card[aria-label*="Próximamente"] .btn-app::after { content: " · PRONTO"; font-size: .8em; opacity: .7; }
 .live-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--pink); border: 2px solid var(--black); animation: pulse 1.6s ease-out infinite; }
 
 .deal {

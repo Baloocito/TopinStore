@@ -52,6 +52,17 @@
     fc.href = go(f.id);
     for (const k of ['kicker', 'title', 'text', 'cta']) fc.querySelector(`[data-f="${k}"]`).textContent = f[k];
 
+    const ac = $('[data-slot="app"]');
+    if (ac && data.app) {
+      const a = data.app;
+      ac.href = a.url;
+      for (const k of ['badge', 'kicker', 'title', 'text', 'cta']) {
+        const el = ac.querySelector(`[data-f="${k}"]`);
+        if (el) el.textContent = a[k] || '';
+      }
+      if (a.soon) ac.setAttribute('aria-label', ac.querySelector('[data-f="title"]').textContent + ' — Próximamente');
+    }
+
     const card = (x) => `
       <a class="card path ${esc(x.color)} reveal" href="${go(x.id)}">
         <div class="row">
@@ -189,7 +200,7 @@
 
   if (window.HUB_DATA) {
     const d = window.HUB_DATA;
-    [d.featured, ...d.paths, ...d.socials, ...((d.support && d.support.tiers) || []), ...(d.support && d.support.intl ? [d.support.intl] : []), ...(d.support && d.support.proof ? [d.support.proof] : [])].forEach((x) => PREVIEW.set(x.id, x.url));
+    [d.featured, ...(d.app ? [d.app] : []), ...d.paths, ...d.socials, ...((d.support && d.support.tiers) || []), ...(d.support && d.support.intl ? [d.support.intl] : []), ...(d.support && d.support.proof ? [d.support.proof] : [])].forEach((x) => PREVIEW.set(x.id, x.url));
     render(d);
     return;
   }
