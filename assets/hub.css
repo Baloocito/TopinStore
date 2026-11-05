@@ -134,9 +134,8 @@ img { display: block; max-width: 100%; }
 .featured:active, .featured.pressed { box-shadow: 0 0 0 var(--pink); }
 @media (hover: hover) { .featured:hover { box-shadow: calc(var(--shadow) + 2px) calc(var(--shadow) + 2px) 0 var(--pink); } }
 .featured h3 { font-size: 30px; }
-.tg-hint { font-size: 12px; margin-top: 10px; opacity: .75; }
-.tg-hint-link { color: inherit; font-weight: 700; text-decoration: underline; pointer-events: auto; }
-.featured:active .tg-hint-link, .featured.pressed .tg-hint-link { pointer-events: none; }
+.btn-tg-dl { display: flex; justify-content: center; margin-top: 10px; padding: 10px 16px; border-radius: 10px; font-size: 13px; background: #229ED9; color: white; text-decoration: none; border: 2px solid var(--black); box-shadow: 3px 3px 0 var(--black); }
+.btn-tg-dl:active { transform: translate(3px,3px); box-shadow: 0 0 0 var(--black); }
 .app-card { background: var(--yellow); color: var(--black); box-shadow: var(--shadow) var(--shadow) 0 var(--pink); }
 .app-card:active, .app-card.pressed { box-shadow: 0 0 0 var(--pink); }
 @media (hover: hover) { .app-card:hover { box-shadow: calc(var(--shadow) + 2px) calc(var(--shadow) + 2px) 0 var(--pink); } }
