@@ -3,6 +3,7 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 import { stats, goal, channelMembers } from './_stats.js';
 import { igToken, igProfile, igAccountInsights, igMedia } from './_ig.js';
 import { sql, inspectPayment } from './_demo.js';
+import { inboxList, inboxDelete, inboxUpload } from './_upload.js';
 
 const COOKIE = 'tg_panel';
 const PASS = () => process.env.PANEL_PASSWORD || '';
@@ -68,6 +69,19 @@ export default async function handler(req, res) {
     const id = String(req.query.id || '').replace(/\D/g, '');
     const del = await sql()`DELETE FROM donations WHERE payment_id = ${id} AND source = 'mercadopago' RETURNING payment_id`;
     return send(res, 200, { removed: del.length });
+  }
+
+  // Inbox de clips: listar, borrar, subir (antes en api/upload-inbox.js, fusionado aquí por límite Vercel).
+  if (action === 'inbox') {
+    if (!authed(req)) return send(res, 401, { error: 'login' });
+    try {
+      if (req.method === 'GET') return send(res, 200, await inboxList());
+      if (req.method === 'DELETE') return send(res, 200, await inboxDelete(req.query.id));
+      if (req.method === 'POST') return send(res, 200, await inboxUpload(req.body || {}));
+      return send(res, 405, { error: 'Método no permitido' });
+    } catch (e) {
+      return send(res, e.status || 500, { error: e.message });
+    }
   }
 
   const days = [7, 30, 90].includes(Number(req.query.days)) ? Number(req.query.days) : 7;

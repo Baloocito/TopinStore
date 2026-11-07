@@ -5,6 +5,10 @@
   "cleanUrls": true,
   "rewrites": [
     {
+      "source": "/api/upload-inbox",
+      "destination": "/api/panel?action=inbox"
+    },
+    {
       "source": "/api/tq",
       "destination": "/api/go?id=tq"
     },
