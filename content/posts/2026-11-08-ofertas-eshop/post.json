@@ -2,15 +2,15 @@
   "project": "TopinSales",
   "type": "carousel",
   "scheduled_at": "2026-11-08T10:00:00-03:00",
-  "story": true,
+  "story": "story.jpg",
   "media": [
-    "slide-00-cover.png",
-    "slide-01-ff7rebirth.png",
-    "slide-02-ff7remake.png",
-    "slide-03-dqmonsters.png",
-    "slide-04-ysorigin.png",
-    "slide-05-owlboy.png",
-    "slide-06-cta.png"
+    "slide-00-cover.jpg",
+    "slide-01-deal.jpg",
+    "slide-02-deal.jpg",
+    "slide-03-deal.jpg",
+    "slide-04-deal.jpg",
+    "slide-05-deal.jpg",
+    "slide-06-cta.jpg"
   ],
   "caption": "🎮 ¡Las mejores ofertas del eShop esta semana! 🔥\n\n¿Cuánto gastaste de más? 👀 Siguiendo nuestro canal t.me/TopinSaleSwitch te ahorras hasta un 85% en tus juegos favoritos. ¡Mira estos precios históricos! 👇\n\n✅ FF7 Rebirth — $7.49 (antes $49.99) ¡-85%!\n✅ FF7 Remake Intergrade — $7.99 (antes $39.99) ¡-80%!\n✅ Dragon Quest Monsters — $5.99 (antes $39.99) ¡-85%!\n✅ Ys Origin — $1.99 (antes $19.99) ¡-90%!\n✅ Owlboy — $3.74 (antes $24.99) ¡-85%!\n\n⏰ Ofertas hasta el 17 de noviembre\n📲 Únete al canal → t.me/TopinSaleSwitch\n🌐 drpipa.cl\n\n#NintendoSwitch #eShop #NintendoDeals #FinalFantasy #DragonQuest #OfertasSwitch #TopinSales #JuegosBaratos #NintendoSale #Switch2 #FF7Rebirth #FF7Remake",
   "note": "Carrusel 6 slides — mejores ofertas eShop semana 8 nov. Oportunidad FF7 doble + DQ Monsters al precio más bajo histórico."
