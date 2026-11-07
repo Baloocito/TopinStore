@@ -377,6 +377,36 @@ td.c,th.c{text-align:center}
   ═══════════════════════════════════════════ -->
   <div class="view" id="view-publicaciones">
     <div class="content">
+
+      <!-- INBOX DE ARCHIVOS -->
+      <div class="card" style="margin-bottom:14px">
+        <h2>Inbox de clips <small>videos · audios · imágenes para procesar</small></h2>
+        <div id="inboxUploadArea">
+          <div style="display:grid;gap:10px">
+            <p class="note" style="margin:0">Sube aquí el video o audio crudo. Claude lo descarga, procesa con ffmpeg y arma el reel.</p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+              <label class="btn sm" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px">
+                📎 Elegir archivo
+                <input type="file" id="inboxFile" accept="video/*,audio/*,image/*" style="display:none">
+              </label>
+              <input id="inboxNote" type="text" placeholder="Nota opcional (ej: ff7 rebirth gameplay robot)" style="flex:1;min-width:0;background:var(--bg);border:2px solid var(--line);border-radius:10px;padding:8px 12px;min-height:40px">
+              <button class="btn sm" id="inboxUpload" type="button" disabled>Subir</button>
+            </div>
+            <div id="inboxProgress" style="display:none">
+              <div style="height:6px;background:var(--bg3);border-radius:4px;overflow:hidden">
+                <div id="inboxBar" style="height:100%;background:var(--teal);border-radius:4px;width:0%;transition:width .2s"></div>
+              </div>
+              <p class="note" id="inboxMsg" role="status" style="margin-top:4px"></p>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:14px">
+          <div style="font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Archivos subidos</div>
+          <div id="inboxList"><p class="empty">Sin archivos todavía.</p></div>
+        </div>
+      </div>
+
+      <!-- COLA -->
       <div class="card">
         <h2>Cola de publicaciones <small>aprobadas en @TopinMandoBot</small></h2>
         <div class="q" id="queue"></div>
@@ -771,6 +801,98 @@ td.c,th.c{text-align:center}
     if (!slug($('#campName').value)) { $('#campMsg').textContent = 'Escribe un nombre primero.'; return; }
     try { await navigator.clipboard.writeText(campUrl()); $('#campMsg').textContent = 'Link copiado. ✓'; }
     catch (_) { const r=document.createRange(); r.selectNodeContents($('#campOut')); getSelection().removeAllRanges(); getSelection().addRange(r); $('#campMsg').textContent = 'Selecciónalo y cópialo.'; }
+  });
+
+  /* ══════════════════════════════════════════
+     INBOX DE ARCHIVOS
+  ══════════════════════════════════════════ */
+  const MIME_ICON = { 'video':'🎬', 'audio':'🎵', 'image':'🖼️' };
+  const fmtSize = (b) => b > 1e6 ? (b/1e6).toFixed(1)+' MB' : (b/1e3).toFixed(0)+' KB';
+  const fmtDate = (s) => new Date(s).toLocaleString('es-CL',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+
+  async function loadInbox() {
+    try {
+      const d = await api('/upload-inbox');
+      const files = d.files || [];
+      $('#inboxList').innerHTML = files.length ? files.map((f) => {
+        const kind = f.mime.split('/')[0];
+        const icon = MIME_ICON[kind] || '📄';
+        return `<div style="display:grid;grid-template-columns:28px 1fr auto auto;gap:6px 10px;align-items:center;padding:10px 4px;border-bottom:1px solid var(--line);font-size:13px">
+          <span style="font-size:18px;text-align:center">${icon}</span>
+          <div>
+            <b style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(f.name)}</b>
+            <span style="color:var(--dim);font-size:11px">${fmtSize(f.size_bytes||0)} · ${fmtDate(f.created_at)}${f.note?` · ${esc(f.note)}`:''}</span>
+          </div>
+          <a href="${esc(f.url)}" target="_blank" rel="noopener" class="btn ghost sm" style="min-height:30px;padding:0 10px;font-size:12px">Ver</a>
+          <button class="btn ghost sm" style="min-height:30px;padding:0 10px;font-size:12px;color:var(--bad)" data-del-inbox="${f.id}" type="button">✕</button>
+        </div>`;
+      }).join('') : '<p class="empty">Sin archivos todavía. Sube el primer clip arriba.</p>';
+    } catch (_) {}
+  }
+
+  // Elegir archivo → habilitar botón
+  $('#inboxFile').addEventListener('change', () => {
+    const f = $('#inboxFile').files[0];
+    $('#inboxUpload').disabled = !f;
+    if (f) $('#inboxNote').placeholder = f.name.replace(/\.[^.]+$/, '');
+  });
+
+  // Subir
+  $('#inboxUpload').addEventListener('click', async () => {
+    const file = $('#inboxFile').files[0];
+    if (!file) return;
+    const MAX = 200 * 1024 * 1024;
+    if (file.size > MAX) { alert('El archivo pesa más de 200 MB.'); return; }
+
+    $('#inboxUpload').disabled = true;
+    $('#inboxProgress').style.display = 'block';
+    $('#inboxMsg').textContent = 'Leyendo archivo…';
+    $('#inboxBar').style.width = '10%';
+
+    try {
+      // Leer como base64
+      const b64 = await new Promise((ok, fail) => {
+        const r = new FileReader();
+        r.onload = () => ok(r.result.split(',')[1]);
+        r.onerror = fail;
+        r.readAsDataURL(file);
+      });
+      $('#inboxBar').style.width = '40%';
+      $('#inboxMsg').textContent = 'Subiendo a UploadThing…';
+
+      const res = await api('/upload-inbox', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file: b64, name: file.name, mime: file.type, note: $('#inboxNote').value || null }),
+      });
+
+      $('#inboxBar').style.width = '100%';
+      $('#inboxMsg').textContent = '✓ Subido: ' + res.file.name;
+      $('#inboxFile').value = '';
+      $('#inboxNote').value = '';
+      $('#inboxUpload').disabled = true;
+      await loadInbox();
+    } catch (e) {
+      $('#inboxMsg').textContent = '✗ Error: ' + e.message;
+      $('#inboxBar').style.background = 'var(--bad)';
+      $('#inboxUpload').disabled = false;
+    }
+  });
+
+  // Borrar archivo del inbox
+  document.addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-del-inbox]');
+    if (!btn) return;
+    if (!confirm('¿Borrar este archivo del inbox y de UploadThing?')) return;
+    await api('/upload-inbox?id=' + btn.dataset.delInbox, { method: 'DELETE' }).catch(() => null);
+    await loadInbox();
+  });
+
+  // Cargar inbox cuando se navega a publicaciones
+  const _origNavigate = navigate;
+  // patch: cargar inbox al entrar a publicaciones
+  document.querySelectorAll('.nav-item[data-view="publicaciones"]').forEach((b) => {
+    b.addEventListener('click', () => loadInbox(), { capture: true });
   });
 
   /* arrancar */
