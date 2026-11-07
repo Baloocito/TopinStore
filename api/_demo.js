@@ -211,6 +211,34 @@ export function ensureSchema() {
         value       text NOT NULL,
         updated_at  timestamptz NOT NULL DEFAULT now()
       )`;
+      // Métricas de posts de Instagram para análisis y A/B testing
+      await q`CREATE TABLE IF NOT EXISTS ig_posts (
+        ig_id         text PRIMARY KEY,
+        type          text,
+        caption       text,
+        image         text,
+        url           text,
+        published_at  timestamptz,
+        likes         integer,
+        comments      integer,
+        reach         integer,
+        views         integer,
+        saved         integer,
+        shares        integer,
+        avg_watch_pct numeric,
+        synced_at     timestamptz NOT NULL DEFAULT now()
+      )`;
+      await q`ALTER TABLE ig_posts ADD COLUMN IF NOT EXISTS avg_watch_pct numeric`;
+      // Variables de experimento por post: voz/no_voz, musica/no_musica, etc.
+      await q`CREATE TABLE IF NOT EXISTS ig_experiments (
+        id          bigserial PRIMARY KEY,
+        ig_id       text NOT NULL REFERENCES ig_posts(ig_id) ON DELETE CASCADE,
+        variable    text NOT NULL,
+        value       text NOT NULL,
+        notes       text,
+        created_at  timestamptz NOT NULL DEFAULT now(),
+        UNIQUE (ig_id, variable)
+      )`;
     })().catch((e) => { _ready = null; throw e; });
   }
   return _ready;

@@ -2,7 +2,7 @@
 // y los lunes envía el informe semanal por Telegram.
 import { sql, ensureSchema, notifyAdmin, esc, checkPayment } from '../_demo.js';
 import { stats, goal, channelMembers } from '../_stats.js';
-import { igToken, igProfile, igAccountInsights, igRefreshIfNeeded } from '../_ig.js';
+import { igToken, igProfile, igAccountInsights, igRefreshIfNeeded, syncIgPosts } from '../_ig.js';
 import { runRadar } from '../_news.js';
 
 const clp = (n) => '$' + Math.round(n || 0).toLocaleString('es-CL');
@@ -29,6 +29,7 @@ async function snapshot(day) {
       const ins = await igAccountInsights(token, 1);
       out.ig_reach = ins.reach;
       await put('ig_reach', ins.reach);
+      out.ig_posts_synced = await syncIgPosts(token, 20);
     } catch (e) { out.ig_error = e.message; }
   }
   return out;

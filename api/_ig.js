@@ -70,6 +70,31 @@ export async function igMedia(token, limit = 9) {
   }));
 }
 
+/** Sincroniza los últimos posts de Instagram a ig_posts (upsert).
+ *  Llama a igMedia internamente; devuelve cuántos posts se guardaron. */
+export async function syncIgPosts(token, limit = 20) {
+  const items = await igMedia(token, limit);
+  if (!items.length) return 0;
+  for (const m of items) {
+    await sql()`
+      INSERT INTO ig_posts (ig_id, type, caption, image, url, published_at,
+        likes, comments, reach, views, saved, shares, synced_at)
+      VALUES (${m.id}, ${m.type}, ${m.caption}, ${m.image}, ${m.url},
+        ${m.at}, ${m.likes}, ${m.comments}, ${m.reach},
+        ${m.views}, ${m.saved}, ${m.shares}, now())
+      ON CONFLICT (ig_id) DO UPDATE SET
+        likes       = EXCLUDED.likes,
+        comments    = EXCLUDED.comments,
+        reach       = EXCLUDED.reach,
+        views       = EXCLUDED.views,
+        saved       = EXCLUDED.saved,
+        shares      = EXCLUDED.shares,
+        synced_at   = now()
+    `;
+  }
+  return items.length;
+}
+
 /** Los tokens de larga duración duran 60 días: se renuevan cuando tienen más de 20. */
 export async function igRefreshIfNeeded() {
   const token = await igToken();
