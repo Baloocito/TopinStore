@@ -96,7 +96,8 @@ nav{flex:1;padding:10px 8px}
 /* ── VIEWS ── */
 .view{display:none;flex:1}
 .view.active{display:block}
-.content{padding:20px;padding-bottom:max(40px,env(safe-area-inset-bottom,0px));max-width:1200px}
+.content{padding:16px;padding-bottom:max(40px,env(safe-area-inset-bottom,0px));max-width:1200px}
+@media(min-width:600px){.content{padding:20px}}
 
 /* ── GRID / CARDS ── */
 .grid{display:grid;gap:14px;grid-template-columns:repeat(12,1fr)}
@@ -107,10 +108,11 @@ nav{flex:1;padding:10px 8px}
 
 /* ── KPIs ── */
 .kpis{display:grid;gap:10px;grid-template-columns:repeat(2,1fr)}
-@media(min-width:600px){.kpis{grid-template-columns:repeat(4,1fr)}}
-.kpi{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:4px;min-width:0}
-.kpi b{font-family:var(--display);font-size:clamp(20px,5vw,28px);line-height:1.05}
-.kpi span{font-size:12px;color:var(--muted)}
+@media(min-width:480px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:700px){.kpis{grid-template-columns:repeat(4,1fr)}}
+.kpi{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:5px;min-width:0}
+.kpi b{font-family:var(--display);font-size:clamp(22px,5vw,30px);line-height:1.05}
+.kpi span{font-size:13px;color:var(--muted)}
 .kpi em{font-style:normal;font-size:12px;font-weight:700}
 .up{color:var(--good)}.down{color:var(--bad)}
 .kpi.hl{border:2px solid var(--yellow);box-shadow:4px 4px 0 var(--pink)}
@@ -176,12 +178,14 @@ td.c,th.c{text-align:center}
 .connect textarea{width:100%;min-height:70px;background:var(--bg);border:2px solid var(--line);border-radius:10px;padding:10px;font-family:ui-monospace,monospace;font-size:12px}
 
 /* ── POSTS TABLE IG ── */
-.ig-post-row{display:grid;grid-template-columns:44px 1fr repeat(5,52px);gap:8px;align-items:center;padding:10px 6px;border-bottom:1px solid var(--line);font-size:13px}
+.ig-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.ig-table-inner{min-width:560px}
+.ig-post-row{display:grid;grid-template-columns:56px minmax(160px,1fr) repeat(5,64px);gap:10px;align-items:center;padding:12px 8px;border-bottom:1px solid var(--line);font-size:14px}
 .ig-post-row:last-child{border:0}
-.ig-post-row img{width:44px;height:44px;border-radius:6px;object-fit:cover;background:var(--bg3)}
+.ig-post-row img{width:56px;height:56px;border-radius:8px;object-fit:cover;background:var(--bg3)}
 .ig-post-row .cap{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)}
-.ig-post-row .cap b{display:block;color:var(--ink);font-size:12px;margin-bottom:2px}
-.ig-post-row .metric{text-align:right;font-variant-numeric:tabular-nums}
+.ig-post-row .cap b{display:block;color:var(--ink);font-size:13px;margin-bottom:3px}
+.ig-post-row .metric{text-align:right;font-variant-numeric:tabular-nums;font-size:14px}
 .ig-post-row .metric.hi{color:var(--good);font-weight:700}
 .type-pill{display:inline-block;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;text-transform:uppercase;letter-spacing:.05em}
 .type-pill.reel{background:rgba(236,28,122,.2);color:var(--pink)}
@@ -322,15 +326,19 @@ td.c,th.c{text-align:center}
       <!-- tabla de posts -->
       <div class="card" style="margin-bottom:14px">
         <h2>Posts recientes <small>métricas del periodo</small></h2>
-        <div id="igPostsHeader" style="display:grid;grid-template-columns:44px 1fr repeat(5,52px);gap:8px;padding:0 6px 8px;border-bottom:1px solid var(--line)">
-          <div></div><div style="font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em">Post</div>
-          <div style="font-size:11px;color:var(--dim);text-align:right">👁</div>
-          <div style="font-size:11px;color:var(--dim);text-align:right">❤</div>
-          <div style="font-size:11px;color:var(--dim);text-align:right">💬</div>
-          <div style="font-size:11px;color:var(--dim);text-align:right">🔗</div>
-          <div style="font-size:11px;color:var(--dim);text-align:right">💾</div>
+        <div class="ig-table-wrap">
+          <div class="ig-table-inner">
+            <div id="igPostsHeader" style="display:grid;grid-template-columns:56px minmax(160px,1fr) repeat(5,64px);gap:10px;padding:0 8px 10px;border-bottom:1px solid var(--line)">
+              <div></div><div style="font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em">Post</div>
+              <div style="font-size:11px;color:var(--dim);text-align:right">👁 Alc.</div>
+              <div style="font-size:11px;color:var(--dim);text-align:right">❤</div>
+              <div style="font-size:11px;color:var(--dim);text-align:right">💬</div>
+              <div style="font-size:11px;color:var(--dim);text-align:right">🔗</div>
+              <div style="font-size:11px;color:var(--dim);text-align:right">💾</div>
+            </div>
+            <div id="igPostsList"></div>
+          </div>
         </div>
-        <div id="igPostsList"></div>
       </div>
 
       <!-- grid de thumbs -->
