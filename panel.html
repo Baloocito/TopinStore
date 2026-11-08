@@ -812,7 +812,7 @@ td.c,th.c{text-align:center}
 
   async function loadInbox() {
     try {
-      const d = await api('/upload-inbox');
+      const d = await api('/panel?action=inbox');
       const files = d.files || [];
       $('#inboxList').innerHTML = files.length ? files.map((f) => {
         const kind = f.mime.split('/')[0];
@@ -860,7 +860,7 @@ td.c,th.c{text-align:center}
       $('#inboxBar').style.width = '40%';
       $('#inboxMsg').textContent = 'Subiendo a UploadThing…';
 
-      const res = await api('/upload-inbox', {
+      const res = await api('/panel?action=inbox', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ file: b64, name: file.name, mime: file.type, note: $('#inboxNote').value || null }),
@@ -884,7 +884,7 @@ td.c,th.c{text-align:center}
     const btn = e.target.closest('[data-del-inbox]');
     if (!btn) return;
     if (!confirm('¿Borrar este archivo del inbox y de UploadThing?')) return;
-    await api('/upload-inbox?id=' + btn.dataset.delInbox, { method: 'DELETE' }).catch(() => null);
+    await api('/panel?action=inbox&id=' + btn.dataset.delInbox, { method: 'DELETE' }).catch(() => null);
     await loadInbox();
   });
 
