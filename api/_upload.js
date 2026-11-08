@@ -1,6 +1,6 @@
 // Lógica del inbox de archivos (videos, audios, imágenes) via UploadThing.
 // Llamado desde api/panel.js con action=inbox | inbox-delete | inbox-upload
-import { sql, ensureSchema } from './_demo.js';
+import { sql, ensureSchema, logError } from './_demo.js';
 
 export async function ensureInboxSchema() {
   await ensureSchema();
@@ -58,6 +58,8 @@ export async function inboxUpload({ file, name, mime, note }) {
 
   const token = process.env.UPLOADTHING_TOKEN;
   if (!token) throw Object.assign(new Error('Falta UPLOADTHING_TOKEN en Vercel.'), { status: 503 });
+
+  await ensureInboxSchema();
 
   await ensureInboxSchema();
 

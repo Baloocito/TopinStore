@@ -1,7 +1,7 @@
 // Publicaciones: cola, aprobación por Telegram (@bot de mando) y publicación en Instagram.
 import { createHash } from 'node:crypto';
 const hashOf = (p) => createHash('sha1').update(JSON.stringify([p.type, p.media, p.caption, p.scheduled_at, p.story || null])).digest('hex');
-import { sql, ensureSchema, ADMIN_ID, SITE, esc } from './_demo.js';
+import { sql, ensureSchema, ADMIN_ID, SITE, esc, logError } from './_demo.js';
 import { igToken } from './_ig.js';
 
 const OPS_TOKEN = process.env.TELEGRAM_OPS_BOT_TOKEN || '';
@@ -185,6 +185,7 @@ export async function publishOne(id) {
       await updateCard(back);
       return back;
     }
+    await logError('social.publishOne', e, { post_id: id });
     const fin = await setStatus(id, 'failed', { error: e.message });
     await updateCard(fin);
     await opsSay(`⚠️ <b>No se pudo publicar</b> <code>${esc(id)}</code>\n${esc(e.message)}`);
@@ -220,7 +221,7 @@ async function remind() {
 export async function tick(src = 'ext') {
   await ensureSchema();
   if (src === 'ext') await setting('social_last_tick', new Date().toISOString());
-  await remind().catch((e) => console.log(JSON.stringify({ remind_error: e.message })));
+  await remind().catch((e) => { console.log(JSON.stringify({ remind_error: e.message })); logError('social.remind', e); });
   const due = await sql()`SELECT id FROM social_posts WHERE status = 'approved' AND scheduled_at <= now() ORDER BY scheduled_at LIMIT 3`;
   const out = [];
   for (const { id } of due) {
@@ -241,5 +242,5 @@ export async function kick({ external = false } = {}) {
     await ensureSchema();
     const [r] = await sql()`SELECT count(*)::int AS n FROM social_posts WHERE status = 'approved' AND scheduled_at <= now() + interval '6 minutes'`;
     if (r.n) await tick('kick');
-  } catch (e) { console.log(JSON.stringify({ kick_error: e.message })); }
+  } catch (e) { console.log(JSON.stringify({ kick_error: e.message })); logError('social.kick', e); }
 }

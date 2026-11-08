@@ -239,7 +239,44 @@ export function ensureSchema() {
         created_at  timestamptz NOT NULL DEFAULT now(),
         UNIQUE (ig_id, variable)
       )`;
+      // Log centralizado de errores — escrito por cualquier función, leído por cron y opsbot.
+      await q`CREATE TABLE IF NOT EXISTS error_log (
+        id          bigserial PRIMARY KEY,
+        fn          text NOT NULL,
+        message     text NOT NULL,
+        stack       text,
+        ctx         jsonb,
+        created_at  timestamptz NOT NULL DEFAULT now()
+      )`;
+      await q`CREATE INDEX IF NOT EXISTS error_log_at_idx ON error_log (created_at DESC)`;
     })().catch((e) => { _ready = null; throw e; });
   }
   return _ready;
+}
+
+/**
+ * Registra un error en error_log sin lanzar excepciones.
+ * @param {string} fn   nombre de la función/módulo (ej: 'social.sync', 'panel.inbox')
+ * @param {Error|unknown} err
+ * @param {object} [ctx]  datos extra (post id, user id, etc.)
+ */
+export async function logError(fn, err, ctx = {}) {
+  try {
+    await ensureSchema();
+    const message = err instanceof Error ? err.message : String(err);
+    const stack   = err instanceof Error ? (err.stack || null) : null;
+    await sql()`INSERT INTO error_log (fn, message, stack, ctx)
+      VALUES (${fn}, ${message}, ${stack}, ${JSON.stringify(ctx)})`;
+  } catch (_) { /* nunca debe romper el flujo principal */ }
+}
+
+/** Devuelve los últimos N errores (por defecto últimas 24h). */
+export async function recentErrors(hours = 24, limit = 20) {
+  await ensureSchema();
+  return sql()`
+    SELECT id, fn, message, ctx, created_at
+    FROM error_log
+    WHERE created_at > now() - (${hours} || ' hours')::interval
+    ORDER BY created_at DESC
+    LIMIT ${limit}`;
 }

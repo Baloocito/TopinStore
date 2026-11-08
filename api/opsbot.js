@@ -1,6 +1,6 @@
 // Webhook del bot de mando: aprobar, descartar, cambiar texto u hora y publicar posts.
 // GET /api/opsbot?setup=1 lo conecta (seguro de abrir varias veces).
-import { sql, ensureSchema, ADMIN_ID, SITE, esc } from './_demo.js';
+import { sql, ensureSchema, ADMIN_ID, SITE, esc, logError, recentErrors } from './_demo.js';
 import { ops, opsSay, OPS_SECRET, card, updateCard, getPost, setStatus, publishOne, when, sync, tick, kick, lastTick } from './_social.js';
 import { runRadar, onNewsCallback, listIdeas } from './_news.js';
 
@@ -151,6 +151,7 @@ export default async function handler(req, res) {
     await ops('setMyCommands', { commands: [
       { command: 'cola', description: 'Lo que viene' }, { command: 'estado', description: 'Estado del reloj de publicación' }, { command: 'sync', description: 'Revisar posts nuevos' },
       { command: 'radar', description: 'Buscar noticias ahora' }, { command: 'ideas', description: 'Ideas guardadas del radar' },
+      { command: 'errores', description: 'Errores de las últimas 24h' },
       { command: 'cancelar', description: 'Salir de una edición' }, { command: 'ayuda', description: 'Cómo funciona' },
     ] });
     await ensureSchema();
@@ -184,12 +185,25 @@ export default async function handler(req, res) {
       else if (text.startsWith('/sync')) {
         const r = await sync();
         await opsSay(`🔄 Cola revisada: ${r.added} nuevos, ${r.updated} actualizados (${r.total} en total).`);
+      } else if (text.startsWith('/errores')) {
+        const hrs = parseInt(text.split(' ')[1]) || 24;
+        const errs = await recentErrors(hrs, 15);
+        if (!errs.length) { await opsSay(`✅ Sin errores en las últimas ${hrs}h.`); }
+        else {
+          const lines = errs.map((e) => {
+            const t = new Date(e.created_at).toLocaleString('es-CL', { timeZone: 'America/Santiago', hour: '2-digit', minute: '2-digit' });
+            const ctx = e.ctx && Object.keys(e.ctx).length ? ' · ' + JSON.stringify(e.ctx) : '';
+            return `⚠️ <code>${esc(e.fn)}</code> ${t}\n   ${esc(e.message)}${ctx}`;
+          });
+          await opsSay(`🪵 <b>${errs.length} error${errs.length > 1 ? 'es' : ''} (últimas ${hrs}h)</b>\n\n${lines.join('\n\n')}`);
+        }
       } else if (text.startsWith('/start') || text.startsWith('/ayuda')) await opsSay(HELP);
       else if (editId && text) await onEditText(editId, text, u.message.message_id);
       else await opsSay('Toca ✏️ <b>Cambiar</b> en un post para editarlo, o usa /cola.');
     }
   } catch (e) {
     console.log(JSON.stringify({ opsbot_error: String((e && e.message) || e) }));
+    await logError('opsbot', e, { update_id: u.update_id });
     if (ADMIN_ID) await opsSay('⚠️ Algo falló: ' + esc(e.message));
   }
   res.statusCode = 200;

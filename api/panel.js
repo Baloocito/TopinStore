@@ -2,7 +2,7 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { stats, goal, channelMembers } from './_stats.js';
 import { igToken, igProfile, igAccountInsights, igMedia } from './_ig.js';
-import { sql, inspectPayment } from './_demo.js';
+import { sql, inspectPayment, logError } from './_demo.js';
 import { inboxList, inboxDelete, inboxUpload } from './_upload.js';
 
 const COOKIE = 'tg_panel';
@@ -80,6 +80,7 @@ export default async function handler(req, res) {
       if (req.method === 'POST') return send(res, 200, await inboxUpload(req.body || {}));
       return send(res, 405, { error: 'Método no permitido' });
     } catch (e) {
+      await logError('panel.inbox', e, { method: req.method, id: req.query.id });
       return send(res, e.status || 500, { error: e.message });
     }
   }

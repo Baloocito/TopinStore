@@ -1,6 +1,6 @@
 // Tarea diaria (Vercel Cron): guarda la foto del día, renueva el token de Instagram
 // y los lunes envía el informe semanal por Telegram.
-import { sql, ensureSchema, notifyAdmin, esc, checkPayment } from '../_demo.js';
+import { sql, ensureSchema, notifyAdmin, esc, checkPayment, recentErrors } from '../_demo.js';
 import { stats, goal, channelMembers } from '../_stats.js';
 import { igToken, igProfile, igAccountInsights, igRefreshIfNeeded, syncIgPosts } from '../_ig.js';
 import { runRadar } from '../_news.js';
@@ -99,6 +99,16 @@ export default async function handler(req, res) {
     if (weekday === 'Mon' || req.query.report === '1') {
       await weeklyReport();
       out.report = 'enviado';
+    }
+    // Resumen de errores del día — solo si hubo alguno.
+    const errs = await recentErrors(24, 10).catch(() => []);
+    out.errors_today = errs.length;
+    if (errs.length) {
+      const lines = errs.map((e) => {
+        const t = new Date(e.created_at).toLocaleString('es-CL', { timeZone: 'America/Santiago', hour: '2-digit', minute: '2-digit' });
+        return `• <code>${esc(e.fn)}</code> ${t} — ${esc(e.message)}`;
+      });
+      await notifyAdmin(`🪵 <b>${errs.length} error${errs.length > 1 ? 'es' : ''} hoy</b>\n\n${lines.join('\n')}\n\nUsa /errores para ver el detalle.`);
     }
   } catch (e) {
     out.error = e.message;
