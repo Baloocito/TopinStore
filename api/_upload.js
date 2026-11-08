@@ -17,6 +17,7 @@ export async function ensureInboxSchema() {
     created_at  timestamptz NOT NULL DEFAULT now()
   )`;
   await q`ALTER TABLE inbox_files ADD COLUMN IF NOT EXISTS note text`;
+  await q`CREATE UNIQUE INDEX IF NOT EXISTS inbox_files_ut_key_idx ON inbox_files (ut_key)`;
 }
 
 const ALLOWED = ['video/mp4','video/quicktime','video/webm','audio/mpeg','audio/mp4','audio/wav','audio/ogg','image/jpeg','image/png','image/webp'];
