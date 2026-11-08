@@ -47,50 +47,51 @@ export async function inboxDelete(id) {
   return { ok: true };
 }
 
-/** POST: sube un archivo (base64) a UploadThing y lo registra en DB */
-export async function inboxUpload({ file, name, mime, note }) {
-  if (!file || !name || !mime) throw Object.assign(new Error('Faltan campos: file (base64), name, mime.'), { status: 400 });
+/**
+ * PASO 1: Genera una URL prefirmada de UploadThing para que el BROWSER suba directo.
+ * El archivo NUNCA pasa por Vercel (límite 4.5 MB del body serverless).
+ * Devuelve { url, fields, key, fileUrl } para que el cliente haga el POST multipart.
+ */
+export async function inboxPresign({ name, mime, size }) {
+  if (!name || !mime || !size) throw Object.assign(new Error('Faltan campos: name, mime, size.'), { status: 400 });
   if (!ALLOWED.includes(mime)) throw Object.assign(new Error('Tipo no permitido: ' + mime), { status: 400 });
-
-  const buffer = Buffer.from(file, 'base64');
-  const sizeMB = buffer.byteLength / 1024 / 1024;
+  const sizeMB = size / 1024 / 1024;
   if (sizeMB > MAX_MB) throw Object.assign(new Error(`Demasiado grande (${sizeMB.toFixed(1)} MB, máx ${MAX_MB} MB)`), { status: 400 });
 
   const token = process.env.UPLOADTHING_TOKEN;
   if (!token) throw Object.assign(new Error('Falta UPLOADTHING_TOKEN en Vercel.'), { status: 503 });
 
-  await ensureInboxSchema();
-
-  await ensureInboxSchema();
-
   const presignRes = await fetch('https://api.uploadthing.com/v6/uploadFiles', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-uploadthing-api-key': token },
-    body: JSON.stringify({ files: [{ name, size: buffer.byteLength, type: mime }], acl: 'public-read' }),
+    body: JSON.stringify({ files: [{ name, size, type: mime }], acl: 'public-read' }),
   });
   const presign = await presignRes.json();
   if (!presignRes.ok) throw new Error(presign.message || 'Error UploadThing presign');
 
   const uploadData = presign.data?.[0];
-  if (!uploadData) throw new Error('Sin datos de subida');
+  if (!uploadData) throw new Error('Sin datos de subida de UploadThing');
 
-  const formData = new FormData();
-  for (const [k, v] of Object.entries(uploadData.fields || {})) formData.append(k, v);
-  formData.append('file', new Blob([buffer], { type: mime }), name);
-  const s3Res = await fetch(uploadData.url, { method: 'POST', body: formData });
-  if (!s3Res.ok) throw new Error('Error subiendo a S3: ' + s3Res.status);
+  return {
+    url: uploadData.url,
+    fields: uploadData.fields || {},
+    key: uploadData.key,
+    uploadId: uploadData.uploadId || null,
+    fileUrl: `https://utfs.io/f/${uploadData.key}`,
+  };
+}
 
-  await fetch('https://api.uploadthing.com/v6/completeMultipartUpload', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-uploadthing-api-key': token },
-    body: JSON.stringify({ fileKey: uploadData.key, uploadId: uploadData.uploadId }),
-  }).catch(() => null);
-
-  const fileUrl = `https://utfs.io/f/${uploadData.key}`;
+/**
+ * PASO 2: El browser ya subió el archivo directo a S3.
+ * Solo registramos en la DB con el key que UploadThing devolvió.
+ */
+export async function inboxRegister({ key, name, mime, size, note }) {
+  if (!key || !name || !mime) throw Object.assign(new Error('Faltan campos: key, name, mime.'), { status: 400 });
+  await ensureInboxSchema();
+  const fileUrl = `https://utfs.io/f/${key}`;
   const [saved] = await sql()`
     INSERT INTO inbox_files (ut_key, url, name, mime, size_bytes, note)
-    VALUES (${uploadData.key}, ${fileUrl}, ${name}, ${mime}, ${buffer.byteLength}, ${note || null})
+    VALUES (${key}, ${fileUrl}, ${name}, ${mime}, ${size || null}, ${note || null})
     RETURNING *`;
-
   return { ok: true, file: saved };
 }

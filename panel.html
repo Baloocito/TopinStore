@@ -837,7 +837,8 @@ td.c,th.c{text-align:center}
     if (f) $('#inboxNote').placeholder = f.name.replace(/\.[^.]+$/, '');
   });
 
-  // Subir
+  // Subir — flujo 2 pasos: presign (server) → upload directo a S3 (browser) → register (server)
+  // El archivo NUNCA pasa por Vercel (límite 4.5 MB del body serverless rompía videos).
   $('#inboxUpload').addEventListener('click', async () => {
     const file = $('#inboxFile').files[0];
     if (!file) return;
@@ -846,24 +847,48 @@ td.c,th.c{text-align:center}
 
     $('#inboxUpload').disabled = true;
     $('#inboxProgress').style.display = 'block';
-    $('#inboxMsg').textContent = 'Leyendo archivo…';
+    $('#inboxBar').style.background = 'var(--teal)';
+    $('#inboxMsg').textContent = 'Obteniendo URL de subida…';
     $('#inboxBar').style.width = '10%';
 
     try {
-      // Leer como base64
-      const b64 = await new Promise((ok, fail) => {
-        const r = new FileReader();
-        r.onload = () => ok(r.result.split(',')[1]);
-        r.onerror = fail;
-        r.readAsDataURL(file);
-      });
-      $('#inboxBar').style.width = '40%';
-      $('#inboxMsg').textContent = 'Subiendo a UploadThing…';
-
-      const res = await api('/panel?action=inbox', {
+      // Paso 1: pedir URL prefirmada al servidor (body pequeño, solo metadatos)
+      const presign = await api('/panel?action=inbox-presign', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ file: b64, name: file.name, mime: file.type, note: $('#inboxNote').value || null }),
+        body: JSON.stringify({ name: file.name, mime: file.type, size: file.size }),
+      });
+      $('#inboxBar').style.width = '25%';
+      $('#inboxMsg').textContent = 'Subiendo directo a UploadThing…';
+
+      // Paso 2: subir el archivo directo desde el browser al S3 de UploadThing
+      const formData = new FormData();
+      for (const [k, v] of Object.entries(presign.fields || {})) formData.append(k, v);
+      formData.append('file', file);
+
+      await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            const pct = 25 + Math.round((e.loaded / e.total) * 65);
+            $('#inboxBar').style.width = pct + '%';
+            $('#inboxMsg').textContent = `Subiendo… ${Math.round(e.loaded / 1e6 * 10) / 10} / ${Math.round(e.total / 1e6 * 10) / 10} MB`;
+          }
+        };
+        xhr.onload = () => xhr.status < 300 ? resolve() : reject(new Error('S3 ' + xhr.status + ': ' + xhr.responseText.slice(0, 200)));
+        xhr.onerror = () => reject(new Error('Error de red al subir a UploadThing'));
+        xhr.open('POST', presign.url);
+        xhr.send(formData);
+      });
+
+      $('#inboxBar').style.width = '90%';
+      $('#inboxMsg').textContent = 'Registrando en la base de datos…';
+
+      // Paso 3: registrar en DB (solo el key, sin el archivo)
+      const res = await api('/panel?action=inbox-register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: presign.key, name: file.name, mime: file.type, size: file.size, note: $('#inboxNote').value || null }),
       });
 
       $('#inboxBar').style.width = '100%';

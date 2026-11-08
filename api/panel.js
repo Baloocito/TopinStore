@@ -3,7 +3,7 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 import { stats, goal, channelMembers } from './_stats.js';
 import { igToken, igProfile, igAccountInsights, igMedia } from './_ig.js';
 import { sql, inspectPayment, logError } from './_demo.js';
-import { inboxList, inboxDelete, inboxUpload } from './_upload.js';
+import { inboxList, inboxDelete, inboxPresign, inboxRegister } from './_upload.js';
 
 const COOKIE = 'tg_panel';
 const PASS = () => process.env.PANEL_PASSWORD || '';
@@ -71,16 +71,36 @@ export default async function handler(req, res) {
     return send(res, 200, { removed: del.length });
   }
 
-  // Inbox de clips: listar, borrar, subir (antes en api/upload-inbox.js, fusionado aquí por límite Vercel).
+  // Inbox de clips: listar y borrar.
   if (action === 'inbox') {
     if (!authed(req)) return send(res, 401, { error: 'login' });
     try {
       if (req.method === 'GET') return send(res, 200, await inboxList());
       if (req.method === 'DELETE') return send(res, 200, await inboxDelete(req.query.id));
-      if (req.method === 'POST') return send(res, 200, await inboxUpload(req.body || {}));
       return send(res, 405, { error: 'Método no permitido' });
     } catch (e) {
       await logError('panel.inbox', e, { method: req.method, id: req.query.id });
+      return send(res, e.status || 500, { error: e.message });
+    }
+  }
+  // Inbox paso 1: genera URL prefirmada para subir DIRECTO desde el browser a UploadThing.
+  // El archivo nunca pasa por Vercel (límite 4.5 MB del body serverless).
+  if (action === 'inbox-presign' && req.method === 'POST') {
+    if (!authed(req)) return send(res, 401, { error: 'login' });
+    try {
+      return send(res, 200, await inboxPresign(req.body || {}));
+    } catch (e) {
+      await logError('panel.inbox-presign', e, { body: req.body });
+      return send(res, e.status || 500, { error: e.message });
+    }
+  }
+  // Inbox paso 2: el browser ya subió el archivo; solo registramos en la DB.
+  if (action === 'inbox-register' && req.method === 'POST') {
+    if (!authed(req)) return send(res, 401, { error: 'login' });
+    try {
+      return send(res, 200, await inboxRegister(req.body || {}));
+    } catch (e) {
+      await logError('panel.inbox-register', e, { body: req.body });
       return send(res, e.status || 500, { error: e.message });
     }
   }
