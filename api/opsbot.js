@@ -1,6 +1,7 @@
 // Webhook del bot de mando: aprobar, descartar, cambiar texto u hora y publicar posts.
 // GET /api/opsbot?setup=1 lo conecta (seguro de abrir varias veces).
 import { sql, ensureSchema, ADMIN_ID, SITE, esc, logError, recentErrors } from './_demo.js';
+import { ensureInboxSchema } from './_upload.js';
 import { ops, opsSay, OPS_SECRET, card, updateCard, getPost, setStatus, publishOne, when, sync, tick, kick, lastTick } from './_social.js';
 import { runRadar, onNewsCallback, listIdeas } from './_news.js';
 
@@ -120,6 +121,66 @@ async function onEditText(id, text, messageId) {
   if (sent.ok) await sql()`UPDATE social_posts SET tg_message_id = ${sent.result.message_id} WHERE id = ${id}`;
 }
 
+/** Recibe un video, audio o foto enviado directamente al bot y lo guarda en inbox_files. */
+async function onMediaMessage(msg) {
+  // Telegram puede mandar video, audio, voice, document o photo
+  const video     = msg.video;
+  const audio     = msg.audio;
+  const voice     = msg.voice;
+  const document  = msg.document;
+  const photos    = msg.photo; // array, tomamos el de mayor resolución
+
+  let file_id, mime, name, size;
+
+  if (video) {
+    file_id = video.file_id;
+    mime    = video.mime_type || 'video/mp4';
+    name    = video.file_name || `video_${Date.now()}.mp4`;
+    size    = video.file_size || null;
+  } else if (audio) {
+    file_id = audio.file_id;
+    mime    = audio.mime_type || 'audio/mpeg';
+    name    = audio.file_name || `audio_${Date.now()}.mp3`;
+    size    = audio.file_size || null;
+  } else if (voice) {
+    file_id = voice.file_id;
+    mime    = 'audio/ogg';
+    name    = `voice_${Date.now()}.ogg`;
+    size    = voice.file_size || null;
+  } else if (document) {
+    file_id = document.file_id;
+    mime    = document.mime_type || 'application/octet-stream';
+    name    = document.file_name || `doc_${Date.now()}`;
+    size    = document.file_size || null;
+  } else if (photos && photos.length) {
+    const p = photos[photos.length - 1]; // mayor resolución
+    file_id = p.file_id;
+    mime    = 'image/jpeg';
+    name    = `photo_${Date.now()}.jpg`;
+    size    = p.file_size || null;
+  } else {
+    return; // tipo no reconocido, ignorar
+  }
+
+  const note = msg.caption ? String(msg.caption).slice(0, 500) : null;
+  // La URL real se construye con file_id — Claude la descarga via API de Telegram cuando la necesita
+  const url  = `tg://file/${file_id}`;
+
+  await ensureInboxSchema();
+  const [saved] = await sql()`
+    INSERT INTO inbox_files (ut_key, url, name, mime, size_bytes, note)
+    VALUES (${file_id}, ${url}, ${name}, ${mime}, ${size}, ${note})
+    ON CONFLICT (ut_key) DO NOTHING
+    RETURNING id, name`;
+
+  if (saved) {
+    const sizeStr = size ? ` · ${(size / 1e6).toFixed(1)} MB` : '';
+    await opsSay(`📥 <b>Guardado en inbox</b>\n\n🎬 <code>${esc(name)}</code>${sizeStr}\nID: <code>${saved.id}</code>\n\nSe ve en drpipa.cl/panel → Publicaciones.`);
+  } else {
+    await opsSay(`⚠️ Este archivo ya estaba en el inbox.`);
+  }
+}
+
 async function queueList() {
   const rows = await sql()`SELECT id, status, scheduled_at, type FROM social_posts
     WHERE status IN ('pending','approved','changes','failed') ORDER BY scheduled_at LIMIT 15`;
@@ -173,6 +234,10 @@ export default async function handler(req, res) {
       await kick();
     } else if (u.message) {
       await kick();
+      // Si el mensaje trae un archivo (video, audio, foto, documento) → inbox
+      if (u.message.video || u.message.audio || u.message.voice || u.message.document || u.message.photo) {
+        await onMediaMessage(u.message);
+      } else {
       const text = String(u.message.text || '').trim();
       const editId = await editing();
       if (text === '/cancelar') { await editing(null); await opsSay('Listo, sin cambios.'); }
@@ -200,6 +265,7 @@ export default async function handler(req, res) {
       } else if (text.startsWith('/start') || text.startsWith('/ayuda')) await opsSay(HELP);
       else if (editId && text) await onEditText(editId, text, u.message.message_id);
       else await opsSay('Toca ✏️ <b>Cambiar</b> en un post para editarlo, o usa /cola.');
+      } // end else (no es archivo)
     }
   } catch (e) {
     console.log(JSON.stringify({ opsbot_error: String((e && e.message) || e) }));
