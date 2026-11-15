@@ -4,6 +4,7 @@ import { sql, ensureSchema, notifyAdmin, esc, checkPayment, recentErrors } from 
 import { stats, goal, channelMembers } from '../_stats.js';
 import { igToken, igProfile, igAccountInsights, igRefreshIfNeeded, syncIgPosts } from '../_ig.js';
 import { runRadar } from '../_news.js';
+import { lastTick } from '../_social.js';
 
 const clp = (n) => '$' + Math.round(n || 0).toLocaleString('es-CL');
 const pct = (a, b) => (b ? Math.round((a / b) * 100) + '%' : '—');
@@ -100,6 +101,29 @@ export default async function handler(req, res) {
       await weeklyReport();
       out.report = 'enviado';
     }
+    // Verificar que el reloj de publicación (cron-job.org) esté vivo.
+    const lastTickAt = await lastTick().catch(() => null);
+    const tickMins = lastTickAt ? Math.round((Date.now() - lastTickAt.getTime()) / 60000) : null;
+    out.cron_tick_mins_ago = tickMins;
+    if (tickMins === null || tickMins > 120) {
+      await notifyAdmin(
+        `🔴 <b>Alerta: reloj de publicación silenciado</b>\n\n` +
+        (tickMins === null
+          ? 'Nunca se registró un tick. Verifica que cron-job.org esté configurado apuntando a:\n<code>https://www.drpipa.cl/api/social?action=tick</code> cada 5 min.'
+          : `Último tick hace <b>${tickMins} min</b> (más de 2 h).\nVerifica cron-job.org: GET <code>https://www.drpipa.cl/api/social?action=tick</code>`) +
+        '\n\nUsa /estado para más detalles.'
+      ).catch(() => {});
+    }
+
+    // Expirar automáticamente posts vencidos hace más de 2h que siguen pending/changes.
+    const expired = await sql()`UPDATE social_posts SET status = 'expired', updated_at = now()
+      WHERE status IN ('pending','changes') AND scheduled_at < now() - interval '2 hours'
+      RETURNING id`;
+    out.posts_expired = expired.length;
+    if (expired.length) {
+      await notifyAdmin(`🗑️ ${expired.length} post${expired.length > 1 ? 's' : ''} expirado${expired.length > 1 ? 's' : ''} automáticamente:\n${expired.map(r => `• <code>${esc(r.id)}</code>`).join('\n')}`).catch(() => {});
+    }
+
     // Resumen de errores del día — solo si hubo alguno.
     const errs = await recentErrors(24, 10).catch(() => []);
     out.errors_today = errs.length;
