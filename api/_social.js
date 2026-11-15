@@ -193,7 +193,7 @@ export async function publishOne(id) {
   }
 }
 
-const setting = async (key, value) => sql()`INSERT INTO settings (key, value) VALUES (${key}, ${value})
+export const setting = async (key, value) => sql()`INSERT INTO settings (key, value) VALUES (${key}, ${value})
   ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()`;
 export async function lastTick() {
   const [r] = await sql()`SELECT value FROM settings WHERE key = 'social_last_tick'`;

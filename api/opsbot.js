@@ -2,7 +2,7 @@
 // GET /api/opsbot?setup=1 lo conecta (seguro de abrir varias veces).
 import { sql, ensureSchema, ADMIN_ID, SITE, esc, logError, recentErrors } from './_demo.js';
 import { ensureInboxSchema } from './_upload.js';
-import { ops, opsSay, OPS_SECRET, card, updateCard, getPost, setStatus, publishOne, when, sync, tick, kick, lastTick } from './_social.js';
+import { ops, opsSay, OPS_SECRET, card, updateCard, getPost, setStatus, publishOne, when, sync, tick, kick, lastTick, setting } from './_social.js';
 import { runRadar, onNewsCallback, listIdeas } from './_news.js';
 
 const TZ = 'America/Santiago';
@@ -231,12 +231,19 @@ async function purgeExpired() {
 async function statusReport() {
   const last = await lastTick();
   const mins = last ? Math.round((Date.now() - last.getTime()) / 60000) : null;
+  // Heartbeat del cron diario de Vercel.
+  const [dailyRow] = await sql()`SELECT value FROM settings WHERE key = 'cron_daily_last_run'`;
+  const dailyLast = dailyRow ? new Date(dailyRow.value) : null;
+  const dailyHrs = dailyLast ? Math.round((Date.now() - dailyLast.getTime()) / 3600000) : null;
   const next = await sql()`SELECT id, status, scheduled_at FROM social_posts WHERE status IN ('approved','publishing','failed')
     ORDER BY scheduled_at LIMIT 5`;
   const late = next.filter((r) => r.status === 'approved' && new Date(r.scheduled_at) < new Date());
-  let t = `🩺 <b>Estado de publicaciones</b>\n\n⏱️ Último chequeo del reloj: ${last ? (mins < 1 ? 'hace menos de 1 min' : `hace ${mins} min`) : 'nunca'}\n`;
-  t += mins !== null && mins <= 15 ? '🟢 Reloj activo.\n' : '🔴 El reloj externo (cron-job.org) no está corriendo. Respaldo activo: salen igual con visitas al sitio o cuando me escribes aquí, pero pueden atrasarse.\n';
-  t += next.length ? '\n' + next.map((r) => `${{ approved: '✅', publishing: '📤', failed: '⚠️' }[r.status]} ${esc(when(r.scheduled_at))} · <code>${esc(r.id)}</code>${new Date(r.scheduled_at) < new Date() && r.status === 'approved' ? ' · ¡atrasado!' : ''}`).join('\n') : '\nNo hay posts aprobados esperando.';
+  let t = `🩺 <b>Estado del sistema</b>\n\n`;
+  t += `⏱️ Reloj de publicación (cron-job.org): ${last ? (mins < 1 ? 'hace menos de 1 min' : `hace ${mins} min`) : 'nunca'}\n`;
+  t += mins !== null && mins <= 15 ? '🟢 Reloj activo.\n' : '🔴 Reloj caído — puede haber retrasos.\n';
+  t += `\n📆 Cron diario (Vercel 9:00): ${dailyLast ? `hace ${dailyHrs}h` : 'nunca registrado'}\n`;
+  t += dailyHrs !== null && dailyHrs < 25 ? '🟢 Cron diario al día.\n' : '🔴 Cron diario sin correr en más de 24h.\n';
+  t += next.length ? '\n<b>Cola:</b>\n' + next.map((r) => `${{ approved: '✅', publishing: '📤', failed: '⚠️' }[r.status]} ${esc(when(r.scheduled_at))} · <code>${esc(r.id)}</code>${new Date(r.scheduled_at) < new Date() && r.status === 'approved' ? ' · ¡atrasado!' : ''}`).join('\n') : '\nNo hay posts aprobados esperando.';
   await opsSay(t);
   // Escribirme aquí también mueve el reloj: si había algo atrasado, sale ahora.
   if (late.length) await tick('kick');

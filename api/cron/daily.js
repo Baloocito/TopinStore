@@ -4,7 +4,7 @@ import { sql, ensureSchema, notifyAdmin, esc, checkPayment, recentErrors } from 
 import { stats, goal, channelMembers } from '../_stats.js';
 import { igToken, igProfile, igAccountInsights, igRefreshIfNeeded, syncIgPosts } from '../_ig.js';
 import { runRadar } from '../_news.js';
-import { lastTick } from '../_social.js';
+import { lastTick, setting } from '../_social.js';
 
 const clp = (n) => '$' + Math.round(n || 0).toLocaleString('es-CL');
 const pct = (a, b) => (b ? Math.round((a / b) * 100) + '%' : '—');
@@ -134,6 +134,9 @@ export default async function handler(req, res) {
       });
       await notifyAdmin(`🪵 <b>${errs.length} error${errs.length > 1 ? 'es' : ''} hoy</b>\n\n${lines.join('\n')}\n\nUsa /errores para ver el detalle.`);
     }
+    // Registrar que el cron diario corrió exitosamente (heartbeat).
+    await setting('cron_daily_last_run', new Date().toISOString()).catch(() => {});
+    out.heartbeat = 'ok';
   } catch (e) {
     out.error = e.message;
   }
