@@ -48,7 +48,7 @@ const HELP =
   'Aquí te llegan los posts que preparo. En cada uno puedes:\n' +
   '✅ <b>Aprobar</b>: sale solo a su hora.\n✏️ <b>Cambiar</b>: me envías el texto nuevo, una hora nueva o una nota.\n' +
   '🚀 <b>Publicar ya</b>, o ❌ <b>Descartar</b>.\n\n' +
-  '<b>Comandos</b>\n/pendientes: todos los posts pendientes con botones de aprobar/rechazar\n/purgar: marcar expirados los posts vencidos\n/cola: lo que viene\n/estado: si el reloj de publicación está vivo\n/sync: revisar si hay posts nuevos\n/radar: buscar noticias ahora\n/ideas: noticias que guardaste para hacer post\n/cancelar: salir de una edición\n\n' +
+  '<b>Comandos</b>\n/pendientes: todos los posts pendientes con botones de aprobar/rechazar\n/borrar &lt;id&gt;: eliminar un post de la DB (para resubirlo corregido)\n/purgar: marcar expirados los posts vencidos\n/cola: lo que viene\n/estado: si el reloj de publicación está vivo\n/sync: revisar si hay posts nuevos\n/radar: buscar noticias ahora\n/ideas: noticias que guardaste para hacer post\n/cancelar: salir de una edición\n\n' +
   '📡 Cada mañana a las 9:00 te llega el radar con las 5 noticias del día.\n\n' +
   `Panel completo: ${SITE}/panel`;
 
@@ -225,6 +225,15 @@ async function pendientesList() {
   await opsSay(`📋 ${rows.length} post${rows.length > 1 ? 's' : ''} pendiente${rows.length > 1 ? 's' : ''}. Usa los botones para aprobar, rechazar o pedir cambios.`);
 }
 
+async function borrarPost(id) {
+  if (!id) return opsSay('Uso: /borrar <id-del-post>');
+  const p = await getPost(id);
+  if (!p) return opsSay(`❌ No encontré el post <code>${esc(id)}</code>.`);
+  if (p.status === 'published' || p.status === 'publishing') return opsSay(`⛔ No se puede borrar un post ya publicado.`);
+  await deletePost(id);
+  await opsSay(`🗑️ Post <code>${esc(id)}</code> eliminado. Haz /sync para reingresarlo si subiste una versión corregida.`);
+}
+
 async function purgeExpired() {
   const now = new Date();
   const rows = await sql()`SELECT id FROM social_posts
@@ -261,7 +270,7 @@ export default async function handler(req, res) {
     const me = await ops('getMe', {});
     const hook = await ops('setWebhook', { url: `${SITE}/api/opsbot`, secret_token: OPS_SECRET, allowed_updates: ['message', 'callback_query'] });
     await ops('setMyCommands', { commands: [
-      { command: 'pendientes', description: 'Ver todos los posts por aprobar con botones' }, { command: 'purgar', description: 'Marcar expirados los posts vencidos' },
+      { command: 'pendientes', description: 'Ver todos los posts por aprobar con botones' }, { command: 'borrar', description: 'Eliminar un post por ID para resubirlo corregido' }, { command: 'purgar', description: 'Marcar expirados los posts vencidos' },
       { command: 'cola', description: 'Lo que viene (próximos 15)' }, { command: 'estado', description: 'Estado del reloj de publicación' }, { command: 'sync', description: 'Revisar posts nuevos' },
       { command: 'radar', description: 'Buscar noticias ahora' }, { command: 'ideas', description: 'Ideas guardadas del radar' },
       { command: 'errores', description: 'Errores de las últimas 24h' },
@@ -294,6 +303,7 @@ export default async function handler(req, res) {
       const editId = await editing();
       if (text === '/cancelar') { await editing(null); await opsSay('Listo, sin cambios.'); }
       else if (text.startsWith('/pendientes')) await pendientesList();
+      else if (text.startsWith('/borrar')) await borrarPost(text.split(' ')[1]);
       else if (text.startsWith('/purgar')) await purgeExpired();
       else if (text.startsWith('/cola')) await queueList();
       else if (text.startsWith('/estado')) await statusReport();
