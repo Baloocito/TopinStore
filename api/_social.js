@@ -79,6 +79,11 @@ export async function setStatus(id, status, extra = {}) {
   return getPost(id);
 }
 
+/** Elimina un post de la DB. Usado al rechazar para que el próximo /sync lo trate como nuevo. */
+export async function deletePost(id) {
+  await sql()`DELETE FROM social_posts WHERE id = ${id}`;
+}
+
 /** Trae data/queue.json del sitio publicado y registra los posts nuevos (o los que cambiaste en el repo). */
 export async function sync() {
   await ensureSchema();

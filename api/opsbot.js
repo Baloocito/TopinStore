@@ -2,7 +2,7 @@
 // GET /api/opsbot?setup=1 lo conecta (seguro de abrir varias veces).
 import { sql, ensureSchema, ADMIN_ID, SITE, esc, logError, recentErrors } from './_demo.js';
 import { ensureInboxSchema } from './_upload.js';
-import { ops, opsSay, OPS_SECRET, card, updateCard, getPost, setStatus, publishOne, when, sync, tick, kick, lastTick, setting } from './_social.js';
+import { ops, opsSay, OPS_SECRET, card, updateCard, getPost, setStatus, deletePost, publishOne, when, sync, tick, kick, lastTick, setting } from './_social.js';
 import { runRadar, onNewsCallback, listIdeas } from './_news.js';
 
 const TZ = 'America/Santiago';
@@ -78,8 +78,14 @@ async function onCallback(cb) {
     await ops('answerCallbackQuery', { callback_query_id: cb.id, text: `Aprobado · sale ${when(p.scheduled_at)}` });
     if (new Date(p.scheduled_at) <= new Date()) { await updateCard(p); return publishOne(id); }
   } else if (act === 'no') {
-    p = await setStatus(id, 'rejected');
-    await ops('answerCallbackQuery', { callback_query_id: cb.id, text: 'Descartado' });
+    // Borrar el post de la DB para que el próximo /sync lo trate como nuevo si se sube una versión corregida.
+    await deletePost(id);
+    await ops('answerCallbackQuery', { callback_query_id: cb.id, text: 'Descartado y eliminado — sube la versión corregida y haz /sync' });
+    // Quitar botones del mensaje de Telegram para que no sigan activos.
+    if (p.tg_message_id) {
+      await ops('editMessageReplyMarkup', { chat_id: process.env.OPS_CHAT_ID, message_id: p.tg_message_id, reply_markup: JSON.stringify({ inline_keyboard: [] }) }).catch(() => {});
+    }
+    return; // Salir antes del updateCard (el post ya no existe)
   } else if (act === 'back') {
     p = await setStatus(id, 'pending');
     await ops('answerCallbackQuery', { callback_query_id: cb.id });

@@ -124,6 +124,12 @@ export default async function handler(req, res) {
       await notifyAdmin(`🗑️ ${expired.length} post${expired.length > 1 ? 's' : ''} expirado${expired.length > 1 ? 's' : ''} automáticamente:\n${expired.map(r => `• <code>${esc(r.id)}</code>`).join('\n')}`).catch(() => {});
     }
 
+    // Limpiar posts rechazados/expirados viejos (>7 días) — ya no sirven y ocupan espacio.
+    const cleaned = await sql()`DELETE FROM social_posts
+      WHERE status IN ('rejected','expired','failed') AND updated_at < now() - interval '7 days'
+      RETURNING id`;
+    out.posts_cleaned = cleaned.length;
+
     // Resumen de errores del día — solo si hubo alguno.
     const errs = await recentErrors(24, 10).catch(() => []);
     out.errors_today = errs.length;
