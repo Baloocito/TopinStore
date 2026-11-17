@@ -32,8 +32,20 @@ Carpeta `content/posts/AAAA-MM-DD-slug/` con `post.json` (project, type image|ca
 - Horario: posts 10:00–12:00 Chile, reels 14:00 (salvo que Xiombo pida otra hora). Cada post lleva historia.
 - Cierre del caption: CTA a drpipa.cl o al canal t.me/TopinSaleSwitch + hashtags.
 - Al hacer push a main, GitHub Actions sincroniza y llegan al bot para aprobar.
+- Dimensiones carousel: slides 1080×1080, story 1080×1920.
+
+### Flujo de corrección de post rechazado
+El `source_hash` se calcula sobre `[type, media[], caption, scheduled_at, story]` — no sobre el contenido binario de las imágenes. Si se rechaza un post y se corrige:
+1. **Renombrar los archivos corregidos** (ej. slide-03v2.jpg) para que el hash cambie.
+2. **Actualizar `post.json`** con los nuevos nombres en `media[]`.
+3. **Push** a main.
+4. En el bot: `/borrar <slug>` → `/sync` → aprobar el nuevo pendiente.
+- `/borrar <id>`: elimina un post de la DB (no publicados). Aparece en /pendientes tras el siguiente /sync.
+- `/purgar`: expira posts vencidos hace >2h que siguen pending/changes.
+- El cron diario limpia automáticamente rejected/expired/failed con >7 días.
 
 ## Flujo de trabajo
 - Rama `hub`; publicar con `git push origin hub hub:main`. Commits como Xiombo <xiombbo@gmail.com>.
 - Build: `node scripts/check.mjs` reescribe index.html (versiones de assets): respalda y restaura index.html si no quieres ese cambio.
 - Probar funciones con PGlite + fetch simulado antes de subir (el sandbox no llega a drpipa.cl ni Telegram).
+- Actualizar menú del bot tras agregar comandos: GET https://drpipa.cl/api/opsbot?setup=1
